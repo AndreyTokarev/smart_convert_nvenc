@@ -13,6 +13,7 @@ from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError
 from .progress import ProgressUpdate, clamp01
+from .windows_guard import WindowsSessionGuard
 
 
 # Utility app palette — muted graphite, not purple/glow
@@ -55,6 +56,7 @@ class App(ctk.CTk):
         self._job_total_videos = 0
         self._job_completed_videos = 0
         self._job_course_offsets: dict[str, int] = {}
+        self._session_guard = WindowsSessionGuard()
 
         self._font_ui = ctk.CTkFont(size=14)
         self._font_ui_bold = ctk.CTkFont(size=14, weight="bold")
@@ -64,8 +66,22 @@ class App(ctk.CTk):
         self._font_mono_sm = ctk.CTkFont(family="Consolas", size=12)
 
         self._build()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.refresh_courses()
         self.after(80, self._drain_logs)
+
+    def _on_close(self) -> None:
+        if self._worker and self._worker.is_alive():
+            if not messagebox.askyesno(
+                "Smart Convert",
+                "A job is still running. Stop and exit?",
+            ):
+                return
+            self._stop.set()
+            self._session_guard.stop()
+        else:
+            self._session_guard.stop()
+        self.destroy()
 
     def _build(self) -> None:
         self.geometry("1200x820")
@@ -524,6 +540,14 @@ class App(ctk.CTk):
         self._app_log(
             f"Queue: {len(courses)} course(s), {self._job_total_videos} videos, sequential"
         )
+        try:
+            hwnd = int(self.winfo_id())
+        except tk.TclError:
+            hwnd = None
+        self._session_guard.start(hwnd)
+        self._app_log(
+            "Windows guard ON: sleep blocked, pending reboot/shutdown aborted while job runs"
+        )
 
         def worker() -> None:
             try:
@@ -577,6 +601,11 @@ class App(ctk.CTk):
                 self._app_log(f"ERROR: {exc}")
                 self.after(0, lambda: messagebox.showerror("Smart Convert", str(exc)))
             finally:
+                self.after(0, self._session_guard.stop)
+                self.after(
+                    0,
+                    lambda: self._app_log("Windows guard OFF"),
+                )
                 self.after(0, lambda: self._set_running(False))
                 self.after(0, self.refresh_courses)
                 self.after(

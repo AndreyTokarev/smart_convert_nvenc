@@ -8,6 +8,7 @@ from .course import convert_course, list_course_dirs
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError
+from .windows_guard import WindowsSessionGuard
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -98,15 +99,22 @@ def main(argv: list[str] | None = None) -> int:
                 _safe_print(f"No course folders in {paths.inbox}")
                 return 0
 
-        for course_dir in courses:
-            convert_course(
-                course_dir,
-                paths,
-                settings,
-                min_course_savings=args.min_course_savings,
-                race_once=not args.race_each,
-                log=_safe_print,
-            )
+        guard = WindowsSessionGuard()
+        guard.start()
+        _safe_print("Windows guard ON (sleep blocked, pending reboot aborted while running)")
+        try:
+            for course_dir in courses:
+                convert_course(
+                    course_dir,
+                    paths,
+                    settings,
+                    min_course_savings=args.min_course_savings,
+                    race_once=not args.race_each,
+                    log=_safe_print,
+                )
+        finally:
+            guard.stop()
+            _safe_print("Windows guard OFF")
         return 0
     except (ToolError, FileNotFoundError, FileExistsError, ValueError, RuntimeError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

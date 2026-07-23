@@ -25,8 +25,8 @@ courses/tmp/      ← temporary encodes
 courses/outbox/   ← result
 ```
 
-Defaults live inside the project; override with `--courses-root`, `--inbox`, `--outbox`, `--tmp`.  
-All default folder names are **English**. Details: [docs/adr/0001-course-inbox-outbox-tmp.md](docs/adr/0001-course-inbox-outbox-tmp.md).
+Also keep the machine awake and discourage Windows Update reboots while a job runs
+(`shutdown /a` + sleep block; GUI also registers a shutdown block reason).
 
 ### Process a course
 
