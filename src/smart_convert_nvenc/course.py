@@ -5,11 +5,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from .ffmpeg_runner import FFmpegCancelled, StopCheck
 from .models import ConvertSettings, EncodeProfile, VIDEO_EXTENSIONS, VideoDecision
 from .paths import CoursePaths
 from .pipeline import convert_video
 from .probe import require_nvenc
 from .progress import ProgressUpdate, clamp01
+from .temp_paths import cleanup_conversion_temps
 
 
 LogFn = Callable[[str], None]
@@ -109,7 +111,7 @@ def convert_course(
     log: LogFn | None = None,
     on_ffmpeg_progress: LogFn | None = None,
     on_progress: ProgressFn | None = None,
-    should_stop: Callable[[], bool] | None = None,
+    should_stop: StopCheck | None = None,
 ) -> CourseResult:
     require_nvenc()
     course_dir = course_dir.resolve()
@@ -126,6 +128,10 @@ def convert_course(
         raise FileExistsError(
             f"Outbox already has '{name}'. Remove or rename it before retrying."
         )
+
+    removed = cleanup_conversion_temps(paths.tmp)
+    if removed:
+        _log(log, f"Cleaned {len(removed)} leftover conversion temp(s) under tmp")
 
     original_size = tree_size(course_dir)
     videos = iter_videos(course_dir)
@@ -149,7 +155,7 @@ def convert_course(
     try:
         for index, video in enumerate(videos, start=1):
             if should_stop and should_stop():
-                raise RuntimeError("Stopped by user")
+                raise FFmpegCancelled("Stopped by user")
             rel = video.relative_to(course_dir)
             _log(log, f"[{index}/{len(videos)}] {rel}")
 
@@ -178,6 +184,7 @@ def convert_course(
                 log=log,
                 on_ffmpeg_progress=on_ffmpeg_progress,
                 on_phase_progress=_on_phase,
+                should_stop=should_stop,
             )
             decisions.append(decision)
             if on_progress:

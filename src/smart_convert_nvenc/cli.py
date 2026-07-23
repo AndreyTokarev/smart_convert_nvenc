@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .pipeline import convert_one
-from .probe import ToolError
+from .probe import ToolError, validate_environment
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,6 +61,8 @@ def _safe_print(message: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        for line in validate_environment():
+            _safe_print(f"env: {line}")
         audio = AudioSettings.parse(args.audio)
         force = VideoCodec(args.force_codec) if args.force_codec else None
         settings = ConvertSettings(

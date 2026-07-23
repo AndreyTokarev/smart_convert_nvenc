@@ -38,6 +38,18 @@ def require_nvenc() -> None:
         )
 
 
+def validate_environment() -> list[str]:
+    """Raise ToolError if unusable; otherwise return human-readable OK lines."""
+    require_nvenc()
+    ffmpeg = shutil.which("ffmpeg") or "ffmpeg"
+    ffprobe = shutil.which("ffprobe") or "ffprobe"
+    return [
+        f"ffmpeg: {ffmpeg}",
+        f"ffprobe: {ffprobe}",
+        "encoders: hevc_nvenc, av1_nvenc",
+    ]
+
+
 def probe_media(path: Path) -> MediaInfo:
     require_tools()
     cmd = [

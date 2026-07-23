@@ -9,10 +9,12 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from .course import convert_course, iter_videos, list_course_dirs
+from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import resolve_course_paths
-from .probe import ToolError
+from .probe import ToolError, validate_environment
 from .progress import ProgressUpdate, clamp01
+from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
 
 
@@ -46,6 +48,12 @@ class App(ctk.CTk):
 
         self.paths = resolve_course_paths()
         self.paths.ensure()
+        removed = cleanup_conversion_temps(self.paths.tmp)
+        self._env_ok_lines: list[str] = []
+        try:
+            self._env_ok_lines = validate_environment()
+        except ToolError as exc:
+            messagebox.showerror("Smart Convert", str(exc))
 
         self._worker: threading.Thread | None = None
         self._stop = threading.Event()
@@ -69,6 +77,10 @@ class App(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.refresh_courses()
         self.after(80, self._drain_logs)
+        if removed:
+            self._app_log(f"Cleaned {len(removed)} leftover conversion temp(s)")
+        for line in self._env_ok_lines:
+            self._app_log(f"env: {line}")
 
     def _on_close(self) -> None:
         if self._worker and self._worker.is_alive():
@@ -78,9 +90,13 @@ class App(ctk.CTk):
             ):
                 return
             self._stop.set()
+            killed = kill_active_subprocesses()
+            if killed:
+                self._app_log(f"Killed {killed} FFmpeg process tree(s)")
             self._session_guard.stop()
         else:
             self._session_guard.stop()
+        cleanup_conversion_temps(self.paths.tmp)
         self.destroy()
 
     def _build(self) -> None:
@@ -497,7 +513,11 @@ class App(ctk.CTk):
 
     def stop(self) -> None:
         self._stop.set()
-        self._app_log("Stop requested (after current video)...")
+        killed = kill_active_subprocesses()
+        if killed:
+            self._app_log(f"Stop: killed {killed} FFmpeg process tree(s)")
+        else:
+            self._app_log("Stop requested...")
         self.status.configure(text="Stopping...", text_color="#e0a84c")
 
     def _set_running(self, running: bool) -> None:
@@ -575,6 +595,9 @@ class App(ctk.CTk):
                             on_progress=self._emit_progress,
                             should_stop=self._stop.is_set,
                         )
+                    except FFmpegCancelled:
+                        self._app_log("Stopped by user.")
+                        break
                     except RuntimeError as exc:
                         if "Stopped by user" in str(exc):
                             self._app_log("Stopped by user.")
@@ -597,10 +620,15 @@ class App(ctk.CTk):
                 ValueError,
                 OSError,
                 RuntimeError,
+                FFmpegCancelled,
             ) as exc:
-                self._app_log(f"ERROR: {exc}")
-                self.after(0, lambda: messagebox.showerror("Smart Convert", str(exc)))
+                if isinstance(exc, FFmpegCancelled):
+                    self._app_log("Stopped by user.")
+                else:
+                    self._app_log(f"ERROR: {exc}")
+                    self.after(0, lambda: messagebox.showerror("Smart Convert", str(exc)))
             finally:
+                cleanup_conversion_temps(self.paths.tmp)
                 self.after(0, self._session_guard.stop)
                 self.after(
                     0,

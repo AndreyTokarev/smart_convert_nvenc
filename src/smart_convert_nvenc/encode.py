@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .ffmpeg_runner import ProgressCallback, run_ffmpeg
+from .ffmpeg_runner import FFmpegCancelled, FFmpegError, ProgressCallback, StopCheck, run_ffmpeg
 from .models import AudioMode, AudioSettings, EncodeProfile, VideoCodec
+from .temp_paths import make_conversion_temp, promote_temp_to_final
 
 
 def audio_args(settings: AudioSettings, *, for_sample: bool) -> list[str]:
-    # Samples always copy audio so size comparison is about video only.
     if for_sample or settings.mode is AudioMode.COPY:
         return ["-c:a", "copy"]
     if settings.mode is AudioMode.AAC:
@@ -50,8 +50,11 @@ def build_encode_args(
     sample_seconds: float | None = None,
     seek_seconds: float = 0.0,
     for_sample: bool = False,
+    hwaccel: str | None = "auto",
 ) -> list[str]:
-    args: list[str] = ["-hwaccel", "auto"]
+    args: list[str] = []
+    if hwaccel:
+        args.extend(["-hwaccel", hwaccel])
     if seek_seconds > 0:
         args.extend(["-ss", f"{seek_seconds:.3f}"])
     args.extend(["-i", str(input_path)])
@@ -75,15 +78,46 @@ def encode_file(
     seek_seconds: float = 0.0,
     for_sample: bool = False,
     on_progress: ProgressCallback | None = None,
+    should_stop: StopCheck | None = None,
+    use_temp: bool = True,
+    retry_without_hwaccel: bool = True,
 ) -> float:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    args = build_encode_args(
-        input_path=input_path,
-        output_path=output_path,
-        profile=profile,
-        audio=audio,
-        sample_seconds=sample_seconds,
-        seek_seconds=seek_seconds,
-        for_sample=for_sample,
-    )
-    return run_ffmpeg(args, on_progress=on_progress)
+    target = make_conversion_temp(output_path) if use_temp else output_path
+
+    def _run(hwaccel: str | None) -> float:
+        args = build_encode_args(
+            input_path=input_path,
+            output_path=target,
+            profile=profile,
+            audio=audio,
+            sample_seconds=sample_seconds,
+            seek_seconds=seek_seconds,
+            for_sample=for_sample,
+            hwaccel=hwaccel,
+        )
+        return run_ffmpeg(args, on_progress=on_progress, should_stop=should_stop)
+
+    try:
+        try:
+            elapsed = _run("auto")
+        except FFmpegCancelled:
+            if target != output_path and target.exists():
+                target.unlink(missing_ok=True)
+            raise
+        except FFmpegError:
+            if not retry_without_hwaccel:
+                if target != output_path and target.exists():
+                    target.unlink(missing_ok=True)
+                raise
+            if target.exists():
+                target.unlink(missing_ok=True)
+            elapsed = _run(None)
+    except Exception:
+        if target != output_path and target.exists():
+            target.unlink(missing_ok=True)
+        raise
+
+    if use_temp:
+        promote_temp_to_final(target, output_path)
+    return elapsed

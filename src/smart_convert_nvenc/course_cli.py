@@ -7,7 +7,8 @@ from pathlib import Path
 from .course import convert_course, list_course_dirs
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import resolve_course_paths
-from .probe import ToolError
+from .probe import ToolError, validate_environment
+from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
 
 
@@ -73,6 +74,11 @@ def main(argv: list[str] | None = None) -> int:
             tmp=args.tmp,
         )
         paths.ensure()
+        for line in validate_environment():
+            _safe_print(f"env: {line}")
+        removed = cleanup_conversion_temps(paths.tmp)
+        if removed:
+            _safe_print(f"Cleaned {len(removed)} leftover conversion temp(s)")
 
         audio = AudioSettings.parse(args.audio)
         force = VideoCodec(args.force_codec) if args.force_codec else None

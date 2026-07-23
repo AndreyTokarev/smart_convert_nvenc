@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from smart_convert_nvenc.paths import CoursePaths, find_project_root, resolve_course_paths
+
+
+def test_find_project_root() -> None:
+    root = find_project_root()
+    assert (root / "pyproject.toml").is_file()
+
+
+def test_find_project_root_from_start(tmp_path: Path) -> None:
+    nested = tmp_path / "a" / "b"
+    nested.mkdir(parents=True)
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    assert find_project_root(nested) == tmp_path.resolve()
+
+
+def test_find_project_root_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    # Point module __file__ into the empty temp tree so real repo is not discovered.
+    monkeypatch.setattr(
+        "smart_convert_nvenc.paths.__file__",
+        str(tmp_path / "fake_paths.py"),
+    )
+    with pytest.raises(RuntimeError, match="pyproject.toml"):
+        find_project_root(tmp_path)
+
+
+def test_find_project_root_skips_seen(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    # Calling with start equal to a parent that will also appear via cwd/__file__ still works.
+    assert find_project_root(tmp_path) == tmp_path.resolve()
+
+
+def test_resolve_defaults_under_project() -> None:
+    root = find_project_root()
+    paths = resolve_course_paths(project_root=root)
+    assert paths.inbox == (root / "courses" / "inbox").resolve()
+    assert paths.outbox == (root / "courses" / "outbox").resolve()
+    assert paths.tmp == (root / "courses" / "tmp").resolve()
+
+
+def test_resolve_cli_overrides(tmp_path: Path) -> None:
+    paths = resolve_course_paths(
+        project_root=tmp_path,
+        inbox=tmp_path / "i",
+        outbox=tmp_path / "o",
+        tmp=tmp_path / "t",
+    )
+    assert paths.inbox == (tmp_path / "i").resolve()
+    assert paths.outbox == (tmp_path / "o").resolve()
+    assert paths.tmp == (tmp_path / "t").resolve()
+
+
+def test_resolve_env_overrides(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SMART_CONVERT_COURSES_ROOT", str(tmp_path / "croot"))
+    monkeypatch.setenv("SMART_CONVERT_INBOX", str(tmp_path / "ein"))
+    monkeypatch.setenv("SMART_CONVERT_OUTBOX", str(tmp_path / "eout"))
+    monkeypatch.setenv("SMART_CONVERT_TMP", str(tmp_path / "etmp"))
+    paths = resolve_course_paths(project_root=tmp_path)
+    assert paths.inbox == (tmp_path / "ein").resolve()
+    assert paths.outbox == (tmp_path / "eout").resolve()
+    assert paths.tmp == (tmp_path / "etmp").resolve()
+
+
+def test_resolve_courses_root_env_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in (
+        "SMART_CONVERT_COURSES_ROOT",
+        "SMART_CONVERT_INBOX",
+        "SMART_CONVERT_OUTBOX",
+        "SMART_CONVERT_TMP",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("SMART_CONVERT_COURSES_ROOT", str(tmp_path / "bundle"))
+    paths = resolve_course_paths(project_root=tmp_path)
+    assert paths.inbox == (tmp_path / "bundle" / "inbox").resolve()
+
+
+def test_course_paths_ensure(tmp_path: Path) -> None:
+    paths = CoursePaths(
+        inbox=tmp_path / "inbox",
+        outbox=tmp_path / "outbox",
+        tmp=tmp_path / "tmp",
+    )
+    paths.ensure()
+    assert paths.inbox.is_dir()
+    assert paths.outbox.is_dir()
+    assert paths.tmp.is_dir()

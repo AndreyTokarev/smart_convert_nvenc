@@ -72,6 +72,15 @@ uv run smart-convert lesson.mp4 --min-savings 0.15
 
 Итог: рядом с исходником появится `*_nvenc_hevc.mp4` или `*_nvenc_av1.mkv`. Исходник не удаляется.
 
+## Тесты
+
+```powershell
+uv sync --group dev
+uv run pytest --cov=smart_convert_nvenc --cov-report=term-missing
+```
+
+Порог покрытия — **≥90%** (`fail_under` в `pyproject.toml`). GUI и `__main__` в метрику не входят (без дисплея / entrypoint). GPU для тестов не нужен.
+
 ## Документация
 
 - [docs/README.md](docs/README.md)

@@ -1,6 +1,6 @@
 # План: перенос проверенных фич из video_converter
 
-- **Статус:** draft → к исполнению  
+- **Статус:** F1 + F4 done; F2–F3, F5–F6 pending  
 - **Дата:** 2026-07-24  
 - **Контекст:** `D:\projects\python\video_converter` — предыдущий личный сервис (Flet + NVENC). Решено не допиливать его, а собрать **smart_convert_nvenc** с нуля под архив курсов. Ниже — что из старого опыта переносим сюда, в каком порядке, и чего сознательно не тащим.
 
@@ -153,10 +153,10 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 
 | Фаза | Статус | Дата | Комментарий |
 |------|--------|------|-------------|
-| F1 | pending | | |
+| F1 | done | 2026-07-24 | Popen registry + taskkill /T; hard GUI Stop; `*.conv.<id>.*` temps + cleanup; hwaccel retry; `validate_environment` on GUI/CLI start |
 | F2 | pending | | |
 | F3 | pending | | |
-| F4 | pending | | |
+| F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | pending | | |
 | F6 | pending | | |
 

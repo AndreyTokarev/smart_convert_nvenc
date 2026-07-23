@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from .encode import encode_file
+from .ffmpeg_runner import FFmpegCancelled, StopCheck
 from .models import (
     DISCLAIMER_SIZE_AT_CQ,
     BenchmarkReport,
@@ -49,6 +50,7 @@ def run_sample(
     seek: float,
     log: LogFn | None = None,
     on_progress: Callable[[str], None] | None = None,
+    should_stop: StopCheck | None = None,
 ) -> SampleResult:
     out = work_dir / f"sample_{profile.codec.value}{profile.container_ext}"
     _log(log, f"  sample {profile.codec.value.upper()} (CQ={profile.cq}, preset={profile.preset})...")
@@ -61,6 +63,7 @@ def run_sample(
         seek_seconds=seek,
         for_sample=True,
         on_progress=on_progress,
+        should_stop=should_stop,
     )
     size = out.stat().st_size
     _log(log, f"    -> {_format_mb(size)} in {elapsed:.1f}s")
@@ -128,12 +131,15 @@ def convert_video(
     show_encode_progress: bool = False,
     on_ffmpeg_progress: LogFn | None = None,
     on_phase_progress: PhaseProgressFn | None = None,
+    should_stop: StopCheck | None = None,
 ) -> VideoDecision:
     """Benchmark (unless force_profile) and optionally full-encode one video."""
     require_nvenc()
     input_path = input_path.resolve()
     if not input_path.is_file():
         raise FileNotFoundError(input_path)
+    if should_stop and should_stop():
+        raise FFmpegCancelled("Stopped by user")
 
     info = probe_media(input_path)
     _log(
@@ -191,6 +197,7 @@ def convert_video(
                 seek=seek,
                 log=log,
                 on_progress=_make_ffmpeg_cb("sample_hevc", sample_len),
+                should_stop=should_stop,
             )
             _emit_phase("sample_hevc", 1.0)
             av1 = run_sample(
@@ -201,6 +208,7 @@ def convert_video(
                 seek=seek,
                 log=log,
                 on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
+                should_stop=should_stop,
             )
             _emit_phase("sample_av1", 1.0)
 
@@ -258,6 +266,7 @@ def convert_video(
             audio=settings.audio,
             for_sample=False,
             on_progress=_make_ffmpeg_cb("encode", info.duration_sec),
+            should_stop=should_stop,
         )
         _emit_phase("encode", 1.0)
         final_size = out.stat().st_size

@@ -10,6 +10,9 @@ wheels/
 .venv
 
 .cache/
+.coverage
+htmlcov/
+.pytest_cache/
 
 # Course media (keep folder READMEs only)
 courses/inbox/**
