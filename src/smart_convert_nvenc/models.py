@@ -107,8 +107,8 @@ class SampleResult:
 @dataclass(frozen=True)
 class BenchmarkReport:
     winner: EncodeProfile
-    hevc: SampleResult
-    av1: SampleResult
+    hevc: SampleResult | None
+    av1: SampleResult | None
     projected_full_bytes: int
     original_bytes: int
     savings_ratio: float
@@ -116,7 +116,32 @@ class BenchmarkReport:
     disclaimer: str
 
 
+@dataclass(frozen=True)
+class VideoDecision:
+    source: Path
+    original_size: int
+    compressed: bool
+    output: Path
+    profile: EncodeProfile | None
+    projected_or_final_size: int
+
+
 DISCLAIMER_SIZE_AT_CQ = (
     "Сравнение по размеру при разных CQ (HEVC vs AV1) — не равное качество. "
     "Для курсов этого обычно достаточно; VMAF в MVP не используется."
 )
+
+VIDEO_EXTENSIONS = {
+    ".mp4",
+    ".m4v",
+    ".mkv",
+    ".avi",
+    ".mov",
+    ".wmv",
+    ".webm",
+    ".flv",
+    ".mpg",
+    ".mpeg",
+    ".ts",
+    ".mts",
+}

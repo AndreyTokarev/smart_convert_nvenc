@@ -13,11 +13,15 @@ from .models import (
     MediaInfo,
     SampleResult,
     VideoCodec,
+    VideoDecision,
 )
 from .probe import probe_media, require_nvenc
+from .progress import clamp01, parse_ffmpeg_time_seconds
 
 
 LogFn = Callable[[str], None]
+# phase name, fraction within that phase 0..1
+PhaseProgressFn = Callable[[str, float], None]
 
 
 def _log(log: LogFn | None, message: str) -> None:
@@ -26,7 +30,7 @@ def _log(log: LogFn | None, message: str) -> None:
 
 
 def _format_mb(size: int) -> str:
-    return f"{size / (1024 * 1024):.2f} МиБ"
+    return f"{size / (1024 * 1024):.2f} MiB"
 
 
 def sample_seek_seconds(info: MediaInfo, settings: ConvertSettings) -> float:
@@ -44,9 +48,10 @@ def run_sample(
     settings: ConvertSettings,
     seek: float,
     log: LogFn | None = None,
+    on_progress: Callable[[str], None] | None = None,
 ) -> SampleResult:
     out = work_dir / f"sample_{profile.codec.value}{profile.container_ext}"
-    _log(log, f"Тест {profile.codec.value.upper()} NVENC (CQ={profile.cq}, preset={profile.preset})...")
+    _log(log, f"  sample {profile.codec.value.upper()} (CQ={profile.cq}, preset={profile.preset})...")
     elapsed = encode_file(
         input_path=input_path,
         output_path=out,
@@ -55,37 +60,50 @@ def run_sample(
         sample_seconds=settings.sample_seconds,
         seek_seconds=seek,
         for_sample=True,
-        on_progress=lambda line: _log(log, f"  {line}"),
+        on_progress=on_progress,
     )
     size = out.stat().st_size
-    _log(log, f"  -> {_format_mb(size)} за {elapsed:.1f} с")
+    _log(log, f"    -> {_format_mb(size)} in {elapsed:.1f}s")
     return SampleResult(profile=profile, path=str(out), size_bytes=size, elapsed_sec=elapsed)
 
 
 def choose_winner(
     *,
-    hevc: SampleResult,
-    av1: SampleResult,
+    hevc: SampleResult | None,
+    av1: SampleResult | None,
     original_bytes: int,
     duration_sec: float,
     sample_seconds: float,
     min_savings: float,
-    force_codec: VideoCodec | None,
+    force_profile: EncodeProfile | None,
 ) -> BenchmarkReport:
-    if force_codec is VideoCodec.HEVC:
-        winner = hevc
-    elif force_codec is VideoCodec.AV1:
-        winner = av1
-    else:
-        winner = av1 if av1.size_bytes < hevc.size_bytes else hevc
+    if force_profile is not None:
+        # Size projection unavailable without a sample; treat as worth trying full encode.
+        # Caller should still compare actual output size.
+        projected = original_bytes
+        winner = force_profile
+        savings = 0.0
+        worth = True
+        return BenchmarkReport(
+            winner=winner,
+            hevc=hevc,
+            av1=av1,
+            projected_full_bytes=projected,
+            original_bytes=original_bytes,
+            savings_ratio=savings,
+            worth_encoding=worth,
+            disclaimer=DISCLAIMER_SIZE_AT_CQ,
+        )
 
+    assert hevc is not None and av1 is not None
+    winner_sample = av1 if av1.size_bytes < hevc.size_bytes else hevc
     scale = duration_sec / sample_seconds if sample_seconds > 0 else 1.0
-    projected = int(winner.size_bytes * scale)
+    projected = int(winner_sample.size_bytes * scale)
     savings = 1.0 - (projected / original_bytes) if original_bytes > 0 else 0.0
     worth = projected < original_bytes * (1.0 - min_savings)
 
     return BenchmarkReport(
-        winner=winner.profile,
+        winner=winner_sample.profile,
         hevc=hevc,
         av1=av1,
         projected_full_bytes=projected,
@@ -100,51 +118,91 @@ def output_path_for(input_path: Path, profile: EncodeProfile) -> Path:
     return input_path.with_name(f"{input_path.stem}_nvenc_{profile.codec.value}{profile.container_ext}")
 
 
-def convert_one(
+def convert_video(
     input_path: Path,
     settings: ConvertSettings,
     *,
+    output_path: Path | None = None,
+    force_profile: EncodeProfile | None = None,
     log: LogFn | None = None,
-) -> Path | None:
+    show_encode_progress: bool = False,
+    on_ffmpeg_progress: LogFn | None = None,
+    on_phase_progress: PhaseProgressFn | None = None,
+) -> VideoDecision:
+    """Benchmark (unless force_profile) and optionally full-encode one video."""
     require_nvenc()
     input_path = input_path.resolve()
     if not input_path.is_file():
         raise FileNotFoundError(input_path)
 
     info = probe_media(input_path)
-    _log(log, f"Исходник: {input_path.name}")
     _log(
         log,
-        f"  {_format_mb(info.size_bytes)}, {info.duration_sec:.1f} с, "
-        f"видео={info.video_codec or '?'}, "
+        f"{input_path.name}: {_format_mb(info.size_bytes)}, "
+        f"{info.duration_sec:.1f}s, {info.video_codec or '?'}, "
         f"{info.width or '?'}x{info.height or '?'}",
     )
     if info.duration_sec <= 0:
-        raise RuntimeError("Не удалось определить длительность видео (ffprobe).")
+        raise RuntimeError(f"Cannot read duration: {input_path}")
+
+    effective_force = force_profile
+    if effective_force is None and settings.force_codec is not None:
+        effective_force = (
+            settings.hevc_profile()
+            if settings.force_codec is VideoCodec.HEVC
+            else settings.av1_profile()
+        )
 
     seek = sample_seek_seconds(info, settings)
     sample_len = min(settings.sample_seconds, info.duration_sec)
-    _log(log, f"Сэмпл: {sample_len:.0f} с с позиции {seek:.1f} с ({settings.sample_offset_ratio:.0%} длительности)")
-    _log(log, f"[!] {DISCLAIMER_SIZE_AT_CQ}")
+    racing = effective_force is None
 
-    with tempfile.TemporaryDirectory(prefix="smart_convert_") as tmp:
+    def _emit_phase(phase: str, local: float) -> None:
+        if on_phase_progress:
+            on_phase_progress(phase, clamp01(local))
+
+    def _make_ffmpeg_cb(phase: str, duration: float) -> Callable[[str], None] | None:
+        if not on_ffmpeg_progress and not on_phase_progress and not show_encode_progress:
+            return None
+
+        def _cb(line: str) -> None:
+            if on_ffmpeg_progress:
+                on_ffmpeg_progress(line)
+            elif show_encode_progress:
+                _log(log, f"    {line}")
+            t = parse_ffmpeg_time_seconds(line)
+            if t is not None and duration > 0:
+                _emit_phase(phase, t / duration)
+
+        return _cb
+
+    with tempfile.TemporaryDirectory(prefix="smart_convert_sample_") as tmp:
         work = Path(tmp)
-        hevc = run_sample(
-            input_path=input_path,
-            work_dir=work,
-            profile=settings.hevc_profile(),
-            settings=settings,
-            seek=seek,
-            log=log,
-        )
-        av1 = run_sample(
-            input_path=input_path,
-            work_dir=work,
-            profile=settings.av1_profile(),
-            settings=settings,
-            seek=seek,
-            log=log,
-        )
+        hevc: SampleResult | None = None
+        av1: SampleResult | None = None
+
+        if racing:
+            _log(log, f"  [!] {DISCLAIMER_SIZE_AT_CQ}")
+            hevc = run_sample(
+                input_path=input_path,
+                work_dir=work,
+                profile=settings.hevc_profile(),
+                settings=settings,
+                seek=seek,
+                log=log,
+                on_progress=_make_ffmpeg_cb("sample_hevc", sample_len),
+            )
+            _emit_phase("sample_hevc", 1.0)
+            av1 = run_sample(
+                input_path=input_path,
+                work_dir=work,
+                profile=settings.av1_profile(),
+                settings=settings,
+                seek=seek,
+                log=log,
+                on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
+            )
+            _emit_phase("sample_av1", 1.0)
 
         report = choose_winner(
             hevc=hevc,
@@ -153,55 +211,96 @@ def convert_one(
             duration_sec=info.duration_sec,
             sample_seconds=sample_len,
             min_savings=settings.min_savings,
-            force_codec=settings.force_codec,
+            force_profile=effective_force,
         )
 
-        _log(log, "=" * 50)
-        _log(log, f"HEVC sample: {_format_mb(hevc.size_bytes)}")
-        _log(log, f"AV1  sample: {_format_mb(av1.size_bytes)}")
-        _log(log, f"Победитель: {report.winner.codec.value.upper()} NVENC")
-        _log(
-            log,
-            f"Прогноз полного файла: {_format_mb(report.projected_full_bytes)} "
-            f"(исходник {_format_mb(report.original_bytes)}, "
-            f"экономия {report.savings_ratio * 100:.1f}%)",
-        )
-
-        if settings.keep_samples:
-            keep_dir = input_path.parent / f".smart_convert_samples_{input_path.stem}"
-            keep_dir.mkdir(exist_ok=True)
-            for sample in (hevc, av1):
-                dest = keep_dir / Path(sample.path).name
-                dest.write_bytes(Path(sample.path).read_bytes())
-            _log(log, f"Сэмплы сохранены в {keep_dir}")
-
-        if not report.worth_encoding:
+        if hevc and av1:
             _log(
                 log,
-                f"Пропуск полного encode: прогноз экономии < {settings.min_savings * 100:.0f}% "
-                f"(или файл не станет заметно меньше).",
+                f"  winner={report.winner.codec.value.upper()} "
+                f"proj={_format_mb(report.projected_full_bytes)} "
+                f"({report.savings_ratio * 100:.1f}% vs source)",
             )
-            return None
 
-        out = output_path_for(input_path, report.winner)
+        if not report.worth_encoding and effective_force is None:
+            _log(log, "  skip full encode (projected savings too low)")
+            _emit_phase("done", 1.0)
+            return VideoDecision(
+                source=input_path,
+                original_size=info.size_bytes,
+                compressed=False,
+                output=input_path,
+                profile=None,
+                projected_or_final_size=info.size_bytes,
+            )
+
+        if output_path is not None:
+            out = output_path.with_suffix(report.winner.container_ext)
+        else:
+            out = output_path_for(input_path, report.winner)
         if settings.dry_run:
-            _log(log, f"Dry-run: полный encode не запускался. Был бы файл: {out}")
-            return out
+            _log(log, f"  dry-run: would write {out}")
+            _emit_phase("done", 1.0)
+            return VideoDecision(
+                source=input_path,
+                original_size=info.size_bytes,
+                compressed=True,
+                output=out,
+                profile=report.winner,
+                projected_or_final_size=report.projected_full_bytes,
+            )
 
-        _log(log, f"Полное кодирование -> {out.name}")
+        _log(log, f"  encoding full -> {out.name}")
         encode_file(
             input_path=input_path,
             output_path=out,
             profile=report.winner,
             audio=settings.audio,
             for_sample=False,
-            on_progress=lambda line: _log(log, f"  {line}"),
+            on_progress=_make_ffmpeg_cb("encode", info.duration_sec),
         )
+        _emit_phase("encode", 1.0)
         final_size = out.stat().st_size
+        if final_size >= info.size_bytes * (1.0 - settings.min_savings):
+            _log(
+                log,
+                f"  compressed not worth keeping "
+                f"({_format_mb(final_size)} vs {_format_mb(info.size_bytes)}); keep original",
+            )
+            out.unlink(missing_ok=True)
+            _emit_phase("done", 1.0)
+            return VideoDecision(
+                source=input_path,
+                original_size=info.size_bytes,
+                compressed=False,
+                output=input_path,
+                profile=report.winner,
+                projected_or_final_size=info.size_bytes,
+            )
+
         real_savings = 1.0 - (final_size / info.size_bytes)
-        _log(
-            log,
-            f"Готово: {_format_mb(final_size)} "
-            f"(факт. экономия {real_savings * 100:.1f}%)\n{out}",
+        _log(log, f"  done {_format_mb(final_size)} ({real_savings * 100:.1f}% smaller)")
+        _emit_phase("done", 1.0)
+        return VideoDecision(
+            source=input_path,
+            original_size=info.size_bytes,
+            compressed=True,
+            output=out,
+            profile=report.winner,
+            projected_or_final_size=final_size,
         )
-        return out
+
+
+def convert_one(
+    input_path: Path,
+    settings: ConvertSettings,
+    *,
+    log: LogFn | None = None,
+) -> Path | None:
+    decision = convert_video(
+        input_path,
+        settings,
+        log=log,
+        show_encode_progress=True,
+    )
+    return decision.output if decision.compressed else None

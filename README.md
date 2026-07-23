@@ -17,6 +17,30 @@
 ffmpeg -hide_banner -encoders | findstr nvenc
 ```
 
+## Course folders (defaults)
+
+```text
+courses/inbox/    ← source courses (one folder per course)
+courses/tmp/      ← temporary encodes
+courses/outbox/   ← result
+```
+
+Defaults live inside the project; override with `--courses-root`, `--inbox`, `--outbox`, `--tmp`.  
+All default folder names are **English**. Details: [docs/adr/0001-course-inbox-outbox-tmp.md](docs/adr/0001-course-inbox-outbox-tmp.md).
+
+### Process a course
+
+```powershell
+# GUI
+uv run smart-convert-gui
+
+# CLI: all courses in inbox
+uv run smart-convert-course
+
+# CLI: one course by folder name
+uv run smart-convert-course "[0000] Balance (full breakdown) [Jam Track Central] [Olly Steele]"
+```
+
 ## Установка
 
 ```powershell

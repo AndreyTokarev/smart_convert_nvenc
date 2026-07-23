@@ -4,10 +4,14 @@ version = "0.1.0"
 description = "Compress video course archives with NVIDIA NVENC (HEVC vs AV1 sample race)."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "customtkinter>=6.0.0",
+]
 
 [project.scripts]
 smart-convert = "smart_convert_nvenc.cli:main"
+smart-convert-course = "smart_convert_nvenc.course_cli:main"
+smart-convert-gui = "smart_convert_nvenc.gui:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -11,3 +11,9 @@ wheels/
 
 .cache/
 
+# Course media (keep folder READMEs only)
+courses/inbox/**
+courses/outbox/**
+courses/tmp/**
+!courses/**/
+!courses/**/README.md
