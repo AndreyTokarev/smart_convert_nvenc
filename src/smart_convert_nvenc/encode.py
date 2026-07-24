@@ -6,10 +6,31 @@ from .ffmpeg_runner import FFmpegCancelled, FFmpegError, ProgressCallback, StopC
 from .models import AudioMode, AudioSettings, EncodeProfile, VideoCodec
 from .temp_paths import make_conversion_temp, promote_temp_to_final
 
+# MPEG-TS / similar often carry AAC in ADTS; MP4/MKV need ASC when copying.
+_ADTS_INPUT_SUFFIXES = {".ts", ".mts", ".m2ts", ".mpeg", ".mpg"}
 
-def audio_args(settings: AudioSettings, *, for_sample: bool) -> list[str]:
-    if for_sample or settings.mode is AudioMode.COPY:
-        return ["-c:a", "copy"]
+
+def audio_args(
+    settings: AudioSettings,
+    *,
+    for_sample: bool,
+    input_path: Path | None = None,
+    output_path: Path | None = None,
+) -> list[str]:
+    # Samples compare video size only — drop audio so MPEG-TS seek + MKV/AV1
+    # does not fail on broken AAC extradata, and CQ race stays video-pure.
+    if for_sample:
+        return ["-an"]
+    if settings.mode is AudioMode.COPY:
+        args = ["-c:a", "copy"]
+        if (
+            input_path is not None
+            and output_path is not None
+            and input_path.suffix.lower() in _ADTS_INPUT_SUFFIXES
+            and output_path.suffix.lower() in {".mp4", ".m4v", ".mov", ".mkv"}
+        ):
+            args.extend(["-bsf:a", "aac_adtstoasc"])
+        return args
     if settings.mode is AudioMode.AAC:
         return ["-c:a", "aac", "-b:a", f"{settings.bitrate_k}k"]
     if settings.mode is AudioMode.OPUS:
@@ -61,9 +82,17 @@ def build_encode_args(
     if sample_seconds is not None:
         args.extend(["-t", f"{sample_seconds:.3f}"])
     args.extend(["-map", "0:v:0"])
-    args.extend(["-map", "0:a:0?"])
+    if not for_sample:
+        args.extend(["-map", "0:a:0?"])
     args.extend(video_args(profile))
-    args.extend(audio_args(audio, for_sample=for_sample))
+    args.extend(
+        audio_args(
+            audio,
+            for_sample=for_sample,
+            input_path=input_path,
+            output_path=output_path,
+        )
+    )
     args.append(str(output_path))
     return args
 

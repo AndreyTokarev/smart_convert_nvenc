@@ -39,8 +39,26 @@ def test_audio_args_modes() -> None:
         "-b:a",
         "64k",
     ]
-    # samples always copy
-    assert audio_args(AudioSettings(mode=AudioMode.AAC), for_sample=True) == ["-c:a", "copy"]
+    # samples drop audio (video-only size race; avoids MPEG-TS/MKV mux failures)
+    assert audio_args(AudioSettings(mode=AudioMode.AAC), for_sample=True) == ["-an"]
+    assert audio_args(AudioSettings(mode=AudioMode.COPY), for_sample=True) == ["-an"]
+
+
+def test_audio_args_copy_adds_adtstoasc_for_mpegts() -> None:
+    args = audio_args(
+        AudioSettings(mode=AudioMode.COPY),
+        for_sample=False,
+        input_path=Path("lesson.ts"),
+        output_path=Path("out.mkv"),
+    )
+    assert args == ["-c:a", "copy", "-bsf:a", "aac_adtstoasc"]
+    plain = audio_args(
+        AudioSettings(mode=AudioMode.COPY),
+        for_sample=False,
+        input_path=Path("lesson.mp4"),
+        output_path=Path("out.mp4"),
+    )
+    assert plain == ["-c:a", "copy"]
 
 
 def test_video_args_hevc_and_av1(hevc: EncodeProfile, av1: EncodeProfile) -> None:
@@ -69,6 +87,8 @@ def test_build_encode_args_with_seek_and_sample(tmp_path: Path, hevc: EncodeProf
     assert args[:2] == ["-hwaccel", "auto"]
     assert "-ss" in args and "5.000" in args
     assert "-t" in args and "10.000" in args
+    assert "-an" in args
+    assert "0:a:0?" not in args
     assert str(inp) in args
     assert str(out) in args
 

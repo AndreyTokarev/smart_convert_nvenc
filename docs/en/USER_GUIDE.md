@@ -134,7 +134,7 @@ Any folder name is valid — the tool **never renames**.
 ## 8. Codec selection
 
 1. Take a sample (default ~20–30s, offset ~25% of duration).
-2. Encode HEVC (default CQ 28) and AV1 (CQ 32) with `-c:a copy` on the sample.
+2. Encode HEVC (default CQ 28) and AV1 (CQ 32) on the sample with **video only** (`-an`) so the size race is not skewed by audio and MPEG-TS seek stays reliable.
 3. Smaller sample wins; size is projected to full duration.
 4. If projected savings < `min_savings` → skip full encode for that file.
 5. After full encode, re-check real size.
