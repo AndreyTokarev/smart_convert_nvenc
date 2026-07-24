@@ -22,7 +22,7 @@ Each zip includes:
 
 - **`smart-convert`** — one binary: GUI (default) / `course …` / single file
 - `README.md`, `LICENSE`, `README-RELEASE.txt`
-- **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, downloaded at build time from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
+- **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n8.1** static with **`hevc_nvenc` + `av1_nvenc`**, from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
 - **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
 
 ## Why three commands / why the zip used to have three exes

@@ -142,7 +142,7 @@ Any folder name is valid — the tool **never renames**.
 
 1. Take a sample (default ~20–30s, offset ~25% of duration).
 2. Encode HEVC (default CQ 28) and AV1 (CQ 32) on the sample with **video only** (`-an`) so the size race is not skewed by audio and MPEG-TS seek stays reliable.
-   - GPU mode: HEVC uses `hevc_nvenc`. AV1 uses `av1_nvenc` when present; otherwise **libsvtav1** (CPU) so the race still includes AV1 on FFmpeg builds without AV1 NVENC (e.g. bundled n7.1).
+   - GPU mode: HEVC uses `hevc_nvenc`. AV1 uses `av1_nvenc` when present (bundled n8.1 includes it); otherwise **libsvtav1** (CPU) as fallback.
 3. Smaller sample wins; size is projected to full duration.
 4. If projected savings < `min_savings` → skip full encode for that file.
 5. After full encode, re-check real size.

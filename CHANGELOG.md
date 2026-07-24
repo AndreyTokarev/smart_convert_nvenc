@@ -17,12 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.1.6] — 2026-07-25
+
+### Changed
+
+- Bundle BtbN **n8.1** FFmpeg (includes **`hevc_nvenc` + `av1_nvenc`**). Verified on current NVIDIA drivers; still keeps libsvtav1 as fallback if `av1_nvenc` is missing.
+
 ## [0.1.5] — 2026-07-25
 
 ### Fixed
 
-- GPU mode no longer requires `av1_nvenc`. Bundled FFmpeg n7.1 has HEVC NVENC; when `av1_nvenc` is missing, AV1 race/encode uses **libsvtav1** (CPU) so AV1 stays available.
-- Startup no longer falsely reports “NVENC unavailable” on n7.1 builds that only ship `hevc_nvenc`.
+- GPU mode no longer requires `av1_nvenc`. Bundled FFmpeg n7.1 had HEVC NVENC only; when `av1_nvenc` is missing, AV1 race/encode uses **libsvtav1** (CPU) so AV1 stays available.
+- Startup no longer falsely reports “NVENC unavailable” on builds that only ship `hevc_nvenc`.
 
 ## [0.1.4] — 2026-07-25
 
@@ -97,7 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3

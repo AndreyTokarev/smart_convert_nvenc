@@ -17,12 +17,18 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Removed
 
+## [0.1.6] — 2026-07-25
+
+### Changed
+
+- В zip кладётся BtbN **n8.1** FFmpeg (**`hevc_nvenc` + `av1_nvenc`**). Проверено на актуальных драйверах NVIDIA; libsvtav1 остаётся fallback, если `av1_nvenc` нет.
+
 ## [0.1.5] — 2026-07-25
 
 ### Fixed
 
-- Режим gpu больше не требует `av1_nvenc`. В bundled FFmpeg n7.1 есть HEVC NVENC; если `av1_nvenc` нет, race/encode AV1 идёт через **libsvtav1** (CPU) — AV1 остаётся доступен.
-- Старт GUI больше не врёт «NVENC недоступен» на сборках n7.1 только с `hevc_nvenc`.
+- Режим gpu больше не требует `av1_nvenc`. В bundled FFmpeg n7.1 был только HEVC NVENC; если `av1_nvenc` нет, race/encode AV1 идёт через **libsvtav1** (CPU) — AV1 остаётся доступен.
+- Старт GUI больше не врёт «NVENC недоступен» на сборках только с `hevc_nvenc`.
 
 ## [0.1.4] — 2026-07-25
 
@@ -97,7 +103,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3

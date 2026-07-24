@@ -22,7 +22,7 @@ Zip в GitHub Releases — задел на будущее; считайте их
 
 - **`smart-convert`** — один бинарник: GUI (по умолчанию) / `course …` / один файл
 - `README` / `LICENSE` / `README-RELEASE.txt`
-- **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, скачивается при сборке с тега `latest` — не bleeding-edge `master`, который часто требует более новый NVENC API драйвера)
+- **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n8.1** static с **`hevc_nvenc` + `av1_nvenc`**, с тега `latest` — не bleeding-edge `master`, который часто требует более новый NVENC API драйвера)
 - **macOS:** FFmpeg **не** кладётся в архив (у BtbN нет macOS-артефактов)
 
 ## Почему три команды / почему раньше в zip было три exe
