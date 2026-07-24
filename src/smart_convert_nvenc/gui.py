@@ -18,7 +18,7 @@ from .gui_settings import GuiSettings, default_settings_path, load_gui_settings,
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import CoursePaths, resolve_course_paths
 from .probe import ToolError, validate_environment
-from .progress import ProgressUpdate, clamp01
+from .progress import ProgressUpdate, clamp01, trim_textbox_line_count
 from .session import SessionStats, format_gib_or_mib
 from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
@@ -37,6 +37,9 @@ COLORS = {
     "danger_hover": "#a32f2f",
     "ok": "#3fa66b",
 }
+
+APP_LOG_MAX_LINES = 2000
+FF_LOG_MAX_LINES = 1000
 
 
 ctk.set_appearance_mode("Dark")
@@ -679,15 +682,30 @@ class App(ctk.CTk):
     def _ff_log(self, message: str, *, replace_live: bool = True) -> None:
         self._ff_log_q.put((message, replace_live))
 
+    def _textbox_line_count(self, widget: ctk.CTkTextbox) -> int:
+        # end-1c is the last character; its line index is the line count.
+        return int(float(widget.index("end-1c").split(".")[0]))
+
+    def _trim_textbox(self, widget: ctk.CTkTextbox, max_lines: int) -> None:
+        drop = trim_textbox_line_count(self._textbox_line_count(widget), max_lines)
+        if drop <= 0:
+            return
+        widget.delete("1.0", f"{drop + 1}.0")
+
     def _drain_logs(self) -> None:
+        app_inserted = False
         try:
             while True:
                 message = self._app_log_q.get_nowait()
                 self.app_log.insert("end", message + "\n")
-                self.app_log.see("end")
+                app_inserted = True
         except queue.Empty:
             pass
+        if app_inserted:
+            self._trim_textbox(self.app_log, APP_LOG_MAX_LINES)
+            self.app_log.see("end")
 
+        ff_inserted = False
         try:
             while True:
                 message, replace_live = self._ff_log_q.get_nowait()
@@ -704,22 +722,28 @@ class App(ctk.CTk):
                         if key != last:
                             self._ff_last_hist = key
                             self.ff_log.insert("end", message + "\n")
-                            self.ff_log.see("end")
+                            ff_inserted = True
                 else:
                     self.ff_log.insert("end", message + "\n")
-                    self.ff_log.see("end")
+                    ff_inserted = True
         except queue.Empty:
             pass
+        if ff_inserted:
+            self._trim_textbox(self.ff_log, FF_LOG_MAX_LINES)
+            self.ff_log.see("end")
 
+        latest_progress: tuple[float, float, str, str] | None = None
         try:
             while True:
-                file_frac, job_frac, file_text, job_text = self._progress_q.get_nowait()
-                self.file_bar.set(clamp01(file_frac))
-                self.job_bar.set(clamp01(job_frac))
-                self.file_progress_label.configure(text=file_text)
-                self.job_progress_label.configure(text=job_text)
+                latest_progress = self._progress_q.get_nowait()
         except queue.Empty:
             pass
+        if latest_progress is not None:
+            file_frac, job_frac, file_text, job_text = latest_progress
+            self.file_bar.set(clamp01(file_frac))
+            self.job_bar.set(clamp01(job_frac))
+            self.file_progress_label.configure(text=file_text)
+            self.job_progress_label.configure(text=job_text)
 
         self.after(80, self._drain_logs)
 

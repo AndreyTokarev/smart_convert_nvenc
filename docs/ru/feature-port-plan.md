@@ -2,7 +2,7 @@
 
 English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 
-- **Статус:** F1 + F2 + F3.1/F3.5 + F4 done; F5–F6 pending  
+- **Статус:** F1–F4 done; F5–F6 pending  
 - **Дата:** 2026-07-24  
 - **Контекст:** `D:\projects\python\video_converter` — предыдущий личный сервис (Flet + NVENC). Решено не допиливать его, а собрать **smart_convert_nvenc** с нуля под архив курсов. Ниже — что из старого опыта переносим сюда, в каком порядке, и чего сознательно не тащим.
 
@@ -157,7 +157,7 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 |------|--------|------|-------------|
 | F1 | done | 2026-07-24 | Popen registry + taskkill /T; hard GUI Stop; `*.conv.<id>.*` temps + cleanup; hwaccel retry; `validate_environment` on GUI/CLI start |
 | F2 | done | 2026-07-24 | Session freed MiB/%/MiB/h; итоги курса; видео+курсы по размеру ↓; `speed=` в прогрессе GUI |
-| F3 | partial | 2026-07-24 | F3.1 paths+encode settings persist (`%APPDATA%/smart_convert_nvenc/settings.json`); F3.5 Open inbox/outbox |
+| F3 | done | 2026-07-24 | Persist настроек; Open inbox/outbox; confirm при закрытии; ring-buffer логов; progress drain — только latest |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | pending | | |
 | F6 | pending | | |
@@ -166,4 +166,4 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 
 ## Связь с общим планом
 
-Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F2 done; следующий фокус — остатки F3 / F5 профили / F6 дубликаты по необходимости.
+Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F4 done; следующий фокус — F5 профили / F6 дубликаты по необходимости.

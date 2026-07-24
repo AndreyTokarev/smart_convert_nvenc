@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Queue ordering by size: videos inside a course and courses in CLI/GUI run largest-first so freed space shows up sooner.
 - FFmpeg `speed=` shown in the GUI file progress line (e.g. `encode 45% 12.9x`).
+- GUI log ring-buffers (app 2000 / FFmpeg 1000 lines) so overnight runs do not grow Textboxes without bound.
 
 ### Changed
 
 - Course list in GUI shows approximate size (MiB) next to each name.
+- GUI progress bars apply only the latest queued update per UI drain tick (less flicker under bursty FFmpeg stats).
 
 ### Fixed
 

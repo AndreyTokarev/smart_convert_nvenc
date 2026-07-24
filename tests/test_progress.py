@@ -5,6 +5,7 @@ from smart_convert_nvenc.progress import (
     clamp01,
     parse_ffmpeg_speed,
     parse_ffmpeg_time_seconds,
+    trim_textbox_line_count,
 )
 
 
@@ -25,6 +26,14 @@ def test_clamp01() -> None:
     assert clamp01(-1.0) == 0.0
     assert clamp01(0.5) == 0.5
     assert clamp01(2.0) == 1.0
+
+
+def test_trim_textbox_line_count() -> None:
+    assert trim_textbox_line_count(100, 2000) == 0
+    assert trim_textbox_line_count(2000, 2000) == 0
+    assert trim_textbox_line_count(2001, 2000) == 1
+    assert trim_textbox_line_count(2500, 1000) == 1500
+    assert trim_textbox_line_count(10, 0) == 0
 
 
 def test_progress_update_defaults() -> None:

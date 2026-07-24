@@ -13,10 +13,12 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 - Очередь по размеру: видео внутри курса и курсы в CLI/GUI — сначала самые крупные, чтобы быстрее видеть freed space.
 - В строке прогресса GUI показывается FFmpeg `speed=` (например `encode 45% 12.9x`).
+- Ring-buffer логов GUI (app 2000 / FFmpeg 1000 строк), чтобы overnight-прогон не раздувал Textbox.
 
 ### Changed
 
 - В списке курсов GUI рядом с именем показывается примерный размер (MiB).
+- Progress bar в GUI применяет только последний апдейт за тик drain (меньше дёрганья при частых stats FFmpeg).
 
 ### Fixed
 

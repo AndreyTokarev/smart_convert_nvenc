@@ -27,6 +27,13 @@ def clamp01(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
+def trim_textbox_line_count(current_lines: int, max_lines: int) -> int:
+    """How many leading lines to delete to keep a textbox within max_lines."""
+    if max_lines <= 0 or current_lines <= max_lines:
+        return 0
+    return current_lines - max_lines
+
+
 @dataclass(frozen=True)
 class ProgressUpdate:
     """Progress for GUI / reporters."""
