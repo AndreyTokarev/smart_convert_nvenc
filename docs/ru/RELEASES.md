@@ -27,12 +27,18 @@ English: [../en/RELEASES.md](../en/RELEASES.md).
 
 ## Как выпустить релиз
 
+1. Обновить `__version__` в `src/smart_convert_nvenc/__init__.py` (единый источник; hatch читает оттуда).
+2. Перенести пункты из **Unreleased** в новую секцию [CHANGELOG.ru.md](../../CHANGELOG.ru.md) и [CHANGELOG.md](../../CHANGELOG.md).
+3. Закоммитить и поставить тег, совпадающий с версией:
+
 ```powershell
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Либо вручную Actions → **Release** → Run workflow.
+
+CLI/GUI показывают ту же версию: `smart-convert --version` / заголовок окна.
 
 ## Локальная сборка
 

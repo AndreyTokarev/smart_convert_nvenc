@@ -11,6 +11,7 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from . import __version__
 from .course import convert_course, iter_videos, list_course_dirs
 from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
 from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
@@ -45,7 +46,7 @@ ctk.set_default_color_theme("dark-blue")
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Smart Convert NVENC")
+        self.title(f"Smart Convert NVENC {__version__}")
         self.geometry("1200x860")
         self.minsize(1000, 720)
         self.configure(fg_color=COLORS["bg"])
@@ -154,7 +155,7 @@ class App(ctk.CTk):
         header.pack(fill="x", pady=(0, 8))
         ctk.CTkLabel(
             header,
-            text="Smart Convert NVENC",
+            text=f"Smart Convert NVENC  v{__version__}",
             font=self._font_title,
             text_color=COLORS["text"],
         ).pack(side="left")

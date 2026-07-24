@@ -1,12 +1,15 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](CHANGELOG.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
 Compress **video course archives** with **NVIDIA NVENC**: race HEVC vs AV1 on a short sample, full-encode only when it saves space, decide at the **course folder** level (`inbox → tmp → outbox`).
 
 Built as a **fast personal MVP**, now open source under **MIT**.
+
+Current version: **0.1.1** — see [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md).
 
 | Language | Docs |
 |----------|------|
@@ -76,6 +79,7 @@ Tag `v*` → GitHub Actions builds Windows / Linux / macOS zips (PyInstaller).
 
 ## More documentation
 
+- Changelog: [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md)
 - Index: [docs/README.md](docs/README.md)
 - Product decisions: [EN](docs/en/refactoring-plan.md) · [RU](docs/ru/refactoring-plan.md)
 - Feature port roadmap: [EN](docs/en/feature-port-plan.md) · [RU](docs/ru/feature-port-plan.md)

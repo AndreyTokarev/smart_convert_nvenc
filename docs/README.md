@@ -2,6 +2,8 @@
 
 Лицензия / License: **MIT** ([LICENSE](../LICENSE)).
 
+Версия / Version: see [CHANGELOG.md](../CHANGELOG.md) · [CHANGELOG.ru.md](../CHANGELOG.ru.md).
+
 Все пользовательские и проектные документы ведутся **на двух языках**: `docs/en/` и `docs/ru/`.
 
 All user-facing and design docs are maintained **in both languages**: `docs/en/` and `docs/ru/`.

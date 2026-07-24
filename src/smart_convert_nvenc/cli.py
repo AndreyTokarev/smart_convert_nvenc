@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import __version__
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .pipeline import convert_one
 from .probe import ToolError, validate_environment
@@ -16,6 +17,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Сжимает видеокурс через NVIDIA NVENC: тест HEVC vs AV1 на сэмпле, "
             "затем полный encode при достаточной экономии места."
         ),
+    )
+    p.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     p.add_argument("input", type=Path, help="Путь к видеофайлу")
     p.add_argument("--sample-sec", type=float, default=30.0, help="Длина тестового фрагмента (сек)")

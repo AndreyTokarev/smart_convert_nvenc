@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import __version__
 from .course import convert_course, list_course_dirs
 from .models import AudioSettings, ConvertSettings, VideoCodec
 from .paths import resolve_course_paths
@@ -19,6 +20,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Process course folders from courses/inbox via NVENC, "
             "then publish to courses/outbox (ADR-0001)."
         ),
+    )
+    p.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     p.add_argument(
         "course",

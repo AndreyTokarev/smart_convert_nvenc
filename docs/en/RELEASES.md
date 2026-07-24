@@ -32,12 +32,18 @@ macOS/Linux packages exist so the app can run where Python packaging is awkward,
 
 ## How to cut a release
 
+1. Update `__version__` in `src/smart_convert_nvenc/__init__.py` (single source of truth; hatch reads it).
+2. Move items from **Unreleased** into a new section in [CHANGELOG.md](../../CHANGELOG.md) and [CHANGELOG.ru.md](../../CHANGELOG.ru.md).
+3. Commit, then tag matching the version:
+
 ```powershell
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Or run the **Release** workflow manually (`workflow_dispatch`) from the Actions tab.
+
+CLI/GUI expose the same version via `smart-convert --version` / window title.
 
 ## Local build (optional)
 

@@ -1,12 +1,15 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](CHANGELOG.ru.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
 Сжимает **архивы видеокурсов** через **NVIDIA NVENC**: на коротком сэмпле сравнивает HEVC и AV1, полный encode только если есть экономия места, решение на уровне **папки курса** (`inbox → tmp → outbox`).
 
 Быстрый личный MVP, теперь open source под **MIT**.
+
+Текущая версия: **0.1.1** — [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md).
 
 | Язык | Документация |
 |------|--------------|
@@ -76,6 +79,7 @@ courses/outbox/  ← результат
 
 ## Ещё документация
 
+- Журнал изменений: [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md)
 - Индекс: [docs/README.md](docs/README.md)
 - Решения по продукту: [RU](docs/ru/refactoring-plan.md) · [EN](docs/en/refactoring-plan.md)
 - План переноса фич: [RU](docs/ru/feature-port-plan.md) · [EN](docs/en/feature-port-plan.md)
