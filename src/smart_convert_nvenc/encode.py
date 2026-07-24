@@ -75,9 +75,9 @@ def video_args(profile: EncodeProfile) -> list[str]:
             str(profile.cq),
             "-b:v",
             "0",
-            "-spatial_aq",
+            "-spatial-aq",
             "1",
-            "-temporal_aq",
+            "-temporal-aq",
             "1",
         ]
         if profile.codec is VideoCodec.HEVC:

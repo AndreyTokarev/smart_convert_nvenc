@@ -24,7 +24,7 @@ Each zip includes:
 - `smart-convert-course`
 - `smart-convert-gui`
 - `README.md`, `LICENSE`, `README-RELEASE.txt`
-- **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL static, downloaded at build time from the floating `latest` tag)
+- **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, downloaded at build time from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
 - **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
 
 ## FFmpeg in the zip

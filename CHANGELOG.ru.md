@@ -13,7 +13,12 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Changed
 
+- В zip кладётся BtbN **n7.1** FFmpeg (не `master`), чтобы NVENC работал на чуть более старых драйверах.
+- Флаги AQ NVENC: `-spatial-aq` / `-temporal-aq` (как требует свежий FFmpeg).
+
 ### Fixed
+
+- В ошибках FFmpeg теперь хвост лога (видны сообщения про драйвер/NVENC).
 
 ### Removed
 

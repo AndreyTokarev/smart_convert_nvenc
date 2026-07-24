@@ -19,13 +19,15 @@ WORKDIR="$(mktemp -d)"
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
+# Prefer release branch over master: master often requires a newer NVENC API
+# than drivers currently installed (e.g. API 13.1 vs 13.0).
 case "$TARGET" in
   windows-amd64)
-    ARCHIVE="ffmpeg-master-latest-win64-gpl.zip"
+    ARCHIVE="ffmpeg-n7.1-latest-win64-gpl-7.1.zip"
     EXTRACT_CMD=(unzip -q)
     ;;
   linux-amd64)
-    ARCHIVE="ffmpeg-master-latest-linux64-gpl.tar.xz"
+    ARCHIVE="ffmpeg-n7.1-latest-linux64-gpl-7.1.tar.xz"
     EXTRACT_CMD=(tar -xJf)
     ;;
   macos-arm64)
@@ -81,7 +83,7 @@ done
   echo "FFmpeg binaries from BtbN/FFmpeg-Builds (GPL static)."
   echo "Source archive: $ARCHIVE"
   echo "URL: $BASE_URL/$ARCHIVE"
-  echo "Downloaded at build time from the floating 'latest' tag."
+  echo "Downloaded at build time from the floating 'latest' tag (release branch n7.1, not master)."
 } > "$DEST/SOURCE.txt"
 
 echo "Staged FFmpeg into $DEST/bin"

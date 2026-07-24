@@ -88,7 +88,7 @@ jobs:
             '' \
             '## FFmpeg' \
             '' \
-            '- Windows / Linux zips INCLUDE a recent BtbN GPL static FFmpeg under ffmpeg/bin/.' \
+            '- Windows / Linux zips INCLUDE BtbN GPL FFmpeg n7.1 under ffmpeg/bin/ (not master tip).' \
             '- macOS zip does NOT bundle FFmpeg (install your own and put it on PATH).' \
             '- FFmpeg is GPL; see ffmpeg/SOURCE.txt and any LICENSE files beside it.' \
             '- NVIDIA GPU + driver still required for NVENC (AV1 encode typically needs RTX 40-series).' \
@@ -155,7 +155,7 @@ jobs:
           body: |
             **Early project:** standalone binaries are **experimental and not meaningfully tested**. Prefer running **from source** (`uv sync` / `uv run`). Use these zips at your own risk.
 
-            **Windows / Linux:** FFmpeg (BtbN GPL static, latest at build time) is bundled under `ffmpeg/bin/`.
+            **Windows / Linux:** FFmpeg (BtbN GPL **n7.1**, at build time) is bundled under `ffmpeg/bin/`.
             **macOS:** install FFmpeg yourself (not bundled).
 
             NVIDIA GPU + driver still required for NVENC.

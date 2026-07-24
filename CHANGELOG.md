@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bundle BtbN **n7.1** FFmpeg (not `master`) so NVENC works on slightly older drivers.
+- NVENC AQ flags use `-spatial-aq` / `-temporal-aq` (required by recent FFmpeg builds).
+
 ### Fixed
+
+- FFmpeg errors now include the last lines of ffmpeg output (so NVENC/driver messages are visible).
 
 ### Removed
 

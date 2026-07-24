@@ -20,7 +20,7 @@ Zip в GitHub Releases — задел на будущее; считайте их
 
 В каждом zip: `smart-convert`, `smart-convert-course`, `smart-convert-gui`, плюс `README` / `LICENSE` / `README-RELEASE.txt`.
 
-- **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL static, скачивается при сборке с тега `latest`)
+- **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, скачивается при сборке с тега `latest` — не bleeding-edge `master`, который часто требует более новый NVENC API драйвера)
 - **macOS:** FFmpeg **не** кладётся в архив (у BtbN нет macOS-артефактов)
 
 ## FFmpeg в zip

@@ -45,7 +45,12 @@ def test_run_ffmpeg_nonzero_raises() -> None:
     def _fake_popen(*args: object, **kwargs: object) -> MagicMock:
         proc = MagicMock()
         proc.pid = 1
-        proc.stdout = iter([])
+        proc.stdout = iter(
+            [
+                "[hevc_nvenc] Driver does not support the required nvenc API version\n",
+                "Conversion failed!\n",
+            ]
+        )
         proc.wait.return_value = 7
         proc.poll.return_value = 7
         return proc
@@ -54,8 +59,9 @@ def test_run_ffmpeg_nonzero_raises() -> None:
         patch("smart_convert_nvenc.ffmpeg_runner.ffmpeg_executable", return_value="ffmpeg"),
         patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen),
     ):
-        with pytest.raises(FFmpegError, match="code 7"):
+        with pytest.raises(FFmpegError, match="nvenc API version") as exc:
             run_ffmpeg(["-i", "missing"])
+    assert "code 7" in str(exc.value)
 
 
 def test_run_ffmpeg_cancelled_by_should_stop() -> None:

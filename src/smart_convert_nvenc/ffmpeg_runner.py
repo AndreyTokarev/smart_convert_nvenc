@@ -4,6 +4,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
 
 from .ffmpeg_tools import ffmpeg_executable
@@ -22,6 +23,7 @@ StopCheck = Callable[[], bool]
 
 _active_processes: set[subprocess.Popen[str]] = set()
 _active_lock = threading.Lock()
+_LOG_TAIL = 40
 
 
 def _register(process: subprocess.Popen[str]) -> None:
@@ -84,6 +86,7 @@ def run_ffmpeg(
     )
     _register(process)
     cancelled = False
+    tail: deque[str] = deque(maxlen=_LOG_TAIL)
     try:
         assert process.stdout is not None
         for line in process.stdout:
@@ -92,6 +95,8 @@ def run_ffmpeg(
                 terminate_process(process)
                 break
             line = line.rstrip()
+            if line:
+                tail.append(line)
             if on_progress and "time=" in line:
                 on_progress(line)
         code = process.wait()
@@ -102,5 +107,8 @@ def run_ffmpeg(
     if cancelled or (should_stop and should_stop()):
         raise FFmpegCancelled("FFmpeg cancelled by user")
     if code != 0:
-        raise FFmpegError(f"FFmpeg exited with code {code}: {' '.join(cmd)}")
+        detail = "\n".join(tail) if tail else "(no ffmpeg output captured)"
+        raise FFmpegError(
+            f"FFmpeg exited with code {code}: {' '.join(cmd)}\n--- ffmpeg log ---\n{detail}"
+        )
     return elapsed
