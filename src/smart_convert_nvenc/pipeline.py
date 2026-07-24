@@ -18,12 +18,12 @@ from .models import (
     already_target_codec,
 )
 from .probe import probe_media, require_nvenc
-from .progress import clamp01, parse_ffmpeg_time_seconds
+from .progress import clamp01, parse_ffmpeg_speed, parse_ffmpeg_time_seconds
 
 
 LogFn = Callable[[str], None]
-# phase name, fraction within that phase 0..1
-PhaseProgressFn = Callable[[str, float], None]
+# phase name, fraction within that phase 0..1, optional ffmpeg speed multiplier
+PhaseProgressFn = Callable[[str, float, float | None], None]
 
 
 def _log(log: LogFn | None, message: str) -> None:
@@ -160,9 +160,9 @@ def convert_video(
             else settings.av1_profile()
         )
 
-    def _emit_phase(phase: str, local: float) -> None:
+    def _emit_phase(phase: str, local: float, speed: float | None = None) -> None:
         if on_phase_progress:
-            on_phase_progress(phase, clamp01(local))
+            on_phase_progress(phase, clamp01(local), speed)
 
     if settings.skip_same_codec:
         target = effective_force.codec if effective_force is not None else None
@@ -195,9 +195,10 @@ def convert_video(
                 on_ffmpeg_progress(line)
             elif show_encode_progress:
                 _log(log, f"    {line}")
+            speed = parse_ffmpeg_speed(line)
             t = parse_ffmpeg_time_seconds(line)
             if t is not None and duration > 0:
-                _emit_phase(phase, t / duration)
+                _emit_phase(phase, t / duration, speed)
 
         return _cb
 

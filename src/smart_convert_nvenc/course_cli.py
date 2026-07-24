@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise FileNotFoundError(f"Course not found in inbox: {course_dir}")
             courses = [course_dir]
         else:
-            courses = list_course_dirs(paths.inbox)
+            courses = list_course_dirs(paths.inbox, by_size=True)
             if not courses:
                 _safe_print(f"No course folders in {paths.inbox}")
                 return 0

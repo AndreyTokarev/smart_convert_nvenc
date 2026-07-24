@@ -42,6 +42,35 @@ def test_list_and_iter(course_layout: CoursePaths) -> None:
     assert tree_size(a) == 10_000 + len(b"notes")
 
 
+def test_iter_videos_sorted_by_size_desc(tmp_path: Path) -> None:
+    course = tmp_path / "C"
+    course.mkdir()
+    small = course / "small.mp4"
+    large = course / "large.mp4"
+    mid = course / "mid.mp4"
+    small.write_bytes(b"a" * 100)
+    mid.write_bytes(b"b" * 500)
+    large.write_bytes(b"c" * 2000)
+    names = [p.name for p in iter_videos(course)]
+    assert names == ["large.mp4", "mid.mp4", "small.mp4"]
+
+
+def test_list_course_dirs_by_size(course_layout: CoursePaths) -> None:
+    small = course_layout.inbox / "SmallCourse"
+    large = course_layout.inbox / "LargeCourse"
+    small.mkdir()
+    large.mkdir()
+    (small / "a.mp4").write_bytes(b"x" * 100)
+    (large / "b.mp4").write_bytes(b"y" * 5000)
+    by_name = list_course_dirs(course_layout.inbox)
+    assert [d.name for d in by_name] == ["LargeCourse", "SmallCourse"]
+    by_size = list_course_dirs(course_layout.inbox, by_size=True)
+    assert [d.name for d in by_size] == ["LargeCourse", "SmallCourse"]
+    (small / "extra.bin").write_bytes(b"z" * 20_000)
+    by_size2 = list_course_dirs(course_layout.inbox, by_size=True)
+    assert [d.name for d in by_size2] == ["SmallCourse", "LargeCourse"]
+
+
 def test_phase_fraction_racing_and_locked() -> None:
     assert _phase_to_file_fraction("sample_hevc", 0.5, racing=True) == pytest.approx(0.05)
     assert _phase_to_file_fraction("sample_av1", 1.0, racing=True) == pytest.approx(0.20)

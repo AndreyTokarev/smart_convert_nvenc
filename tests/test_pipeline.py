@@ -176,7 +176,7 @@ def test_convert_video_full_success(tmp_path: Path, settings: ConvertSettings) -
             src,
             settings,
             log=lambda m: None,
-            on_phase_progress=lambda p, f: phases.append(p),
+            on_phase_progress=lambda p, f, s=None: phases.append(p),
             on_ffmpeg_progress=lambda line: None,
         )
     assert decision.compressed is True

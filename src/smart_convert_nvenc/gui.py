@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from . import __version__
-from .course import convert_course, iter_videos, list_course_dirs
+from .course import convert_course, iter_videos, list_course_dirs, tree_size
 from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
 from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
 from .models import AudioSettings, ConvertSettings, VideoCodec
@@ -636,7 +636,7 @@ class App(ctk.CTk):
         for child in self.course_list.winfo_children():
             child.destroy()
         self._course_vars.clear()
-        courses = list_course_dirs(self.paths.inbox)
+        courses = list_course_dirs(self.paths.inbox, by_size=True)
         self.course_count.configure(text=f"{len(courses)} found")
         if not courses:
             ctk.CTkLabel(
@@ -647,12 +647,13 @@ class App(ctk.CTk):
             ).pack(anchor="w", padx=8, pady=12)
             return
         for course in courses:
+            size_mib = tree_size(course) / (1024 * 1024)
             var = tk.BooleanVar(value=False)
             row = ctk.CTkFrame(self.course_list, fg_color="transparent")
             row.pack(fill="x", padx=4, pady=4)
             ctk.CTkCheckBox(
                 row,
-                text=course.name,
+                text=f"{course.name}  ({size_mib:.0f} MiB)",
                 variable=var,
                 font=self._font_course,
                 text_color=COLORS["text"],
@@ -729,9 +730,12 @@ class App(ctk.CTk):
         total = max(1, self._job_total_videos)
         job_frac = overall_units / total
         phase = update.phase.replace("_", " ")
+        speed_bit = (
+            f"  {update.ffmpeg_speed:.1f}x" if update.ffmpeg_speed is not None else ""
+        )
         file_text = (
             f"File: {update.video_name}  ({update.video_index}/{update.videos_in_course})  "
-            f"{phase}  {update.file_fraction * 100:.0f}%"
+            f"{phase}  {update.file_fraction * 100:.0f}%{speed_bit}"
         )
         job_text = (
             f"Job: {int(overall_units)}/{total} videos  ({job_frac * 100:.0f}%)  "
@@ -797,6 +801,7 @@ class App(ctk.CTk):
         if self._worker and self._worker.is_alive():
             messagebox.showwarning("Smart Convert", "Already running.")
             return
+        courses = sorted(courses, key=lambda p: (-tree_size(p), p.name.lower()))
 
         try:
             settings = self._settings()

@@ -35,19 +35,25 @@ def tree_size(path: Path) -> int:
     return total
 
 
-def list_course_dirs(inbox: Path) -> list[Path]:
-    return sorted(
-        (p for p in inbox.iterdir() if p.is_dir() and not p.name.startswith(".")),
-        key=lambda p: p.name.lower(),
-    )
+def list_course_dirs(inbox: Path, *, by_size: bool = False) -> list[Path]:
+    courses = [
+        p for p in inbox.iterdir() if p.is_dir() and not p.name.startswith(".")
+    ]
+    if by_size:
+        sized = [(tree_size(p), p) for p in courses]
+        sized.sort(key=lambda item: (-item[0], item[1].name.lower()))
+        return [p for _, p in sized]
+    return sorted(courses, key=lambda p: p.name.lower())
 
 
 def iter_videos(course_dir: Path) -> list[Path]:
-    return [
+    videos = [
         path
-        for path in sorted(course_dir.rglob("*"))
+        for path in course_dir.rglob("*")
         if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
     ]
+    videos.sort(key=lambda p: (-p.stat().st_size, str(p).lower()))
+    return videos
 
 
 def iter_non_videos(course_dir: Path) -> list[Path]:
@@ -185,7 +191,14 @@ def convert_course(
             out_path = tmp_course / rel
             racing = locked_profile is None and settings.force_codec is None
 
-            def _on_phase(phase: str, local: float, *, idx=index, vid=video) -> None:
+            def _on_phase(
+                phase: str,
+                local: float,
+                speed: float | None = None,
+                *,
+                idx=index,
+                vid=video,
+            ) -> None:
                 if not on_progress:
                     return
                 on_progress(
@@ -196,6 +209,7 @@ def convert_course(
                         video_name=vid.name,
                         phase=phase,
                         file_fraction=_phase_to_file_fraction(phase, local, racing=racing),
+                        ffmpeg_speed=speed,
                     )
                 )
 

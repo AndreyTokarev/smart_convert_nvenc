@@ -2,7 +2,7 @@
 
 Русский: [../ru/feature-port-plan.md](../ru/feature-port-plan.md).
 
-- **Status:** F1 + F2 partial + F3.1/F3.5 + F4 done; F5–F6 pending  
+- **Status:** F1 + F2 + F3.1/F3.5 + F4 done; F5–F6 pending  
 - **Date:** 2026-07-24  
 - **Context:** `D:\projects\python\video_converter` — previous personal service (Flet + NVENC). Decided not to extend it, but build **smart_convert_nvenc** from scratch for the course archive. Below: what to port from old experience, in what order, and what we deliberately do not carry over.
 
@@ -156,7 +156,7 @@ Do not start F5 pack until Stop and temp are stable (F1).
 | Phase | Status | Date | Comment |
 |-------|--------|------|---------|
 | F1 | done | 2026-07-24 | Popen registry + taskkill /T; hard GUI Stop; `*.conv.<id>.*` temps + cleanup; hwaccel retry; `validate_environment` on GUI/CLI start |
-| F2 | partial | 2026-07-24 | GUI: last-course + session freed MiB/%/MiB/h (`session.py`); F2.3–F2.5 still missing |
+| F2 | done | 2026-07-24 | Session freed MiB/%/MiB/h; course totals; videos+courses sorted by size ↓; `speed=` in GUI progress |
 | F3 | partial | 2026-07-24 | F3.1 paths+encode settings persist (`%APPDATA%/smart_convert_nvenc/settings.json`); F3.5 Open inbox/outbox |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | pending | | |
@@ -166,4 +166,4 @@ Do not start F5 pack until Stop and temp are stable (F1).
 
 ## Link to overall plan
 
-Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; next focus — **F1–F2** from this document, then duplicates (F6.1).
+Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; F1–F2 done; next focus — F3 leftovers / F5 profiles / F6 duplicates as needed.
