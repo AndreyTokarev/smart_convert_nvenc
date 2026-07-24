@@ -36,6 +36,7 @@ def test_require_nvenc_ok() -> None:
     result.stderr = ""
     with (
         patch("smart_convert_nvenc.probe.require_tools"),
+        patch("smart_convert_nvenc.probe.ffmpeg_executable", return_value="ffmpeg"),
         patch("smart_convert_nvenc.probe.subprocess.run", return_value=result),
     ):
         require_nvenc()
@@ -47,6 +48,7 @@ def test_require_nvenc_missing() -> None:
     result.stderr = ""
     with (
         patch("smart_convert_nvenc.probe.require_tools"),
+        patch("smart_convert_nvenc.probe.ffmpeg_executable", return_value="ffmpeg"),
         patch("smart_convert_nvenc.probe.subprocess.run", return_value=result),
     ):
         with pytest.raises(ToolError, match="hevc_nvenc"):
