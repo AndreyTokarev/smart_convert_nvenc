@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import __version__
 from .course import convert_course, list_course_dirs
-from .models import AudioSettings, ConvertSettings, VideoCodec
+from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
 from .temp_paths import cleanup_conversion_temps
@@ -17,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="smart-convert-course",
         description=(
-            "Process course folders from courses/inbox via NVENC, "
+            "Process course folders from courses/inbox (NVENC or CPU), "
             "then publish to courses/outbox (ADR-0001)."
         ),
     )
@@ -48,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--cq-hevc", type=int, default=28)
     p.add_argument("--cq-av1", type=int, default=32)
     p.add_argument("--preset", default="p6")
+    p.add_argument(
+        "--encoder",
+        choices=["gpu", "cpu", "auto"],
+        default="gpu",
+        help="gpu=NVENC only; cpu=libx265/libsvtav1; auto=NVENC if available else CPU",
+    )
     p.add_argument("--audio", default="copy")
     p.add_argument("--force-codec", choices=["hevc", "av1"], default=None)
     p.add_argument(
@@ -85,7 +91,8 @@ def main(argv: list[str] | None = None) -> int:
             tmp=args.tmp,
         )
         paths.ensure()
-        for line in validate_environment():
+        encoder = EncoderBackend(args.encoder)
+        for line in validate_environment(encoder):
             _safe_print(f"env: {line}")
         removed = cleanup_conversion_temps(paths.tmp)
         if removed:
@@ -104,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             force_codec=force,
             skip_same_codec=not args.reencode_same_codec,
+            encoder=encoder,
         )
 
         if args.course:

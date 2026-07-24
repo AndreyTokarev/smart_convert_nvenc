@@ -14,7 +14,7 @@ from smart_convert_nvenc.course import (
     tree_size,
 )
 from smart_convert_nvenc.ffmpeg_runner import FFmpegCancelled
-from smart_convert_nvenc.models import ConvertSettings, EncodeProfile, VideoCodec, VideoDecision
+from smart_convert_nvenc.models import ConvertSettings, EncoderBackend, EncodeProfile, VideoCodec, VideoDecision
 from smart_convert_nvenc.paths import CoursePaths
 
 
@@ -106,7 +106,7 @@ def test_convert_course_dry_run(course_layout: CoursePaths, settings: ConvertSet
         force_codec=VideoCodec.HEVC,
     )
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
     ):
         result = convert_course(course, course_layout, dry, log=lambda m: None)
@@ -130,7 +130,7 @@ def test_convert_course_not_worth(course_layout: CoursePaths, settings: ConvertS
         )
 
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
     ):
         result = convert_course(course, course_layout, settings)
@@ -164,7 +164,7 @@ def test_convert_course_assemble_compressed(
         )
 
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
     ):
         result = convert_course(
@@ -189,7 +189,7 @@ def test_convert_course_no_videos_passthrough(
     course = course_layout.inbox / "PdfOnly"
     course.mkdir()
     (course / "doc.pdf").write_bytes(b"x" * 500)
-    with patch("smart_convert_nvenc.course.require_nvenc"):
+    with patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")):
         result = convert_course(course, course_layout, settings)
     assert result.videos_total == 0
     assert result.compressed_course is False
@@ -208,7 +208,7 @@ def test_convert_course_no_videos_dry_run(
         dry_run=True,
         audio=settings.audio,
     )
-    with patch("smart_convert_nvenc.course.require_nvenc"):
+    with patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")):
         result = convert_course(course, course_layout, dry)
     assert course.exists()
     assert result.videos_total == 0
@@ -216,7 +216,7 @@ def test_convert_course_no_videos_dry_run(
     course = _make_course(course_layout.inbox, "Clash")
     (course_layout.outbox / "Clash").mkdir()
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(FileExistsError),
     ):
         convert_course(course, course_layout, settings)
@@ -228,7 +228,7 @@ def test_convert_course_must_be_inbox_child(
     other = tmp_path / "elsewhere"
     other.mkdir()
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(ValueError, match="direct child"),
     ):
         convert_course(other, course_layout, settings)
@@ -237,7 +237,7 @@ def test_convert_course_must_be_inbox_child(
 def test_convert_course_stop(course_layout: CoursePaths, settings: ConvertSettings) -> None:
     course = _make_course(course_layout.inbox, "StopMe")
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(FFmpegCancelled),
     ):
         convert_course(course, course_layout, settings, should_stop=lambda: True)
@@ -253,7 +253,7 @@ def test_convert_course_cleans_on_error(
         raise RuntimeError("encode failed")
 
     with (
-        patch("smart_convert_nvenc.course.require_nvenc"),
+        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.course.convert_video", side_effect=_boom),
         pytest.raises(RuntimeError, match="encode failed"),
     ):

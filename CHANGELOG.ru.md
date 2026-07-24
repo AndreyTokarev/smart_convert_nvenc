@@ -17,6 +17,21 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Removed
 
+## [0.1.3] — 2026-07-25
+
+### Added
+
+- Режим энкодера `gpu` (по умолчанию) / `cpu` / `auto`: принудительно libx265 + libsvtav1 или auto-fallback без NVENC (`--encoder`, меню Encoder в GUI).
+- В Win/Linux release zip кладётся FFmpeg BtbN GPL в `ffmpeg/bin/` (latest на момент сборки); приложение предпочитает bundled поверх PATH (`SMART_CONVERT_FFMPEG_DIR`).
+
+### Changed
+
+- В документации явно: standalone-бинарники ранние/экспериментальные; поддерживаемый путь — из исходников.
+
+### Fixed
+
+- Сборка PyInstaller (GUI/CLI) больше не требует `pyproject.toml`; по умолчанию `courses/` создаётся рядом с exe.
+
 ## [0.1.2] — 2026-07-25
 
 ### Added
@@ -60,7 +75,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AndreyTokarev/smart_convert_nvenc/releases/tag/v0.1.0

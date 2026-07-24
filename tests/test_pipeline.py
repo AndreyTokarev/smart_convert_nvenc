@@ -8,6 +8,7 @@ import pytest
 from smart_convert_nvenc.ffmpeg_runner import FFmpegCancelled
 from smart_convert_nvenc.models import (
     ConvertSettings,
+    EncoderBackend,
     EncodeProfile,
     MediaInfo,
     SampleResult,
@@ -85,6 +86,12 @@ def test_choose_winner_force(hevc_profile: EncodeProfile) -> None:
 def test_output_path_for(tmp_path: Path, hevc_profile: EncodeProfile) -> None:
     path = tmp_path / "lesson.mp4"
     assert output_path_for(path, hevc_profile).name == "lesson_nvenc_hevc.mp4"
+    cpu = EncodeProfile(
+        codec=VideoCodec.HEVC,
+        cq=28,
+        backend=EncoderBackend.CPU,
+    )
+    assert output_path_for(path, cpu).name == "lesson_cpu_hevc.mp4"
 
 
 def test_convert_video_dry_run_force(tmp_path: Path, settings: ConvertSettings) -> None:
@@ -107,7 +114,7 @@ def test_convert_video_dry_run_force(tmp_path: Path, settings: ConvertSettings) 
         audio=settings.audio,
     )
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
     ):
         decision = convert_video(src, settings)
@@ -136,7 +143,7 @@ def test_convert_video_skip_projected(tmp_path: Path, settings: ConvertSettings)
         return 0.1
 
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
         patch("smart_convert_nvenc.pipeline.encode_file", side_effect=_fake_encode),
     ):
@@ -168,7 +175,7 @@ def test_convert_video_full_success(tmp_path: Path, settings: ConvertSettings) -
         return 0.2
 
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
         patch("smart_convert_nvenc.pipeline.encode_file", side_effect=_fake_encode),
     ):
@@ -206,7 +213,7 @@ def test_convert_video_reject_weak_full(tmp_path: Path, settings: ConvertSetting
         return 0.2
 
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
         patch("smart_convert_nvenc.pipeline.encode_file", side_effect=_fake_encode),
     ):
@@ -228,7 +235,7 @@ def test_convert_video_skips_already_hevc(tmp_path: Path, settings: ConvertSetti
         has_audio=True,
     )
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
         patch("smart_convert_nvenc.pipeline.encode_file") as encode,
     ):
@@ -260,7 +267,7 @@ def test_convert_video_force_av1_does_not_skip_hevc(
         skip_same_codec=True,
     )
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
     ):
         decision = convert_video(src, forced)
@@ -271,7 +278,7 @@ def test_convert_video_force_av1_does_not_skip_hevc(
     src = tmp_path / "a.mp4"
     src.write_bytes(b"x")
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(FFmpegCancelled),
     ):
         convert_video(src, settings, should_stop=lambda: True)
@@ -290,7 +297,7 @@ def test_convert_video_bad_duration(tmp_path: Path, settings: ConvertSettings) -
         has_audio=False,
     )
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
         pytest.raises(RuntimeError, match="duration"),
     ):
@@ -299,7 +306,7 @@ def test_convert_video_bad_duration(tmp_path: Path, settings: ConvertSettings) -
 
 def test_convert_video_missing_file(tmp_path: Path, settings: ConvertSettings) -> None:
     with (
-        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(FileNotFoundError),
     ):
         convert_video(tmp_path / "nope.mp4", settings)

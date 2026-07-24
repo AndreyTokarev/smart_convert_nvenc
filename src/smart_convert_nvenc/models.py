@@ -10,6 +10,14 @@ class VideoCodec(str, Enum):
     AV1 = "av1"
 
 
+class EncoderBackend(str, Enum):
+    """Requested or resolved video encode backend."""
+
+    GPU = "gpu"
+    CPU = "cpu"
+    AUTO = "auto"
+
+
 # ffprobe codec_name values that count as already-encoded targets
 _HEVC_PROBE_NAMES = frozenset({"hevc", "h265", "hev1", "hvc1"})
 _AV1_PROBE_NAMES = frozenset({"av1", "av01"})
@@ -87,6 +95,7 @@ class EncodeProfile:
     cq: int
     preset: str = "p6"
     container_ext: str = ".mp4"
+    backend: EncoderBackend = EncoderBackend.GPU
 
     @property
     def nvenc_name(self) -> str:
@@ -94,6 +103,14 @@ class EncodeProfile:
             return "hevc_nvenc"
         if self.codec is VideoCodec.AV1:
             return "av1_nvenc"
+        raise AssertionError(f"Unhandled codec: {self.codec}")
+
+    @property
+    def cpu_encoder_name(self) -> str:
+        if self.codec is VideoCodec.HEVC:
+            return "libx265"
+        if self.codec is VideoCodec.AV1:
+            return "libsvtav1"
         raise AssertionError(f"Unhandled codec: {self.codec}")
 
 
@@ -110,21 +127,28 @@ class ConvertSettings:
     force_codec: VideoCodec | None = None
     keep_samples: bool = False
     skip_same_codec: bool = True
+    encoder: EncoderBackend = EncoderBackend.GPU
 
-    def hevc_profile(self) -> EncodeProfile:
+    def hevc_profile(self, *, backend: EncoderBackend = EncoderBackend.GPU) -> EncodeProfile:
+        if backend is EncoderBackend.AUTO:
+            raise ValueError("EncodeProfile backend must be resolved GPU or CPU, not AUTO")
         return EncodeProfile(
             codec=VideoCodec.HEVC,
             cq=self.hevc_cq,
             preset=self.preset,
             container_ext=".mp4",
+            backend=backend,
         )
 
-    def av1_profile(self) -> EncodeProfile:
+    def av1_profile(self, *, backend: EncoderBackend = EncoderBackend.GPU) -> EncodeProfile:
+        if backend is EncoderBackend.AUTO:
+            raise ValueError("EncodeProfile backend must be resolved GPU or CPU, not AUTO")
         return EncodeProfile(
             codec=VideoCodec.AV1,
             cq=self.av1_cq,
             preset=self.preset,
             container_ext=".mkv",
+            backend=backend,
         )
 
 

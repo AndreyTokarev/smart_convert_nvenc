@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .models import AudioSettings, ConvertSettings, VideoCodec
+from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
 from .pipeline import convert_one
 from .probe import ToolError, validate_environment
 
@@ -14,7 +14,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="smart-convert",
         description=(
-            "Сжимает видеокурс через NVIDIA NVENC: тест HEVC vs AV1 на сэмпле, "
+            "Сжимает видеокурс: тест HEVC vs AV1 на сэмпле (NVENC или CPU), "
             "затем полный encode при достаточной экономии места."
         ),
     )
@@ -37,9 +37,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.10,
         help="Минимальная прогнозная экономия (0.10 = 10%%), иначе skip",
     )
-    p.add_argument("--cq-hevc", type=int, default=28, help="CQ для hevc_nvenc")
-    p.add_argument("--cq-av1", type=int, default=32, help="CQ для av1_nvenc")
-    p.add_argument("--preset", default="p6", help="NVENC preset p1..p7")
+    p.add_argument("--cq-hevc", type=int, default=28, help="CQ/CRF для HEVC")
+    p.add_argument("--cq-av1", type=int, default=32, help="CQ/CRF для AV1")
+    p.add_argument("--preset", default="p6", help="NVENC preset p1..p7 (CPU: mapped to x265/SVT)")
+    p.add_argument(
+        "--encoder",
+        choices=["gpu", "cpu", "auto"],
+        default="gpu",
+        help="gpu=NVENC only; cpu=libx265/libsvtav1; auto=NVENC if available else CPU",
+    )
     p.add_argument(
         "--audio",
         default="copy",
@@ -72,7 +78,8 @@ def _safe_print(message: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        for line in validate_environment():
+        encoder = EncoderBackend(args.encoder)
+        for line in validate_environment(encoder):
             _safe_print(f"env: {line}")
         audio = AudioSettings.parse(args.audio)
         force = VideoCodec(args.force_codec) if args.force_codec else None
@@ -88,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
             force_codec=force,
             keep_samples=args.keep_samples,
             skip_same_codec=not args.reencode_same_codec,
+            encoder=encoder,
         )
         convert_one(args.input, settings, log=_safe_print)
         return 0

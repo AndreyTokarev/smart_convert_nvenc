@@ -26,6 +26,7 @@ def test_save_and_load_roundtrip(tmp_path: Path) -> None:
         sample_sec="25",
         cq_hevc="30",
         codec="hevc",
+        encoder="auto",
     )
     path = tmp_path / "settings.json"
     save_gui_settings(settings, path)
@@ -34,6 +35,7 @@ def test_save_and_load_roundtrip(tmp_path: Path) -> None:
     assert loaded.sample_sec == "25"
     assert loaded.cq_hevc == "30"
     assert loaded.codec == "hevc"
+    assert loaded.encoder == "auto"
     assert loaded.course_paths().inbox == defaults.inbox.resolve()
 
 

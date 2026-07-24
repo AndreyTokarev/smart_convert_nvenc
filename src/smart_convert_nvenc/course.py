@@ -9,7 +9,7 @@ from .ffmpeg_runner import FFmpegCancelled, StopCheck
 from .models import ConvertSettings, EncodeProfile, VIDEO_EXTENSIONS, VideoDecision
 from .paths import CoursePaths
 from .pipeline import convert_video
-from .probe import require_nvenc
+from .probe import resolve_encoder_backend
 from .progress import ProgressUpdate, clamp01
 from .temp_paths import cleanup_conversion_temps
 
@@ -119,7 +119,8 @@ def convert_course(
     on_progress: ProgressFn | None = None,
     should_stop: StopCheck | None = None,
 ) -> CourseResult:
-    require_nvenc()
+    backend, backend_note = resolve_encoder_backend(settings.encoder)
+    _log(log, backend_note)
     course_dir = course_dir.resolve()
     if not course_dir.is_dir():
         raise FileNotFoundError(course_dir)

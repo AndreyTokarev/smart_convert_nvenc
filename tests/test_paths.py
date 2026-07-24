@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -42,6 +43,37 @@ def test_resolve_defaults_under_project() -> None:
     assert paths.inbox == (root / "courses" / "inbox").resolve()
     assert paths.outbox == (root / "courses" / "outbox").resolve()
     assert paths.tmp == (root / "courses" / "tmp").resolve()
+
+
+def test_resolve_all_explicit_skips_project_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "smart_convert_nvenc.paths.__file__",
+        str(tmp_path / "fake_paths.py"),
+    )
+    monkeypatch.chdir(tmp_path)
+    paths = resolve_course_paths(
+        inbox=tmp_path / "i",
+        outbox=tmp_path / "o",
+        tmp=tmp_path / "t",
+    )
+    assert paths.inbox == (tmp_path / "i").resolve()
+
+
+def test_default_data_root_frozen(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_exe = tmp_path / "bundle" / "smart-convert-gui.exe"
+    fake_exe.parent.mkdir(parents=True)
+    fake_exe.write_bytes(b"x")
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(fake_exe))
+    from smart_convert_nvenc.paths import default_data_root
+
+    assert default_data_root() == fake_exe.parent.resolve()
+    paths = resolve_course_paths()
+    assert paths.inbox == (fake_exe.parent / "courses" / "inbox").resolve()
 
 
 def test_resolve_cli_overrides(tmp_path: Path) -> None:

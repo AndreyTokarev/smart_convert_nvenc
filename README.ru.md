@@ -1,7 +1,7 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.2-blue.svg)](CHANGELOG.ru.md)
+[![Version](https://img.shields.io/badge/version-0.1.3-blue.svg)](CHANGELOG.ru.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
@@ -9,7 +9,7 @@
 
 Быстрый личный MVP, теперь open source под **MIT**.
 
-Текущая версия: **0.1.2** — [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md).
+Текущая версия: **0.1.3** — [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md).
 
 | Язык | Документация |
 |------|--------------|
@@ -71,7 +71,8 @@ courses/outbox/  ← результат
 ## Релизы (standalone)
 
 Тег `v*` → GitHub Actions собирает zip для Windows / Linux / macOS (PyInstaller).  
-На машине по-прежнему нужны **FFmpeg + NVIDIA NVENC**. Подробнее: [docs/ru/RELEASES.md](docs/ru/RELEASES.md) · [docs/en/RELEASES.md](docs/en/RELEASES.md).
+**Ранний проект:** бинарные релизы **экспериментальные и по сути не тестируются**; **рабочий** способ — **из исходников** (`uv sync` / `uv run`). Zip — на свой риск.  
+**В Win/Linux zip входит FFmpeg** в `ffmpeg/bin/` (BtbN GPL); **macOS** — ставьте FFmpeg сами. Для NVENC по-прежнему нужен драйвер NVIDIA. Подробнее: [docs/ru/RELEASES.md](docs/ru/RELEASES.md) · [docs/en/RELEASES.md](docs/en/RELEASES.md).
 
 ## Лицензия
 

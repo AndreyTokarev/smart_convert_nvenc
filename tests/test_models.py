@@ -6,6 +6,7 @@ from smart_convert_nvenc.models import (
     AudioMode,
     AudioSettings,
     ConvertSettings,
+    EncoderBackend,
     EncodeProfile,
     VideoCodec,
     already_target_codec,
@@ -43,10 +44,18 @@ def test_convert_settings_profiles(settings: ConvertSettings) -> None:
     assert hevc.codec is VideoCodec.HEVC
     assert hevc.cq == settings.hevc_cq
     assert hevc.container_ext == ".mp4"
+    assert hevc.backend is EncoderBackend.GPU
     assert av1.codec is VideoCodec.AV1
     assert av1.cq == settings.av1_cq
     assert av1.container_ext == ".mkv"
+    assert av1.backend is EncoderBackend.GPU
     assert settings.skip_same_codec is True
+    assert settings.encoder is EncoderBackend.GPU
+    cpu = settings.hevc_profile(backend=EncoderBackend.CPU)
+    assert cpu.backend is EncoderBackend.CPU
+    assert cpu.cpu_encoder_name == "libx265"
+    with pytest.raises(ValueError, match="AUTO"):
+        settings.hevc_profile(backend=EncoderBackend.AUTO)
 
 
 def test_probe_codec_helpers() -> None:

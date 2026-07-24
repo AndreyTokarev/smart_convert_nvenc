@@ -12,17 +12,28 @@ from smart_convert_nvenc.encode import (
     video_args,
 )
 from smart_convert_nvenc.ffmpeg_runner import FFmpegCancelled, FFmpegError
-from smart_convert_nvenc.models import AudioMode, AudioSettings, EncodeProfile, VideoCodec
+from smart_convert_nvenc.models import (
+    AudioMode,
+    AudioSettings,
+    EncoderBackend,
+    EncodeProfile,
+    VideoCodec,
+)
 
 
 @pytest.fixture
 def hevc() -> EncodeProfile:
-    return EncodeProfile(codec=VideoCodec.HEVC, cq=28)
+    return EncodeProfile(codec=VideoCodec.HEVC, cq=28, backend=EncoderBackend.GPU)
 
 
 @pytest.fixture
 def av1() -> EncodeProfile:
-    return EncodeProfile(codec=VideoCodec.AV1, cq=32, container_ext=".mkv")
+    return EncodeProfile(
+        codec=VideoCodec.AV1,
+        cq=32,
+        container_ext=".mkv",
+        backend=EncoderBackend.GPU,
+    )
 
 
 def test_audio_args_modes() -> None:
@@ -69,6 +80,41 @@ def test_video_args_hevc_and_av1(hevc: EncodeProfile, av1: EncodeProfile) -> Non
     av1_args = video_args(av1)
     assert "av1_nvenc" in av1_args
     assert "hvc1" not in av1_args
+
+
+def test_video_args_cpu_preset_extremes() -> None:
+    slow = EncodeProfile(
+        codec=VideoCodec.HEVC,
+        cq=28,
+        preset="p7",
+        backend=EncoderBackend.CPU,
+    )
+    fast = EncodeProfile(
+        codec=VideoCodec.AV1,
+        cq=32,
+        preset="p1",
+        container_ext=".mkv",
+        backend=EncoderBackend.CPU,
+    )
+    assert "slow" in video_args(slow)
+    assert "10" in video_args(fast)
+
+
+def test_build_encode_args_cpu_skips_hwaccel(tmp_path: Path) -> None:
+    profile = EncodeProfile(
+        codec=VideoCodec.HEVC,
+        cq=28,
+        backend=EncoderBackend.CPU,
+    )
+    args = build_encode_args(
+        input_path=tmp_path / "in.mp4",
+        output_path=tmp_path / "out.mp4",
+        profile=profile,
+        audio=AudioSettings(),
+        hwaccel="auto",
+    )
+    assert "-hwaccel" not in args
+    assert "libx265" in args
 
 
 def test_build_encode_args_with_seek_and_sample(tmp_path: Path, hevc: EncodeProfile) -> None:

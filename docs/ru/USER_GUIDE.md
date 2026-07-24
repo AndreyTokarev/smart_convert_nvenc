@@ -39,28 +39,33 @@
 ## 3. Чего нет (намеренно / пока)
 
 - VMAF / «равное качество» при сравнении кодеков (есть дисклеймер size@CQ)
-- CPU fallback (x265 / SVT-AV1)
 - Автопереименование папок курсов
 - Поиск дубликатов (в планах)
 - Готовый `.exe` installer (в планах)
+- Аппаратный encode AMD/Intel; перекалибровка CQ↔CRF для CPU vs NVENC
 
 ## 4. Требования
 
 - **ОС:** Windows 10/11 (основная цель; пути и guard заточены под Win)
 - **Python:** 3.12+
 - **Пакетный менеджер:** [uv](https://github.com/astral-sh/uv)
-- **FFmpeg** в `PATH` с энкодерами `hevc_nvenc` и `av1_nvenc`
-- **GPU:** NVIDIA с NVENC; для **AV1 encode** обычно RTX 40xx
-- Драйвер NVIDIA актуальной ветки
+- **FFmpeg** в `PATH` (при запуске из исходников):
+  - **GPU (по умолчанию):** `hevc_nvenc` и `av1_nvenc`
+  - **CPU / auto-fallback:** `libx265` и `libsvtav1`
+  - В Win/Linux release zip FFmpeg уже лежит в `ffmpeg/bin/`; опционально: `SMART_CONVERT_FFMPEG_DIR`
+- **GPU (опционально):** NVIDIA с NVENC; для **AV1 encode** обычно RTX 40xx
+- Драйвер NVIDIA актуальной ветки (при режиме GPU)
 
 Проверка:
 
 ```powershell
-ffmpeg -hide_banner -encoders | findstr nvenc
+ffmpeg -hide_banner -encoders | findstr /i "nvenc libx265 libsvtav1"
 ffprobe -version
 ```
 
 ## 5. Установка
+
+**Поддерживаемый путь:** клонировать репозиторий и запускать через `uv` (из исходников). Zip из GitHub Releases есть, но это **ранний / непротестированный** вариант — см. [RELEASES.md](./RELEASES.md).
 
 ```powershell
 git clone https://github.com/AndreyTokarev/smart_convert_nvenc.git
@@ -163,7 +168,7 @@ uv run smart-convert-gui
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — список, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, min savings, CQ, preset, codec, Skip if already HEVC/AV1
+- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — журнал и live-строка ffmpeg
 
@@ -173,6 +178,8 @@ uv run smart-convert-gui
 
 **Stop** жёстко убивает текущий FFmpeg (не «после файла»).
 
+Режимы энкодера: `gpu` (только NVENC, по умолчанию), `cpu` (libx265 / libsvtav1), `auto` (NVENC если есть, иначе CPU).
+
 ## 10. CLI
 
 ### Один файл
@@ -181,6 +188,8 @@ uv run smart-convert-gui
 uv run smart-convert lesson.mp4
 uv run smart-convert lesson.mp4 --dry-run
 uv run smart-convert lesson.mp4 --force-codec hevc --cq-hevc 30
+uv run smart-convert lesson.mp4 --encoder auto
+uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
 uv run smart-convert lesson.mp4 --reencode-same-codec
 ```
@@ -190,6 +199,7 @@ uv run smart-convert lesson.mp4 --reencode-same-codec
 ```powershell
 uv run smart-convert-course
 uv run smart-convert-course "My Course Name"
+uv run smart-convert-course --encoder auto
 uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
 uv run smart-convert-course --reencode-same-codec
@@ -204,6 +214,7 @@ uv run smart-convert-course --reencode-same-codec
 | `SMART_CONVERT_OUTBOX` | Путь outbox |
 | `SMART_CONVERT_TMP` | Путь tmp |
 | `SMART_CONVERT_APPDATA` | Корень для settings.json (тесты/portable) |
+| `SMART_CONVERT_FFMPEG_DIR` | Каталог с `ffmpeg`/`ffprobe` (или `…/bin`); перекрывает bundled + PATH |
 
 ## 12. Тесты
 

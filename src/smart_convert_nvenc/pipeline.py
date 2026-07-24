@@ -10,6 +10,7 @@ from .models import (
     DISCLAIMER_SIZE_AT_CQ,
     BenchmarkReport,
     ConvertSettings,
+    EncoderBackend,
     EncodeProfile,
     MediaInfo,
     SampleResult,
@@ -17,7 +18,7 @@ from .models import (
     VideoDecision,
     already_target_codec,
 )
-from .probe import probe_media, require_nvenc
+from .probe import probe_media, resolve_encoder_backend
 from .progress import clamp01, parse_ffmpeg_speed, parse_ffmpeg_time_seconds
 
 
@@ -54,7 +55,13 @@ def run_sample(
     should_stop: StopCheck | None = None,
 ) -> SampleResult:
     out = work_dir / f"sample_{profile.codec.value}{profile.container_ext}"
-    _log(log, f"  sample {profile.codec.value.upper()} (CQ={profile.cq}, preset={profile.preset})...")
+    backend_label = profile.backend.value
+    quality = "CRF" if profile.backend is EncoderBackend.CPU else "CQ"
+    _log(
+        log,
+        f"  sample {profile.codec.value.upper()} "
+        f"({backend_label}, {quality}={profile.cq}, preset={profile.preset})...",
+    )
     elapsed = encode_file(
         input_path=input_path,
         output_path=out,
@@ -119,7 +126,10 @@ def choose_winner(
 
 
 def output_path_for(input_path: Path, profile: EncodeProfile) -> Path:
-    return input_path.with_name(f"{input_path.stem}_nvenc_{profile.codec.value}{profile.container_ext}")
+    tag = "nvenc" if profile.backend is EncoderBackend.GPU else "cpu"
+    return input_path.with_name(
+        f"{input_path.stem}_{tag}_{profile.codec.value}{profile.container_ext}"
+    )
 
 
 def convert_video(
@@ -135,7 +145,8 @@ def convert_video(
     should_stop: StopCheck | None = None,
 ) -> VideoDecision:
     """Benchmark (unless force_profile) and optionally full-encode one video."""
-    require_nvenc()
+    backend, backend_note = resolve_encoder_backend(settings.encoder)
+    _log(log, f"  {backend_note}")
     input_path = input_path.resolve()
     if not input_path.is_file():
         raise FileNotFoundError(input_path)
@@ -155,9 +166,17 @@ def convert_video(
     effective_force = force_profile
     if effective_force is None and settings.force_codec is not None:
         effective_force = (
-            settings.hevc_profile()
+            settings.hevc_profile(backend=backend)
             if settings.force_codec is VideoCodec.HEVC
-            else settings.av1_profile()
+            else settings.av1_profile(backend=backend)
+        )
+    elif effective_force is not None and effective_force.backend is EncoderBackend.AUTO:
+        effective_force = EncodeProfile(
+            codec=effective_force.codec,
+            cq=effective_force.cq,
+            preset=effective_force.preset,
+            container_ext=effective_force.container_ext,
+            backend=backend,
         )
 
     def _emit_phase(phase: str, local: float, speed: float | None = None) -> None:
@@ -212,7 +231,7 @@ def convert_video(
             hevc = run_sample(
                 input_path=input_path,
                 work_dir=work,
-                profile=settings.hevc_profile(),
+                profile=settings.hevc_profile(backend=backend),
                 settings=settings,
                 seek=seek,
                 log=log,
@@ -223,7 +242,7 @@ def convert_video(
             av1 = run_sample(
                 input_path=input_path,
                 work_dir=work,
-                profile=settings.av1_profile(),
+                profile=settings.av1_profile(backend=backend),
                 settings=settings,
                 seek=seek,
                 log=log,

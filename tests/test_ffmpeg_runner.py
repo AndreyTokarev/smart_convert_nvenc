@@ -32,7 +32,10 @@ def test_run_ffmpeg_success_with_progress() -> None:
         proc.poll.return_value = 0
         return proc
 
-    with patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen):
+    with (
+        patch("smart_convert_nvenc.ffmpeg_runner.ffmpeg_executable", return_value="ffmpeg"),
+        patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen),
+    ):
         elapsed = run_ffmpeg(["-version"], on_progress=lines.append)
     assert elapsed >= 0
     assert lines == ["frame=1 time=00:00:01.00 bitrate=N/A"]
@@ -47,7 +50,10 @@ def test_run_ffmpeg_nonzero_raises() -> None:
         proc.poll.return_value = 7
         return proc
 
-    with patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen):
+    with (
+        patch("smart_convert_nvenc.ffmpeg_runner.ffmpeg_executable", return_value="ffmpeg"),
+        patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen),
+    ):
         with pytest.raises(FFmpegError, match="code 7"):
             run_ffmpeg(["-i", "missing"])
 
@@ -70,6 +76,7 @@ def test_run_ffmpeg_cancelled_by_should_stop() -> None:
         return proc
 
     with (
+        patch("smart_convert_nvenc.ffmpeg_runner.ffmpeg_executable", return_value="ffmpeg"),
         patch("smart_convert_nvenc.ffmpeg_runner.subprocess.Popen", side_effect=_fake_popen),
         patch("smart_convert_nvenc.ffmpeg_runner.terminate_process", return_value=True) as term,
     ):

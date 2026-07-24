@@ -1,7 +1,7 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.3-blue.svg)](CHANGELOG.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
@@ -9,7 +9,7 @@ Compress **video course archives** with **NVIDIA NVENC**: race HEVC vs AV1 on a 
 
 Built as a **fast personal MVP**, now open source under **MIT**.
 
-Current version: **0.1.2** — see [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md).
+Current version: **0.1.3** — see [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md).
 
 | Language | Docs |
 |----------|------|
@@ -71,7 +71,8 @@ courses/outbox/  ← results
 ## Releases (standalone)
 
 Tag `v*` → GitHub Actions builds Windows / Linux / macOS zips (PyInstaller).  
-**FFmpeg + NVIDIA NVENC still required** on the machine. Details: [docs/en/RELEASES.md](docs/en/RELEASES.md) · [docs/ru/RELEASES.md](docs/ru/RELEASES.md).
+**Early project:** binary releases are **experimental and not really tested**; the **working** way to run is **from source** (`uv sync` / `uv run`). Use zips at your own risk.  
+**Windows / Linux zips include FFmpeg** under `ffmpeg/bin/` (BtbN GPL); **macOS** still needs system FFmpeg. NVIDIA driver still required for NVENC. Details: [docs/en/RELEASES.md](docs/en/RELEASES.md) · [docs/ru/RELEASES.md](docs/ru/RELEASES.md).
 
 ## License
 

@@ -111,7 +111,7 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 | F5.1 | Вынести CQ/preset/defaults в `profiles.toml` или JSON (без опечаток presers) | PROFILES.md | `src/.../data/profiles.toml` |
 | F5.2 | Профиль «course» (агрессивнее CQ, опц. audio opus) | — | profiles + CLI `--profile` |
 | F5.3 | Скрипт сборки standalone exe + doc | BUILD.md / PyInstaller или аналог | `scripts/build.ps1`, `docs/BUILD.md` |
-| F5.4 | Vendor/PATH strategy для FFmpeg (как в старом: PATH обязателен или bundle) | vendor/ffmpeg | решить ADR-0002 |
+| F5.4 | Vendor/PATH strategy для FFmpeg — **сделано** (BtbN в Win/Linux zip + `SMART_CONVERT_FFMPEG_DIR` / PATH fallback) |
 
 **Критерий готовности:** один профиль запускается флагом; (опционально) есть инструкция/скрипт сборки exe.
 
@@ -122,7 +122,7 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 | F6.1 | Поиск дубликатов курсов/файлов (отчёт, без автоудаления) |
 | F6.2 | Batch-отчёт по пачке курсов в файл (`session-report.md`) |
 | F6.3 | VMAF/гибрид (решение 1B → позже C) |
-| F6.4 | CPU fallback x265/SVT-AV1 (решение 3A — только если понадобится) |
+| F6.4 | CPU fallback x265/SVT-AV1 — **сделано** (`encoder`: gpu/cpu/auto; без перекалибровки CQ↔CRF) |
 
 ---
 
@@ -159,8 +159,8 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 | F2 | done | 2026-07-24 | Session freed MiB/%/MiB/h; итоги курса; видео+курсы по размеру ↓; `speed=` в прогрессе GUI |
 | F3 | done | 2026-07-24 | Persist настроек; Open inbox/outbox; confirm при закрытии; ring-buffer логов; progress drain — только latest |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
-| F5 | pending | | |
-| F6 | pending | | |
+| F5 | partial | 2026-07-25 | F5.4 FFmpeg vendor в Win/Linux release zip |
+| F6 | partial | 2026-07-25 | F6.4 CPU encode force + auto-fallback landed |
 
 ---
 

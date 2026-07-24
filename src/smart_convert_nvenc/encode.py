@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .ffmpeg_runner import FFmpegCancelled, FFmpegError, ProgressCallback, StopCheck, run_ffmpeg
-from .models import AudioMode, AudioSettings, EncodeProfile, VideoCodec
+from .models import AudioMode, AudioSettings, EncoderBackend, EncodeProfile, VideoCodec
 from .temp_paths import make_conversion_temp, promote_temp_to_final
 
 # MPEG-TS / similar often carry AAC in ADTS; MP4/MKV need ASC when copying.
@@ -38,28 +38,74 @@ def audio_args(
     raise AssertionError(f"Unhandled audio mode: {settings.mode}")
 
 
+def _x265_preset(nvenc_preset: str) -> str:
+    raw = nvenc_preset.strip().lower()
+    if raw in {"p7", "slow", "slower", "veryslow"}:
+        return "slow"
+    if raw in {"p1", "p2", "ultrafast", "superfast", "veryfast"}:
+        return "veryfast"
+    return "medium"
+
+
+def _svt_preset(nvenc_preset: str) -> str:
+    # SVT-AV1: lower number = slower / better. 6 is a practical default.
+    raw = nvenc_preset.strip().lower()
+    if raw in {"p7", "slow", "slower", "veryslow"}:
+        return "4"
+    if raw in {"p1", "p2", "ultrafast", "superfast", "veryfast"}:
+        return "10"
+    return "6"
+
+
 def video_args(profile: EncodeProfile) -> list[str]:
-    args = [
-        "-c:v",
-        profile.nvenc_name,
-        "-preset",
-        profile.preset,
-        "-tune",
-        "hq",
-        "-rc",
-        "vbr",
-        "-cq",
-        str(profile.cq),
-        "-b:v",
-        "0",
-        "-spatial_aq",
-        "1",
-        "-temporal_aq",
-        "1",
-    ]
-    if profile.codec is VideoCodec.HEVC:
-        args.extend(["-tag:v", "hvc1"])
-    return args
+    backend = profile.backend
+    if backend is EncoderBackend.AUTO:
+        raise ValueError("EncodeProfile.backend must be GPU or CPU, not AUTO")
+    if backend is EncoderBackend.GPU:
+        args = [
+            "-c:v",
+            profile.nvenc_name,
+            "-preset",
+            profile.preset,
+            "-tune",
+            "hq",
+            "-rc",
+            "vbr",
+            "-cq",
+            str(profile.cq),
+            "-b:v",
+            "0",
+            "-spatial_aq",
+            "1",
+            "-temporal_aq",
+            "1",
+        ]
+        if profile.codec is VideoCodec.HEVC:
+            args.extend(["-tag:v", "hvc1"])
+        return args
+    if backend is EncoderBackend.CPU:
+        if profile.codec is VideoCodec.HEVC:
+            return [
+                "-c:v",
+                "libx265",
+                "-crf",
+                str(profile.cq),
+                "-preset",
+                _x265_preset(profile.preset),
+                "-tag:v",
+                "hvc1",
+            ]
+        if profile.codec is VideoCodec.AV1:
+            return [
+                "-c:v",
+                "libsvtav1",
+                "-crf",
+                str(profile.cq),
+                "-preset",
+                _svt_preset(profile.preset),
+            ]
+        raise AssertionError(f"Unhandled codec: {profile.codec}")
+    raise AssertionError(f"Unhandled encoder backend: {backend}")
 
 
 def build_encode_args(
@@ -74,8 +120,9 @@ def build_encode_args(
     hwaccel: str | None = "auto",
 ) -> list[str]:
     args: list[str] = []
-    if hwaccel:
-        args.extend(["-hwaccel", hwaccel])
+    use_hwaccel = hwaccel if profile.backend is EncoderBackend.GPU else None
+    if use_hwaccel:
+        args.extend(["-hwaccel", use_hwaccel])
     if seek_seconds > 0:
         args.extend(["-ss", f"{seek_seconds:.3f}"])
     args.extend(["-i", str(input_path)])
@@ -113,6 +160,9 @@ def encode_file(
 ) -> float:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     target = make_conversion_temp(output_path) if use_temp else output_path
+    allow_hwaccel_retry = (
+        retry_without_hwaccel and profile.backend is EncoderBackend.GPU
+    )
 
     def _run(hwaccel: str | None) -> float:
         args = build_encode_args(
@@ -129,13 +179,14 @@ def encode_file(
 
     try:
         try:
-            elapsed = _run("auto")
+            first_hwaccel = "auto" if profile.backend is EncoderBackend.GPU else None
+            elapsed = _run(first_hwaccel)
         except FFmpegCancelled:
             if target != output_path and target.exists():
                 target.unlink(missing_ok=True)
             raise
         except FFmpegError:
-            if not retry_without_hwaccel:
+            if not allow_hwaccel_retry:
                 if target != output_path and target.exists():
                     target.unlink(missing_ok=True)
                 raise

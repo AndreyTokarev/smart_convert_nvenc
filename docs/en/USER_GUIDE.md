@@ -39,26 +39,31 @@ License: **MIT** — use, modify, redistribute freely.
 ## 3. What it does not do (yet / by design)
 
 - VMAF / equal-quality codec comparison (size@CQ disclaimer instead)
-- CPU fallback (x265 / SVT-AV1)
 - Auto-renaming course folders
 - Duplicate detection (planned)
 - Packaged `.exe` installer (planned)
+- AMD/Intel hardware encode; CQ↔CRF recalibration for CPU vs NVENC
 
 ## 4. Requirements
 
 - **OS:** Windows 10/11 (primary target)
 - **Python:** 3.12+
 - **Package manager:** [uv](https://github.com/astral-sh/uv)
-- **FFmpeg** on `PATH` with `hevc_nvenc` and `av1_nvenc`
-- **GPU:** NVIDIA with NVENC; **AV1 encode** typically needs RTX 40-series
-- Current NVIDIA driver
+- **FFmpeg** on `PATH` (when running from source):
+  - **GPU (default):** `hevc_nvenc` and `av1_nvenc`
+  - **CPU / auto-fallback:** `libx265` and `libsvtav1`
+  - Release zips (Win/Linux) already ship FFmpeg under `ffmpeg/bin/`; optional override: `SMART_CONVERT_FFMPEG_DIR`
+- **GPU (optional):** NVIDIA with NVENC; **AV1 encode** typically needs RTX 40-series
+- Current NVIDIA driver (when using GPU)
 
 ```powershell
-ffmpeg -hide_banner -encoders | findstr nvenc
+ffmpeg -hide_banner -encoders | findstr /i "nvenc libx265 libsvtav1"
 ffprobe -version
 ```
 
 ## 5. Install
+
+**Supported path:** clone the repo and run with `uv` (from source). Standalone Release zips exist but are **early / untested** — see [RELEASES.md](./RELEASES.md).
 
 ```powershell
 git clone https://github.com/AndreyTokarev/smart_convert_nvenc.git
@@ -158,7 +163,7 @@ Blocks:
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — list, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, savings, CQ, preset, codec, Skip if already HEVC/AV1
+- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — journal + live ffmpeg line
 
@@ -168,16 +173,21 @@ Settings file:
 
 **Stop** hard-kills the current FFmpeg tree.
 
+Encoder modes: `gpu` (NVENC only, default), `cpu` (libx265 / libsvtav1), `auto` (NVENC if present, else CPU).
+
 ## 10. CLI examples
 
 ```powershell
 uv run smart-convert lesson.mp4
 uv run smart-convert lesson.mp4 --dry-run --force-codec hevc
+uv run smart-convert lesson.mp4 --encoder auto
+uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
 uv run smart-convert lesson.mp4 --reencode-same-codec
 
 uv run smart-convert-course
 uv run smart-convert-course "My Course Name"
+uv run smart-convert-course --encoder auto
 uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
 ```
@@ -191,6 +201,7 @@ uv run smart-convert-course --race-each
 | `SMART_CONVERT_OUTBOX` | Outbox path |
 | `SMART_CONVERT_TMP` | Tmp path |
 | `SMART_CONVERT_APPDATA` | Settings root (tests / portable) |
+| `SMART_CONVERT_FFMPEG_DIR` | Directory with `ffmpeg`/`ffprobe` (or `…/bin`); overrides bundled + PATH |
 
 ## 12. Tests
 

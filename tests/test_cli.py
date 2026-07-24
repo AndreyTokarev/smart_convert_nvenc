@@ -11,10 +11,18 @@ from smart_convert_nvenc.probe import ToolError
 
 def test_cli_build_parser() -> None:
     parser = cli.build_parser()
-    args = parser.parse_args(["video.mp4", "--force-codec", "hevc", "--dry-run"])
+    args = parser.parse_args(
+        ["video.mp4", "--force-codec", "hevc", "--dry-run", "--encoder", "auto"]
+    )
     assert args.force_codec == "hevc"
     assert args.dry_run is True
+    assert args.encoder == "auto"
 
+
+def test_course_cli_build_parser_encoder() -> None:
+    parser = course_cli.build_parser()
+    args = parser.parse_args(["--encoder", "cpu"])
+    assert args.encoder == "cpu"
 
 def test_cli_main_success(tmp_path: Path) -> None:
     video = tmp_path / "a.mp4"

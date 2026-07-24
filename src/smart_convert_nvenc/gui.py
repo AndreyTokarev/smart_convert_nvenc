@@ -15,7 +15,7 @@ from . import __version__
 from .course import convert_course, iter_videos, list_course_dirs, tree_size
 from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
 from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
-from .models import AudioSettings, ConvertSettings, VideoCodec
+from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
 from .paths import CoursePaths, resolve_course_paths
 from .probe import ToolError, validate_environment
 from .progress import ProgressUpdate, clamp01, trim_textbox_line_count
@@ -63,7 +63,12 @@ class App(ctk.CTk):
         removed = cleanup_conversion_temps(self.paths.tmp)
         self._env_ok_lines: list[str] = []
         try:
-            self._env_ok_lines = validate_environment()
+            enc = self._gui_settings.encoder if self._gui_settings.encoder in {
+                "gpu",
+                "cpu",
+                "auto",
+            } else "gpu"
+            self._env_ok_lines = validate_environment(EncoderBackend(enc))
         except ToolError as exc:
             messagebox.showerror("Smart Convert", str(exc))
 
@@ -106,6 +111,7 @@ class App(ctk.CTk):
         self.cq_av1_var.set(s.cq_av1)
         self.preset_var.set(s.preset)
         self.codec_var.set(s.codec if s.codec in {"auto", "hevc", "av1"} else "auto")
+        self.encoder_var.set(s.encoder if s.encoder in {"gpu", "cpu", "auto"} else "gpu")
         self.skip_same_codec_var.set(bool(s.skip_same_codec))
         self.inbox_var.set(str(self.paths.inbox))
         self.outbox_var.set(str(self.paths.outbox))
@@ -122,6 +128,7 @@ class App(ctk.CTk):
             cq_av1=self.cq_av1_var.get().strip(),
             preset=self.preset_var.get().strip(),
             codec=self.codec_var.get().strip(),
+            encoder=self.encoder_var.get().strip(),
             skip_same_codec=bool(self.skip_same_codec_var.get()),
         )
 
@@ -273,6 +280,7 @@ class App(ctk.CTk):
         self.cq_av1_var = tk.StringVar(value="32")
         self.preset_var = tk.StringVar(value="p6")
         self.codec_var = tk.StringVar(value="auto")
+        self.encoder_var = tk.StringVar(value="gpu")
         self.skip_same_codec_var = tk.BooleanVar(value=True)
 
         fields = ctk.CTkFrame(settings_panel, fg_color="transparent")
@@ -297,6 +305,28 @@ class App(ctk.CTk):
             codec_row,
             variable=self.codec_var,
             values=["auto", "hevc", "av1"],
+            width=120,
+            height=28,
+            font=self._font_ui,
+            fg_color=COLORS["panel2"],
+            button_color=COLORS["border"],
+            button_hover_color=COLORS["accent"],
+        ).pack(side="left")
+
+        enc_row = ctk.CTkFrame(fields, fg_color="transparent")
+        enc_row.pack(fill="x", padx=10, pady=2)
+        ctk.CTkLabel(
+            enc_row,
+            text="Encoder",
+            width=100,
+            anchor="w",
+            font=self._font_ui,
+            text_color=COLORS["muted"],
+        ).pack(side="left")
+        ctk.CTkOptionMenu(
+            enc_row,
+            variable=self.encoder_var,
+            values=["gpu", "cpu", "auto"],
             width=120,
             height=28,
             font=self._font_ui,
@@ -770,6 +800,9 @@ class App(ctk.CTk):
     def _settings(self) -> ConvertSettings:
         codec_raw = self.codec_var.get()
         force = None if codec_raw == "auto" else VideoCodec(codec_raw)
+        enc_raw = self.encoder_var.get().strip().lower()
+        if enc_raw not in {"gpu", "cpu", "auto"}:
+            enc_raw = "gpu"
         return ConvertSettings(
             sample_seconds=float(self.sample_var.get()),
             min_savings=float(self.min_savings_var.get()),
@@ -779,6 +812,7 @@ class App(ctk.CTk):
             audio=AudioSettings.parse("copy"),
             force_codec=force,
             skip_same_codec=bool(self.skip_same_codec_var.get()),
+            encoder=EncoderBackend(enc_raw),
         )
 
     def _selected_courses(self) -> list[Path]:

@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+
+def is_frozen() -> bool:
+    """True when running as a PyInstaller (or similar) bundled binary."""
+    return bool(getattr(sys, "frozen", False))
 
 
 def find_project_root(start: Path | None = None) -> Path:
@@ -22,6 +28,17 @@ def find_project_root(start: Path | None = None) -> Path:
             if (path / "pyproject.toml").is_file():
                 return path
     raise RuntimeError("Не найден корень проекта (pyproject.toml).")
+
+
+def default_data_root() -> Path:
+    """Directory used for default ``courses/`` layout.
+
+    - Dev / source install: repo root (``pyproject.toml``).
+    - Frozen exe: directory containing the binary (portable zip layout).
+    """
+    if is_frozen():
+        return Path(sys.executable).resolve().parent
+    return find_project_root()
 
 
 @dataclass(frozen=True)
@@ -44,17 +61,32 @@ def resolve_course_paths(
     tmp: Path | None = None,
     project_root: Path | None = None,
 ) -> CoursePaths:
-    root = project_root or find_project_root()
-
     env_root = os.environ.get("SMART_CONVERT_COURSES_ROOT")
     env_inbox = os.environ.get("SMART_CONVERT_INBOX")
     env_outbox = os.environ.get("SMART_CONVERT_OUTBOX")
     env_tmp = os.environ.get("SMART_CONVERT_TMP")
 
-    base = courses_root or (Path(env_root) if env_root else root / "courses")
+    resolved_inbox = inbox or (Path(env_inbox) if env_inbox else None)
+    resolved_outbox = outbox or (Path(env_outbox) if env_outbox else None)
+    resolved_tmp = tmp or (Path(env_tmp) if env_tmp else None)
+
+    if resolved_inbox is None or resolved_outbox is None or resolved_tmp is None:
+        if courses_root is not None:
+            base = courses_root
+        elif env_root:
+            base = Path(env_root)
+        else:
+            root = project_root or default_data_root()
+            base = root / "courses"
+        if resolved_inbox is None:
+            resolved_inbox = base / "inbox"
+        if resolved_outbox is None:
+            resolved_outbox = base / "outbox"
+        if resolved_tmp is None:
+            resolved_tmp = base / "tmp"
 
     return CoursePaths(
-        inbox=(inbox or (Path(env_inbox) if env_inbox else base / "inbox")).resolve(),
-        outbox=(outbox or (Path(env_outbox) if env_outbox else base / "outbox")).resolve(),
-        tmp=(tmp or (Path(env_tmp) if env_tmp else base / "tmp")).resolve(),
+        inbox=resolved_inbox.resolve(),
+        outbox=resolved_outbox.resolve(),
+        tmp=resolved_tmp.resolve(),
     )

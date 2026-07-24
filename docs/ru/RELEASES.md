@@ -2,6 +2,12 @@
 
 English: [../en/RELEASES.md](../en/RELEASES.md).
 
+## Статус (ранний проект)
+
+**Бинарные релизы экспериментальные и пока по сути не тестируются.**  
+Проект в самом начале: **рабочий / поддерживаемый** способ запуска — **из исходников** (`git clone` + `uv sync` + `uv run …`).  
+Zip в GitHub Releases — задел на будущее; считайте их **неподдерживаемыми / на свой риск**, пока эта пометка не снята.
+
 ## Что лежит в GitHub Releases
 
 На каждый git-тег `v*` (например `v0.1.0`) workflow [`.github/workflows/release.yml`](../../.github/workflows/release.yml) собирает **PyInstaller** one-file бинарники:
@@ -14,14 +20,15 @@ English: [../en/RELEASES.md](../en/RELEASES.md).
 
 В каждом zip: `smart-convert`, `smart-convert-course`, `smart-convert-gui`, плюс `README` / `LICENSE` / `README-RELEASE.txt`.
 
-## Важно: FFmpeg всё равно нужен
+- **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL static, скачивается при сборке с тега `latest`)
+- **macOS:** FFmpeg **не** кладётся в архив (у BtbN нет macOS-артефактов)
 
-Сборки **не** включают FFmpeg и драйверы NVIDIA.
+## FFmpeg в zip
 
-На машине по-прежнему нужны:
-
-1. FFmpeg с `hevc_nvenc` + `av1_nvenc` в `PATH`
-2. GPU NVIDIA + драйвер для реального NVENC
+- В Win/Linux-релизах FFmpeg **включён** в `ffmpeg/bin/`. Приложение предпочитает его PATH (`SMART_CONVERT_FFMPEG_DIR` перекрывает).
+- Бинарники FFmpeg — **GPL** (сборка BtbN GPL); см. `ffmpeg/SOURCE.txt` / license в zip.
+- **Драйверы NVIDIA не поставляются.** Для NVENC нужны GPU и драйвер на машине.
+- **Из исходников** (`uv run`): поставьте FFmpeg сами в `PATH` (или `SMART_CONVERT_FFMPEG_DIR`).
 
 Сборки под macOS/Linux нужны для удобного запуска приложения, но **encode через NVENC — про NVIDIA**. Без подходящего FFmpeg/GPU проверка окружения упадёт.
 

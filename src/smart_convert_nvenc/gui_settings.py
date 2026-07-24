@@ -35,6 +35,7 @@ class GuiSettings:
     cq_av1: str = "32"
     preset: str = "p6"
     codec: str = "auto"
+    encoder: str = "gpu"
     skip_same_codec: bool = True
 
     def course_paths(self) -> CoursePaths:
@@ -57,6 +58,7 @@ class GuiSettings:
             cq_av1=self.cq_av1,
             preset=self.preset,
             codec=self.codec,
+            encoder=self.encoder,
             skip_same_codec=self.skip_same_codec,
         )
 

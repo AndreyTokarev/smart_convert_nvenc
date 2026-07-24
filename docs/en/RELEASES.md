@@ -2,6 +2,12 @@
 
 English. Русский: [../ru/RELEASES.md](../ru/RELEASES.md).
 
+## Status (early project)
+
+**Standalone binaries are experimental and are not meaningfully tested yet.**  
+The project is at the very beginning: the **supported / working** way to run the app is **from source** (`git clone` + `uv sync` + `uv run …`).  
+GitHub Release zips are convenience artifacts for later; treat them as **unsupported / use at your own risk** until this note is removed.
+
 ## What GitHub Releases contain
 
 On each git tag `v*` (example: `v0.1.0`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:
@@ -18,15 +24,15 @@ Each zip includes:
 - `smart-convert-course`
 - `smart-convert-gui`
 - `README.md`, `LICENSE`, `README-RELEASE.txt`
+- **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL static, downloaded at build time from the floating `latest` tag)
+- **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
 
-## Important: FFmpeg is still required
+## FFmpeg in the zip
 
-These builds **do not** ship FFmpeg or NVIDIA drivers.
-
-You still need on the machine:
-
-1. FFmpeg with `hevc_nvenc` + `av1_nvenc` on `PATH`
-2. An NVIDIA GPU + driver for actual NVENC encode
+- Win/Linux release zips **include** a recent FFmpeg under `ffmpeg/bin/`. The app prefers that over PATH (`SMART_CONVERT_FFMPEG_DIR` can override).
+- FFmpeg binaries are **GPL** (BtbN GPL build); see `ffmpeg/SOURCE.txt` / license files in the zip.
+- **NVIDIA drivers are still not shipped.** NVENC needs a suitable GPU + driver on the machine.
+- **From source** (`uv run`): install FFmpeg yourself and put it on `PATH` (or set `SMART_CONVERT_FFMPEG_DIR`).
 
 macOS/Linux packages exist so the app can run where Python packaging is awkward, but **NVENC encode is NVIDIA-centric**. On Mac without NVIDIA NVENC, CLI/GUI can start, but encoding will fail environment checks unless a suitable FFmpeg/GPU stack exists.
 

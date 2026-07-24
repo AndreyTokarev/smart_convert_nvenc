@@ -6,6 +6,8 @@ import threading
 import time
 from collections.abc import Callable
 
+from .ffmpeg_tools import ffmpeg_executable
+
 
 class FFmpegError(RuntimeError):
     pass
@@ -70,7 +72,7 @@ def run_ffmpeg(
     on_progress: ProgressCallback | None = None,
     should_stop: StopCheck | None = None,
 ) -> float:
-    cmd = ["ffmpeg", "-hide_banner", "-y", *args]
+    cmd = [ffmpeg_executable(), "-hide_banner", "-y", *args]
     started = time.perf_counter()
     process = subprocess.Popen(
         cmd,

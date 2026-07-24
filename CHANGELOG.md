@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.1.3] — 2026-07-25
+
+### Added
+
+- Encoder mode `gpu` (default) / `cpu` / `auto`: force libx265 + libsvtav1, or auto-fallback when NVENC is missing (`--encoder`, GUI Encoder menu).
+- Release zips for Windows/Linux bundle BtbN GPL FFmpeg under `ffmpeg/bin/` (latest at build time); app prefers bundled binaries over PATH (`SMART_CONVERT_FFMPEG_DIR` override).
+
+### Changed
+
+- Docs state that standalone binaries are early/experimental; the supported run path remains from source.
+
+### Fixed
+
+- Frozen GUI/CLI binaries no longer require `pyproject.toml`; default `courses/` is created next to the executable.
+
 ## [0.1.2] — 2026-07-25
 
 ### Added
@@ -60,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AndreyTokarev/smart_convert_nvenc/releases/tag/v0.1.0

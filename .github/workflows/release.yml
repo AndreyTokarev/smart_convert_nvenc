@@ -75,15 +75,23 @@ jobs:
           cp dist/smart-convert-course${{ matrix.ext }} "$OUT/"
           cp dist/smart-convert-gui${{ matrix.ext }} "$OUT/"
           cp README.md LICENSE "$OUT/"
+          chmod +x scripts/fetch_ffmpeg.sh
+          scripts/fetch_ffmpeg.sh "${{ matrix.artifact }}" "$OUT"
           printf '%s\n' \
             '# smart_convert_nvenc release binaries' \
             '' \
+            'STATUS: early project — these binaries are EXPERIMENTAL and not meaningfully tested.' \
+            'The supported / working way to run is from source (git clone + uv sync + uv run).' \
+            'Use this zip at your own risk until that disclaimer is removed from the docs.' \
+            '' \
             'These are standalone builds of the CLI/GUI entrypoints.' \
             '' \
-            '## Requirements' \
+            '## FFmpeg' \
             '' \
-            '- FFmpeg with `hevc_nvenc` and `av1_nvenc` must be installed and on PATH.' \
-            '- NVIDIA GPU + driver for NVENC (AV1 encode typically needs RTX 40-series).' \
+            '- Windows / Linux zips INCLUDE a recent BtbN GPL static FFmpeg under ffmpeg/bin/.' \
+            '- macOS zip does NOT bundle FFmpeg (install your own and put it on PATH).' \
+            '- FFmpeg is GPL; see ffmpeg/SOURCE.txt and any LICENSE files beside it.' \
+            '- NVIDIA GPU + driver still required for NVENC (AV1 encode typically needs RTX 40-series).' \
             '- GUI needs a desktop session (Windows / macOS / Linux with Tk).' \
             '' \
             '## Binaries' \
@@ -91,6 +99,7 @@ jobs:
             '- `smart-convert` — single file' \
             '- `smart-convert-course` — course inbox/outbox pipeline' \
             '- `smart-convert-gui` — desktop UI' \
+            '- `ffmpeg/bin/` — bundled ffmpeg + ffprobe (Win/Linux)' \
             '' \
             'NVENC itself is Windows/Linux with NVIDIA; macOS builds are for CLI/GUI packaging compatibility but encode still needs FFmpeg+NVENC hardware where available.' \
             > "$OUT/README-RELEASE.txt"
@@ -144,9 +153,12 @@ jobs:
           name: ${{ steps.tag.outputs.name }}
           generate_release_notes: true
           body: |
-            Standalone binaries for Windows / Linux / macOS.
+            **Early project:** standalone binaries are **experimental and not meaningfully tested**. Prefer running **from source** (`uv sync` / `uv run`). Use these zips at your own risk.
 
-            **Still required on the machine:** FFmpeg with `hevc_nvenc` + `av1_nvenc` on `PATH`, plus an NVIDIA GPU for NVENC.
+            **Windows / Linux:** FFmpeg (BtbN GPL static, latest at build time) is bundled under `ffmpeg/bin/`.
+            **macOS:** install FFmpeg yourself (not bundled).
+
+            NVIDIA GPU + driver still required for NVENC.
 
             See `README-RELEASE.txt` inside each zip.
           files: upload/*.zip
