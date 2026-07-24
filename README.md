@@ -8,9 +8,8 @@ Built as a **fast personal MVP**, now open source under **MIT**.
 
 | Language | Docs |
 |----------|------|
-| **English** | [docs/en/USER_GUIDE.md](docs/en/USER_GUIDE.md) · [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md) |
-| **Русский** | [docs/ru/USER_GUIDE.md](docs/ru/USER_GUIDE.md) · [docs/ru/ARCHITECTURE.md](docs/ru/ARCHITECTURE.md) |
-| Community post (EN) | [docs/community/VK_POST_EN.md](docs/community/VK_POST_EN.md) |
+| **English** | [docs/en/USER_GUIDE.md](docs/en/USER_GUIDE.md) · [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md) · [docs/en/RELEASES.md](docs/en/RELEASES.md) |
+| **Русский** | [docs/ru/USER_GUIDE.md](docs/ru/USER_GUIDE.md) · [docs/ru/ARCHITECTURE.md](docs/ru/ARCHITECTURE.md) · [docs/ru/RELEASES.md](docs/ru/RELEASES.md) |
 
 ## Why
 
@@ -40,7 +39,7 @@ ffmpeg -hide_banner -encoders | findstr nvenc
 ## Quick start
 
 ```powershell
-git clone <REPO_URL> smart_convert_nvenc
+git clone https://github.com/AndreyTokarev/smart_convert_nvenc.git
 cd smart_convert_nvenc
 uv sync
 
@@ -61,6 +60,11 @@ courses/inbox/   ← drop course folders
 courses/tmp/     ← encode scratch
 courses/outbox/  ← results
 ```
+
+## Releases (standalone)
+
+Tag `v*` → GitHub Actions builds Windows / Linux / macOS zips (PyInstaller).  
+**FFmpeg + NVIDIA NVENC still required** on the machine. Details: [docs/en/RELEASES.md](docs/en/RELEASES.md).
 
 ## License
 

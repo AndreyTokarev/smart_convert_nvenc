@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import queue
+import subprocess
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -614,7 +616,12 @@ class App(ctk.CTk):
     def _open_in_explorer(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
         try:
-            os.startfile(path)  # type: ignore[attr-defined]
+            if sys.platform == "win32":
+                os.startfile(path)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(path)], check=False)
+            else:
+                subprocess.run(["xdg-open", str(path)], check=False)
         except OSError as exc:
             messagebox.showerror("Smart Convert", str(exc))
 

@@ -61,7 +61,7 @@ ffprobe -version
 ## 5. Install
 
 ```powershell
-git clone <your-repo-url> smart_convert_nvenc
+git clone https://github.com/AndreyTokarev/smart_convert_nvenc.git
 cd smart_convert_nvenc
 uv sync
 uv sync --group dev   # tests / contrib

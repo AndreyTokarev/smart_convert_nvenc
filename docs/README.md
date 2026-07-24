@@ -8,10 +8,11 @@
 |--|---------|---------|
 | User guide | [en/USER_GUIDE.md](./en/USER_GUIDE.md) | [ru/USER_GUIDE.md](./ru/USER_GUIDE.md) |
 | Architecture | [en/ARCHITECTURE.md](./en/ARCHITECTURE.md) | [ru/ARCHITECTURE.md](./ru/ARCHITECTURE.md) |
+| Releases (Win/Linux/macOS) | [en/RELEASES.md](./en/RELEASES.md) | [ru/RELEASES.md](./ru/RELEASES.md) |
 
 ## Community / announcement
 
-- [community/VK_POST_EN.md](./community/VK_POST_EN.md) — English presentation post (VK / forums); replace `<REPO_URL>`
+VK / forum draft posts are kept locally (`docs/community/`, gitignored) and are not part of the published repository.
 
 ## Design & history
 

@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+*.spec
 
 # Virtual environments
 .venv
@@ -13,6 +14,9 @@ wheels/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Local-only community drafts (not for the public repo)
+docs/community/VK_POST_EN.md
 
 # Course media (keep folder READMEs only)
 courses/inbox/**
