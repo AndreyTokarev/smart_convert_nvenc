@@ -18,13 +18,35 @@ from .models import (
     VideoDecision,
     already_target_codec,
 )
-from .probe import has_av1_nvenc, probe_media, resolve_encoder_backend, ToolError
+from .probe import (
+    ToolError,
+    has_av1_nvenc,
+    has_cpu_encoders,
+    probe_media,
+    resolve_encoder_backend,
+)
 from .progress import clamp01, parse_ffmpeg_speed, parse_ffmpeg_time_seconds
 
 
 LogFn = Callable[[str], None]
 # phase name, fraction within that phase 0..1, optional ffmpeg speed multiplier
 PhaseProgressFn = Callable[[str, float, float | None], None]
+
+
+def _av1_profile_for_backend(
+    settings: ConvertSettings, backend: EncoderBackend
+) -> EncodeProfile:
+    """AV1 profile: prefer NVENC; if missing, fall back to libsvtav1 (CPU)."""
+    if backend is EncoderBackend.CPU:
+        return settings.av1_profile(backend=EncoderBackend.CPU)
+    if has_av1_nvenc():
+        return settings.av1_profile(backend=EncoderBackend.GPU)
+    if has_cpu_encoders():
+        return settings.av1_profile(backend=EncoderBackend.CPU)
+    raise ToolError(
+        "Нужен AV1, но нет ни av1_nvenc, ни libsvtav1 в FFmpeg. "
+        "Поставьте полную сборку FFmpeg или выберите HEVC."
+    )
 
 
 def _log(log: LogFn | None, message: str) -> None:
@@ -173,30 +195,31 @@ def convert_video(
 
     effective_force = force_profile
     if effective_force is None and settings.force_codec is not None:
-        effective_force = (
-            settings.hevc_profile(backend=backend)
-            if settings.force_codec is VideoCodec.HEVC
-            else settings.av1_profile(backend=backend)
-        )
+        if settings.force_codec is VideoCodec.HEVC:
+            effective_force = settings.hevc_profile(backend=backend)
+        else:
+            effective_force = _av1_profile_for_backend(settings, backend)
     elif effective_force is not None and effective_force.backend is EncoderBackend.AUTO:
-        effective_force = EncodeProfile(
-            codec=effective_force.codec,
-            cq=effective_force.cq,
-            preset=effective_force.preset,
-            container_ext=effective_force.container_ext,
-            backend=backend,
-        )
+        if effective_force.codec is VideoCodec.AV1:
+            effective_force = _av1_profile_for_backend(settings, backend)
+        else:
+            effective_force = EncodeProfile(
+                codec=effective_force.codec,
+                cq=effective_force.cq,
+                preset=effective_force.preset,
+                container_ext=effective_force.container_ext,
+                backend=backend,
+            )
 
     if (
-        backend is EncoderBackend.GPU
-        and effective_force is not None
+        effective_force is not None
         and effective_force.codec is VideoCodec.AV1
-        and not has_av1_nvenc()
+        and effective_force.backend is EncoderBackend.CPU
+        and backend is EncoderBackend.GPU
     ):
-        raise ToolError(
-            "Force AV1 + encoder=gpu, но в FFmpeg нет av1_nvenc "
-            "(часто так на сборках без RTX 40xx / старых ветках). "
-            "Выберите HEVC, encoder=cpu/auto, или FFmpeg с av1_nvenc."
+        _log(
+            log,
+            "  AV1 via libsvtav1 (cpu) — av1_nvenc not in this FFmpeg build",
         )
 
     def _emit_phase(phase: str, local: float, speed: float | None = None) -> None:
@@ -259,25 +282,31 @@ def convert_video(
                 should_stop=should_stop,
             )
             _emit_phase("sample_hevc", 1.0)
-            can_av1 = backend is EncoderBackend.CPU or has_av1_nvenc()
-            if can_av1:
+            try:
+                av1_profile = _av1_profile_for_backend(settings, backend)
+            except ToolError as exc:
+                _log(log, f"  skip AV1 sample ({exc})")
+                av1_profile = None
+            if av1_profile is not None:
+                if (
+                    backend is EncoderBackend.GPU
+                    and av1_profile.backend is EncoderBackend.CPU
+                ):
+                    _log(
+                        log,
+                        "  AV1 sample via libsvtav1 (cpu) — no av1_nvenc in FFmpeg",
+                    )
                 av1 = run_sample(
                     input_path=input_path,
                     work_dir=work,
-                    profile=settings.av1_profile(backend=backend),
+                    profile=av1_profile,
                     settings=settings,
                     seek=seek,
                     log=log,
                     on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
                     should_stop=should_stop,
                 )
-                _emit_phase("sample_av1", 1.0)
-            else:
-                _log(
-                    log,
-                    "  skip AV1 sample (av1_nvenc not in this FFmpeg; HEVC-only race)",
-                )
-                _emit_phase("sample_av1", 1.0)
+            _emit_phase("sample_av1", 1.0)
 
         report = choose_winner(
             hevc=hevc,

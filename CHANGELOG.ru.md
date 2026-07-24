@@ -15,7 +15,14 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Fixed
 
-- Режим gpu принимает FFmpeg только с `hevc_nvenc` (без `av1_nvenc`, как у BtbN n7.1); sample AV1 в этом случае пропускается.
+### Removed
+
+## [0.1.5] — 2026-07-25
+
+### Fixed
+
+- Режим gpu больше не требует `av1_nvenc`. В bundled FFmpeg n7.1 есть HEVC NVENC; если `av1_nvenc` нет, race/encode AV1 идёт через **libsvtav1** (CPU) — AV1 остаётся доступен.
+- Старт GUI больше не врёт «NVENC недоступен» на сборках n7.1 только с `hevc_nvenc`.
 
 ## [0.1.4] — 2026-07-25
 
@@ -90,7 +97,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2

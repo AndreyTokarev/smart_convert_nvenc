@@ -102,6 +102,21 @@ def test_choose_winner_force(hevc_profile: EncodeProfile) -> None:
     assert report.worth_encoding is True
 
 
+def test_av1_profile_falls_back_to_cpu_without_av1_nvenc(
+    settings: ConvertSettings,
+) -> None:
+    from smart_convert_nvenc.pipeline import _av1_profile_for_backend
+
+    with (
+        patch("smart_convert_nvenc.pipeline.has_av1_nvenc", return_value=False),
+        patch("smart_convert_nvenc.pipeline.has_cpu_encoders", return_value=True),
+    ):
+        profile = _av1_profile_for_backend(settings, EncoderBackend.GPU)
+    assert profile.codec is VideoCodec.AV1
+    assert profile.backend is EncoderBackend.CPU
+    assert profile.cpu_encoder_name == "libsvtav1"
+
+
 def test_output_path_for(tmp_path: Path, hevc_profile: EncodeProfile) -> None:
     path = tmp_path / "lesson.mp4"
     assert output_path_for(path, hevc_profile).name == "lesson_nvenc_hevc.mp4"

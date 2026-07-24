@@ -109,8 +109,12 @@ def resolve_encoder_backend(
                 "Encoder=gpu, но NVENC недоступен (нужен hevc_nvenc). "
                 "Попробуйте --encoder auto или --encoder cpu."
             )
-        note = "encoder: gpu (NVENC hevc"
-        note += ", av1)" if av1 else "; av1_nvenc отсутствует — race только HEVC)"
+        if av1:
+            note = "encoder: gpu (NVENC hevc + av1)"
+        elif cpu:
+            note = "encoder: gpu (NVENC hevc; AV1 via libsvtav1 cpu — no av1_nvenc)"
+        else:
+            note = "encoder: gpu (NVENC hevc only; AV1 unavailable)"
         return EncoderBackend.GPU, note
 
     if requested is EncoderBackend.CPU:
@@ -122,8 +126,12 @@ def resolve_encoder_backend(
 
     if requested is EncoderBackend.AUTO:
         if nvenc:
-            note = "encoder: gpu (auto — NVENC hevc"
-            note += ", av1)" if av1 else "; no av1_nvenc)"
+            if av1:
+                note = "encoder: gpu (auto — NVENC hevc + av1)"
+            elif cpu:
+                note = "encoder: gpu (auto — NVENC hevc; AV1 via libsvtav1)"
+            else:
+                note = "encoder: gpu (auto — NVENC hevc only)"
             return EncoderBackend.GPU, note
         if cpu:
             return (
@@ -150,6 +158,8 @@ def validate_environment(
         enc_bits = ["hevc_nvenc"]
         if has_av1_nvenc(names):
             enc_bits.append("av1_nvenc")
+        elif has_cpu_encoders(names):
+            enc_bits.append("libsvtav1(av1-fallback)")
         lines.append("encoders: " + ", ".join(enc_bits))
     else:
         lines.append("encoders: libx265, libsvtav1")

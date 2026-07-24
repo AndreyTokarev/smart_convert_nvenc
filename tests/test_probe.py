@@ -76,14 +76,47 @@ def test_resolve_encoder_cpu_requires_libs() -> None:
         resolve_encoder_backend(EncoderBackend.CPU, encoders={"hevc_nvenc", "av1_nvenc"})
 
 
-def test_resolve_encoder_gpu_ok_and_missing() -> None:
-    names = {"hevc_nvenc"}  # av1_nvenc optional (absent on some FFmpeg builds)
-    backend, note = resolve_encoder_backend(EncoderBackend.GPU, encoders=names)
+def test_resolve_encoder_gpu_with_av1_nvenc() -> None:
+    backend, note = resolve_encoder_backend(
+        EncoderBackend.GPU,
+        encoders={"hevc_nvenc", "av1_nvenc"},
+    )
     assert backend is EncoderBackend.GPU
-    assert "gpu" in note
-    assert "av1_nvenc" in note or "HEVC" in note or "hevc" in note
-    with pytest.raises(ToolError, match="hevc_nvenc|NVENC"):
-        resolve_encoder_backend(EncoderBackend.GPU, encoders={"libx265", "libsvtav1"})
+    assert "av1" in note
+
+
+def test_resolve_encoder_gpu_hevc_only_no_cpu() -> None:
+    backend, note = resolve_encoder_backend(
+        EncoderBackend.GPU,
+        encoders={"hevc_nvenc"},
+    )
+    assert backend is EncoderBackend.GPU
+    assert "AV1 unavailable" in note
+
+
+def test_resolve_encoder_auto_with_hevc_and_svt() -> None:
+    backend, note = resolve_encoder_backend(
+        EncoderBackend.AUTO,
+        encoders={"hevc_nvenc", "libx265", "libsvtav1"},
+    )
+    assert backend is EncoderBackend.GPU
+    assert "libsvtav1" in note
+
+
+def test_validate_environment_lists_svt_fallback() -> None:
+    with (
+        patch("smart_convert_nvenc.probe.require_tools"),
+        patch(
+            "smart_convert_nvenc.probe.list_ffmpeg_encoders",
+            return_value={"hevc_nvenc", "libx265", "libsvtav1"},
+        ),
+        patch(
+            "smart_convert_nvenc.probe.describe_tools",
+            return_value=["ffmpeg: x (path)", "ffprobe: y (path)"],
+        ),
+    ):
+        lines = validate_environment(EncoderBackend.GPU)
+    assert any("libsvtav1" in line for line in lines)
 
 
 def test_resolve_encoder_cpu_ok() -> None:
