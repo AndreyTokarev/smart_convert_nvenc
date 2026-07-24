@@ -58,6 +58,7 @@ Media is **not** committed (gitignore contents of the default tree); only README
 
 - **Course** = directory `courses/inbox/<name>/` (recursive: videos, PDFs, code, subs, …).
 - Loose files directly under `inbox/` (not in a course folder) are out of scope for v1 (error + hint).
+- Ideal short folder name + optional `course.json` metadata/root marker: [ADR-0002](./0002-course-folder-naming.md). The pipeline treats the folder name as opaque identity and does not rename it.
 
 ### When a course “got smaller”
 

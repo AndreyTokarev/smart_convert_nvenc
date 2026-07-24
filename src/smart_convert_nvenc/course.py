@@ -144,6 +144,29 @@ def convert_course(
         f"Size: {_format_mb(original_size)}, videos: {len(videos)}, other files: {len(non_videos)}",
     )
 
+    if not videos:
+        _log(log, "No video files — pass-through inbox -> outbox (nothing to encode)")
+        if settings.dry_run:
+            return CourseResult(
+                name=name,
+                original_size=original_size,
+                final_size=original_size,
+                compressed_course=False,
+                outbox_path=out_course,
+                videos_compressed=0,
+                videos_total=0,
+            )
+        _move_path(course_dir, out_course)
+        return CourseResult(
+            name=name,
+            original_size=original_size,
+            final_size=original_size,
+            compressed_course=False,
+            outbox_path=out_course,
+            videos_compressed=0,
+            videos_total=0,
+        )
+
     if tmp_course.exists():
         _log(log, f"Cleaning leftover tmp: {tmp_course}")
         _safe_rmtree(tmp_course)
