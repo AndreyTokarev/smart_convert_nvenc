@@ -1,22 +1,30 @@
-# Документация smart_convert_nvenc
+# Документация / Documentation — smart_convert_nvenc
 
-## Зачем проект
+Лицензия: **MIT** ([LICENSE](../LICENSE)).
 
-Большой архив **видеокурсов** съедает диск; файлы могут дублироваться. Нужно **сжать архив** (читаемые слайды + разборчивая речь), убрать/найти дубликаты и освободить место под новые курсы — быстро, через **NVIDIA NVENC**.
+## User-facing guides
 
-Проект собран **с нуля** после опыта с личным `video_converter` (старый сервис остаётся справочником, не зависимостью).
+| | English | Русский |
+|--|---------|---------|
+| User guide | [en/USER_GUIDE.md](./en/USER_GUIDE.md) | [ru/USER_GUIDE.md](./ru/USER_GUIDE.md) |
+| Architecture | [en/ARCHITECTURE.md](./en/ARCHITECTURE.md) | [ru/ARCHITECTURE.md](./ru/ARCHITECTURE.md) |
 
-| Документ | Описание |
-|----------|----------|
-| [refactoring-plan.md](./refactoring-plan.md) | Цель, фазы, **журнал решений**, дорожная карта |
-| [feature-port-plan.md](./feature-port-plan.md) | План переноса проверенных фич из старого video_converter |
-| [adr/README.md](./adr/README.md) | ADR: архитектурные решения |
-| [adr/0001-course-inbox-outbox-tmp.md](./adr/0001-course-inbox-outbox-tmp.md) | Конвейер `courses/inbox` → `tmp` → `outbox` |
-| [adr/0002-course-folder-naming.md](./adr/0002-course-folder-naming.md) | Короткие имена папок + опциональный `course.json` (метаданные / маркер корня) |
-| [review-codec-advice.md](./review-codec-advice.md) | Рецензия исходного чата |
-| [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md) | Исходный чат с другой моделью |
+## Community / announcement
 
-Отметки по открытым вопросам кодека — в **Журнале решений** внутри [refactoring-plan.md](./refactoring-plan.md).  
-Решение по папкам курсов — в **ADR-0001**.  
-Схема имён папок курсов — в **ADR-0002**.  
-Что брать из прошлого сервиса — в **feature-port-plan**.
+- [community/VK_POST_EN.md](./community/VK_POST_EN.md) — English presentation post (VK / forums); replace `<REPO_URL>`
+
+## Design & history
+
+| Document | Description |
+|----------|-------------|
+| [refactoring-plan.md](./refactoring-plan.md) | Goal, decision journal (1B/2C/3A/4C), roadmap |
+| [feature-port-plan.md](./feature-port-plan.md) | Port plan from earlier video_converter (F1–F6) |
+| [adr/README.md](./adr/README.md) | Architecture Decision Records |
+| [adr/0001-course-inbox-outbox-tmp.md](./adr/0001-course-inbox-outbox-tmp.md) | Course pipeline `inbox → tmp → outbox` |
+| [adr/0002-course-folder-naming.md](./adr/0002-course-folder-naming.md) | Short folder names + optional `course.json` |
+| [review-codec-advice.md](./review-codec-advice.md) | Review of earlier codec chat |
+| [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md) | Source chat archive |
+
+## Project purpose (one paragraph)
+
+Free disk space from large **video course** libraries by GPU-encoding lessons with NVENC, deciding at **course** granularity, and publishing results through a safe outbox flow — without pretending sample size races are VMAF-equal quality.

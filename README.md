@@ -1,87 +1,74 @@
 # smart_convert_nvenc
 
-Сжимает архив **видеокурсов** через NVIDIA NVENC: на коротком сэмпле сравнивает HEVC и AV1, и если прогноз экономии достаточный — кодирует весь файл.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> MVP: один файл, CLI, без VMAF (сравнение size@CQ + дисклеймер). GUI / batch / дубликаты — позже. См. [docs/refactoring-plan.md](docs/refactoring-plan.md).
+Compress **video course archives** with **NVIDIA NVENC**: race HEVC vs AV1 on a short sample, full-encode only when it saves space, decide at the **course folder** level (`inbox → tmp → outbox`).
 
-## Требования
+Built as a **fast personal MVP**, now open source under **MIT**.
 
-- Windows + Python 3.12+
+| Language | Docs |
+|----------|------|
+| **English** | [docs/en/USER_GUIDE.md](docs/en/USER_GUIDE.md) · [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md) |
+| **Русский** | [docs/ru/USER_GUIDE.md](docs/ru/USER_GUIDE.md) · [docs/ru/ARCHITECTURE.md](docs/ru/ARCHITECTURE.md) |
+| Community post (EN) | [docs/community/VK_POST_EN.md](docs/community/VK_POST_EN.md) |
+
+## Why
+
+Online courses (screen + slides + speech) eat disk. You rarely need cinema-grade encodes — you need **readable slides**, **clear audio**, and **free space** for the next download. This tool batch-compresses whole course trees on an NVIDIA GPU.
+
+## Highlights
+
+- HEVC vs AV1 **sample race** + min-savings gate (honest size@CQ disclaimer, no VMAF in MVP)
+- Course pipeline: non-video files preserved; unprofitable courses pass through unchanged
+- CLI + CustomTkinter **GUI** (maximized, path pickers, session freed MiB / % / MiB/h)
+- Hard **Stop** (Windows process-tree kill), unique temp files, hwaccel retry
+- Skip videos already in HEVC/AV1
+- Windows sleep / pending-reboot guard while a job runs
+- Tests with **≥90%** coverage (GPU not required for CI)
+
+## Requirements
+
+- Windows 10/11 + Python 3.12+
 - [uv](https://github.com/astral-sh/uv)
-- FFmpeg с `hevc_nvenc` и `av1_nvenc` (RTX 40xx для AV1 encode)
-- NVIDIA-драйвер
-
-Проверка энкодеров:
+- FFmpeg with `hevc_nvenc` + `av1_nvenc` (RTX 40xx for AV1 encode)
+- NVIDIA driver
 
 ```powershell
 ffmpeg -hide_banner -encoders | findstr nvenc
 ```
 
-## Course folders (defaults)
-
-```text
-courses/inbox/    ← source courses (one folder per course)
-courses/tmp/      ← temporary encodes
-courses/outbox/   ← result
-```
-
-Also keep the machine awake and discourage Windows Update reboots while a job runs
-(`shutdown /a` + sleep block; GUI also registers a shutdown block reason).
-
-### Process a course
+## Quick start
 
 ```powershell
+git clone <REPO_URL> smart_convert_nvenc
+cd smart_convert_nvenc
+uv sync
+
 # GUI
 uv run smart-convert-gui
 
-# CLI: all courses in inbox
+# or CLI: all courses in courses/inbox
 uv run smart-convert-course
 
-# CLI: one course by folder name
-uv run smart-convert-course "[0000] Balance (full breakdown) [Jam Track Central] [Olly Steele]"
-```
-
-## Установка
-
-```powershell
-cd D:\projects\smart_convert_nvenc
-uv sync
-```
-
-## Запуск
-
-```powershell
+# single file
 uv run smart-convert "D:\path\to\lesson.mp4"
 ```
 
-Полезные флаги:
+Default layout:
 
-```powershell
-# только тест сэмпла
-uv run smart-convert lesson.mp4 --dry-run
-
-# сильнее жать / другой пресет
-uv run smart-convert lesson.mp4 --cq-hevc 30 --cq-av1 34 --preset p7
-
-# перекодировать речь в Opus 96k (по умолчанию звук copy)
-uv run smart-convert lesson.mp4 --audio opus:96
-
-# полный encode только если экономия ≥ 15%
-uv run smart-convert lesson.mp4 --min-savings 0.15
+```text
+courses/inbox/   ← drop course folders
+courses/tmp/     ← encode scratch
+courses/outbox/  ← results
 ```
 
-Итог: рядом с исходником появится `*_nvenc_hevc.mp4` или `*_nvenc_av1.mkv`. Исходник не удаляется.
+## License
 
-## Тесты
+[MIT](LICENSE) — free to use, modify, and redistribute.
 
-```powershell
-uv sync --group dev
-uv run pytest --cov=smart_convert_nvenc --cov-report=term-missing
-```
+## More documentation
 
-Порог покрытия — **≥90%** (`fail_under` в `pyproject.toml`). GUI и `__main__` в метрику не входят (без дисплея / entrypoint). GPU для тестов не нужен.
-
-## Документация
-
-- [docs/README.md](docs/README.md)
-- [docs/refactoring-plan.md](docs/refactoring-plan.md) — решения 1B / 2C / 3A / 4C
+- Index: [docs/README.md](docs/README.md)
+- Product decisions: [docs/refactoring-plan.md](docs/refactoring-plan.md)
+- Feature port roadmap: [docs/feature-port-plan.md](docs/feature-port-plan.md)
+- ADRs: [docs/adr/](docs/adr/)

@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--dry-run", action="store_true", help="Только бенчмарк сэмпла, без полного encode")
     p.add_argument("--keep-samples", action="store_true", help="Сохранить тестовые фрагменты рядом с файлом")
+    p.add_argument(
+        "--reencode-same-codec",
+        action="store_true",
+        help="Не пропускать файлы, которые уже HEVC/AV1 (или уже force-codec)",
+    )
     return p
 
 
@@ -76,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             force_codec=force,
             keep_samples=args.keep_samples,
+            skip_same_codec=not args.reencode_same_codec,
         )
         convert_one(args.input, settings, log=_safe_print)
         return 0

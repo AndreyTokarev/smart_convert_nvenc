@@ -1,24 +1,26 @@
 from __future__ import annotations
 
+import os
 import queue
 import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
 from .course import convert_course, iter_videos, list_course_dirs
 from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
+from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
 from .models import AudioSettings, ConvertSettings, VideoCodec
-from .paths import resolve_course_paths
+from .paths import CoursePaths, resolve_course_paths
 from .probe import ToolError, validate_environment
 from .progress import ProgressUpdate, clamp01
+from .session import SessionStats, format_gib_or_mib
 from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
 
 
-# Utility app palette — muted graphite, not purple/glow
 COLORS = {
     "bg": "#1a1d21",
     "panel": "#23282e",
@@ -42,11 +44,15 @@ class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Smart Convert NVENC")
-        self.geometry("1100x760")
-        self.minsize(920, 640)
+        self.geometry("1200x860")
+        self.minsize(1000, 720)
         self.configure(fg_color=COLORS["bg"])
+        # CustomTkinter resets state on Windows mainloop; delay maximize.
+        self.after(1, self.state, "zoomed")
 
-        self.paths = resolve_course_paths()
+        self._settings_path = default_settings_path()
+        self._gui_settings = load_gui_settings(self._settings_path)
+        self.paths = self._gui_settings.course_paths()
         self.paths.ensure()
         removed = cleanup_conversion_temps(self.paths.tmp)
         self._env_ok_lines: list[str] = []
@@ -65,6 +71,8 @@ class App(ctk.CTk):
         self._job_completed_videos = 0
         self._job_course_offsets: dict[str, int] = {}
         self._session_guard = WindowsSessionGuard()
+        self._path_widgets: list[object] = []
+        self._session_stats = SessionStats()
 
         self._font_ui = ctk.CTkFont(size=14)
         self._font_ui_bold = ctk.CTkFont(size=14, weight="bold")
@@ -74,13 +82,46 @@ class App(ctk.CTk):
         self._font_mono_sm = ctk.CTkFont(family="Consolas", size=12)
 
         self._build()
+        self._apply_loaded_encode_settings()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.refresh_courses()
         self.after(80, self._drain_logs)
+        self._app_log(f"Settings: {self._settings_path}")
         if removed:
             self._app_log(f"Cleaned {len(removed)} leftover conversion temp(s)")
         for line in self._env_ok_lines:
             self._app_log(f"env: {line}")
+
+    def _apply_loaded_encode_settings(self) -> None:
+        s = self._gui_settings
+        self.sample_var.set(s.sample_sec)
+        self.min_savings_var.set(s.min_savings)
+        self.cq_hevc_var.set(s.cq_hevc)
+        self.cq_av1_var.set(s.cq_av1)
+        self.preset_var.set(s.preset)
+        self.codec_var.set(s.codec if s.codec in {"auto", "hevc", "av1"} else "auto")
+        self.skip_same_codec_var.set(bool(s.skip_same_codec))
+        self.inbox_var.set(str(self.paths.inbox))
+        self.outbox_var.set(str(self.paths.outbox))
+        self.tmp_var.set(str(self.paths.tmp))
+
+    def _collect_gui_settings(self) -> GuiSettings:
+        return GuiSettings(
+            inbox=self.inbox_var.get().strip(),
+            outbox=self.outbox_var.get().strip(),
+            tmp=self.tmp_var.get().strip(),
+            sample_sec=self.sample_var.get().strip(),
+            min_savings=self.min_savings_var.get().strip(),
+            cq_hevc=self.cq_hevc_var.get().strip(),
+            cq_av1=self.cq_av1_var.get().strip(),
+            preset=self.preset_var.get().strip(),
+            codec=self.codec_var.get().strip(),
+            skip_same_codec=bool(self.skip_same_codec_var.get()),
+        )
+
+    def _persist_settings(self) -> None:
+        self._gui_settings = self._collect_gui_settings()
+        save_gui_settings(self._gui_settings, self._settings_path)
 
     def _on_close(self) -> None:
         if self._worker and self._worker.is_alive():
@@ -96,17 +137,17 @@ class App(ctk.CTk):
             self._session_guard.stop()
         else:
             self._session_guard.stop()
+        try:
+            self._persist_settings()
+        except OSError:
+            pass
         cleanup_conversion_temps(self.paths.tmp)
         self.destroy()
 
     def _build(self) -> None:
-        self.geometry("1200x820")
-        self.minsize(1000, 700)
-
         root = ctk.CTkFrame(self, fg_color=COLORS["bg"])
         root.pack(fill="both", expand=True, padx=14, pady=12)
 
-        # --- Header (compact) ---
         header = ctk.CTkFrame(root, fg_color="transparent")
         header.pack(fill="x", pady=(0, 8))
         ctk.CTkLabel(
@@ -122,15 +163,44 @@ class App(ctk.CTk):
             text_color=COLORS["ok"],
         )
         self.status.pack(side="right")
-        ctk.CTkLabel(
-            root,
-            text=f"inbox  {self.paths.inbox}    |    outbox  {self.paths.outbox}",
-            font=self._font_mono_sm,
-            text_color=COLORS["muted"],
-            anchor="w",
-        ).pack(fill="x", pady=(0, 8))
 
-        # --- Top: courses + settings (fixed-ish height, does not steal log space) ---
+        paths_panel = ctk.CTkFrame(root, fg_color=COLORS["panel"], corner_radius=10)
+        paths_panel.pack(fill="x", pady=(0, 8))
+        paths_head = ctk.CTkFrame(paths_panel, fg_color="transparent")
+        paths_head.pack(fill="x", padx=12, pady=(8, 4))
+        ctk.CTkLabel(
+            paths_head,
+            text="Folders",
+            font=self._font_ui_bold,
+            text_color=COLORS["text"],
+        ).pack(side="left")
+        path_btns = ctk.CTkFrame(paths_head, fg_color="transparent")
+        path_btns.pack(side="right")
+        for text, cmd in (
+            ("Courses root…", self._pick_courses_root),
+            ("Apply", self._apply_paths),
+            ("Defaults", self._reset_paths_defaults),
+        ):
+            btn = ctk.CTkButton(
+                path_btns,
+                text=text,
+                width=110,
+                height=28,
+                font=self._font_ui,
+                fg_color=COLORS["panel2"],
+                hover_color=COLORS["border"],
+                command=cmd,
+            )
+            btn.pack(side="left", padx=(6, 0))
+            self._path_widgets.append(btn)
+
+        self.inbox_var = tk.StringVar()
+        self.outbox_var = tk.StringVar()
+        self.tmp_var = tk.StringVar()
+        self._path_row(paths_panel, "inbox", self.inbox_var, self._browse_inbox)
+        self._path_row(paths_panel, "outbox", self.outbox_var, self._browse_outbox)
+        self._path_row(paths_panel, "tmp", self.tmp_var, self._browse_tmp)
+
         top = ctk.CTkFrame(root, fg_color="transparent", height=220)
         top.pack(fill="x", pady=(0, 8))
         top.pack_propagate(False)
@@ -167,6 +237,8 @@ class App(ctk.CTk):
             ("Refresh", self.refresh_courses),
             ("Select all", self._select_all),
             ("Clear", self._select_none),
+            ("Open inbox", self._open_inbox),
+            ("Open outbox", self._open_outbox),
         ):
             ctk.CTkButton(
                 course_btns,
@@ -195,6 +267,7 @@ class App(ctk.CTk):
         self.cq_av1_var = tk.StringVar(value="32")
         self.preset_var = tk.StringVar(value="p6")
         self.codec_var = tk.StringVar(value="auto")
+        self.skip_same_codec_var = tk.BooleanVar(value=True)
 
         fields = ctk.CTkFrame(settings_panel, fg_color="transparent")
         fields.pack(fill="x", padx=4)
@@ -226,6 +299,20 @@ class App(ctk.CTk):
             button_hover_color=COLORS["accent"],
         ).pack(side="left")
 
+        skip_row = ctk.CTkFrame(fields, fg_color="transparent")
+        skip_row.pack(fill="x", padx=10, pady=(4, 2))
+        ctk.CTkCheckBox(
+            skip_row,
+            text="Skip if already HEVC/AV1",
+            variable=self.skip_same_codec_var,
+            font=self._font_ui,
+            text_color=COLORS["text"],
+            fg_color=COLORS["accent"],
+            hover_color=COLORS["accent_hover"],
+            border_color=COLORS["border"],
+            checkmark_color="#ffffff",
+        ).pack(anchor="w")
+
         action = ctk.CTkFrame(settings_panel, fg_color="transparent")
         action.pack(fill="x", padx=12, pady=(6, 10), side="bottom")
         self.start_btn = ctk.CTkButton(
@@ -250,7 +337,7 @@ class App(ctk.CTk):
         self.start_all_btn.pack(fill="x", pady=(0, 4))
         self.stop_btn = ctk.CTkButton(
             action,
-            text="Stop after current video",
+            text="Stop",
             height=30,
             font=self._font_ui,
             fg_color=COLORS["danger"],
@@ -260,7 +347,6 @@ class App(ctk.CTk):
         )
         self.stop_btn.pack(fill="x")
 
-        # --- Progress (compact) ---
         progress_box = ctk.CTkFrame(root, fg_color=COLORS["panel"], corner_radius=10)
         progress_box.pack(fill="x", pady=(0, 8))
 
@@ -295,10 +381,40 @@ class App(ctk.CTk):
             progress_color=COLORS["ok"],
             fg_color=COLORS["panel2"],
         )
-        self.job_bar.pack(fill="x", padx=12, pady=(0, 8))
+        self.job_bar.pack(fill="x", padx=12, pady=(0, 6))
         self.job_bar.set(0)
 
-        # --- Logs take ALL remaining vertical space ---
+        savings = ctk.CTkFrame(progress_box, fg_color="transparent")
+        savings.pack(fill="x", padx=12, pady=(0, 10))
+        savings.grid_columnconfigure(0, weight=1)
+        savings.grid_columnconfigure(1, weight=1)
+        savings.grid_columnconfigure(2, weight=1)
+
+        self.last_course_label = ctk.CTkLabel(
+            savings,
+            text="Last course: —",
+            anchor="w",
+            font=self._font_ui,
+            text_color=COLORS["text"],
+        )
+        self.last_course_label.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self.session_freed_label = ctk.CTkLabel(
+            savings,
+            text="Session freed: 0 MiB",
+            anchor="w",
+            font=self._font_ui_bold,
+            text_color=COLORS["ok"],
+        )
+        self.session_freed_label.grid(row=0, column=1, sticky="ew", padx=(0, 8))
+        self.session_rate_label = ctk.CTkLabel(
+            savings,
+            text="0%",
+            anchor="e",
+            font=self._font_ui,
+            text_color=COLORS["muted"],
+        )
+        self.session_rate_label.grid(row=0, column=2, sticky="ew")
+
         logs = ctk.CTkFrame(root, fg_color="transparent")
         logs.pack(fill="both", expand=True)
         logs.grid_columnconfigure(0, weight=1)
@@ -351,6 +467,45 @@ class App(ctk.CTk):
         )
         self.ff_log.grid(row=2, column=0, sticky="nsew", padx=10, pady=(0, 10))
 
+    def _path_row(
+        self,
+        parent: ctk.CTkFrame,
+        label: str,
+        var: tk.StringVar,
+        browse_cmd: object,
+    ) -> None:
+        row = ctk.CTkFrame(parent, fg_color="transparent")
+        row.pack(fill="x", padx=12, pady=2)
+        ctk.CTkLabel(
+            row,
+            text=label,
+            width=56,
+            anchor="w",
+            font=self._font_ui,
+            text_color=COLORS["muted"],
+        ).pack(side="left")
+        entry = ctk.CTkEntry(
+            row,
+            textvariable=var,
+            height=28,
+            font=self._font_mono_sm,
+            fg_color=COLORS["panel2"],
+            border_color=COLORS["border"],
+        )
+        entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        btn = ctk.CTkButton(
+            row,
+            text="Browse…",
+            width=88,
+            height=28,
+            font=self._font_ui,
+            fg_color=COLORS["panel2"],
+            hover_color=COLORS["border"],
+            command=browse_cmd,
+        )
+        btn.pack(side="left")
+        self._path_widgets.extend([entry, btn])
+
     def _row(self, parent: ctk.CTkFrame, label: str, var: tk.StringVar) -> None:
         row = ctk.CTkFrame(parent, fg_color="transparent")
         row.pack(fill="x", padx=10, pady=2)
@@ -372,6 +527,103 @@ class App(ctk.CTk):
             border_color=COLORS["border"],
         ).pack(side="left")
 
+    def _busy(self) -> bool:
+        return bool(self._worker and self._worker.is_alive())
+
+    def _browse_folder(self, title: str, current: str) -> Path | None:
+        initial = current if Path(current).is_dir() else str(Path.home())
+        chosen = filedialog.askdirectory(title=title, initialdir=initial, mustexist=True)
+        if not chosen:
+            return None
+        return Path(chosen)
+
+    def _browse_inbox(self) -> None:
+        path = self._browse_folder("Select inbox folder", self.inbox_var.get())
+        if path:
+            self.inbox_var.set(str(path.resolve()))
+
+    def _browse_outbox(self) -> None:
+        path = self._browse_folder("Select outbox folder", self.outbox_var.get())
+        if path:
+            self.outbox_var.set(str(path.resolve()))
+
+    def _browse_tmp(self) -> None:
+        path = self._browse_folder("Select tmp folder", self.tmp_var.get())
+        if path:
+            self.tmp_var.set(str(path.resolve()))
+
+    def _pick_courses_root(self) -> None:
+        if self._busy():
+            messagebox.showwarning("Smart Convert", "Stop the job before changing folders.")
+            return
+        path = self._browse_folder(
+            "Select courses root (inbox/outbox/tmp inside)",
+            self.inbox_var.get(),
+        )
+        if not path:
+            return
+        resolved = resolve_course_paths(courses_root=path)
+        self.inbox_var.set(str(resolved.inbox))
+        self.outbox_var.set(str(resolved.outbox))
+        self.tmp_var.set(str(resolved.tmp))
+        self._apply_paths()
+
+    def _reset_paths_defaults(self) -> None:
+        if self._busy():
+            messagebox.showwarning("Smart Convert", "Stop the job before changing folders.")
+            return
+        defaults = resolve_course_paths()
+        self.inbox_var.set(str(defaults.inbox))
+        self.outbox_var.set(str(defaults.outbox))
+        self.tmp_var.set(str(defaults.tmp))
+        self._apply_paths()
+
+    def _apply_paths(self) -> None:
+        if self._busy():
+            messagebox.showwarning("Smart Convert", "Stop the job before changing folders.")
+            return
+        inbox = self.inbox_var.get().strip()
+        outbox = self.outbox_var.get().strip()
+        tmp = self.tmp_var.get().strip()
+        if not inbox or not outbox or not tmp:
+            messagebox.showerror("Smart Convert", "inbox, outbox and tmp must all be set.")
+            return
+        new_paths = CoursePaths(
+            inbox=Path(inbox).expanduser().resolve(),
+            outbox=Path(outbox).expanduser().resolve(),
+            tmp=Path(tmp).expanduser().resolve(),
+        )
+        try:
+            new_paths.ensure()
+        except OSError as exc:
+            messagebox.showerror("Smart Convert", f"Cannot create folders: {exc}")
+            return
+        self.paths = new_paths
+        self.inbox_var.set(str(new_paths.inbox))
+        self.outbox_var.set(str(new_paths.outbox))
+        self.tmp_var.set(str(new_paths.tmp))
+        try:
+            self._persist_settings()
+        except OSError as exc:
+            messagebox.showerror("Smart Convert", f"Cannot save settings: {exc}")
+            return
+        cleanup_conversion_temps(self.paths.tmp)
+        self._app_log(f"Paths applied. inbox={self.paths.inbox}")
+        self.refresh_courses()
+
+    def _open_in_explorer(self, path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+        try:
+            os.startfile(path)  # type: ignore[attr-defined]
+        except OSError as exc:
+            messagebox.showerror("Smart Convert", str(exc))
+
+    def _open_inbox(self) -> None:
+        self._open_in_explorer(self.paths.inbox)
+
+    def _open_outbox(self) -> None:
+        self._open_in_explorer(self.paths.outbox)
+
     def refresh_courses(self) -> None:
         for child in self.course_list.winfo_children():
             child.destroy()
@@ -381,7 +633,7 @@ class App(ctk.CTk):
         if not courses:
             ctk.CTkLabel(
                 self.course_list,
-                text="Inbox is empty — drop course folders into courses/inbox",
+                text="Inbox is empty — drop course folders into the inbox path",
                 font=self._font_ui,
                 text_color=COLORS["muted"],
             ).pack(anchor="w", padx=8, pady=12)
@@ -490,6 +742,7 @@ class App(ctk.CTk):
             preset=self.preset_var.get().strip(),
             audio=AudioSettings.parse("copy"),
             force_codec=force,
+            skip_same_codec=bool(self.skip_same_codec_var.get()),
         )
 
     def _selected_courses(self) -> list[Path]:
@@ -526,6 +779,11 @@ class App(ctk.CTk):
         self.start_btn.configure(state=state_idle)
         self.start_all_btn.configure(state=state_idle)
         self.stop_btn.configure(state=state_run)
+        for widget in self._path_widgets:
+            try:
+                widget.configure(state=state_idle)
+            except tk.TclError:
+                pass
 
     def _run(self, courses: list[Path]) -> None:
         if self._worker and self._worker.is_alive():
@@ -534,12 +792,18 @@ class App(ctk.CTk):
 
         try:
             settings = self._settings()
+            self._persist_settings()
         except ValueError as exc:
             messagebox.showerror("Smart Convert", f"Bad settings: {exc}")
+            return
+        except OSError as exc:
+            messagebox.showerror("Smart Convert", f"Cannot save settings: {exc}")
             return
 
         self._stop.clear()
         self._set_running(True)
+        self._session_stats = SessionStats()
+        self._refresh_savings_labels()
         self._job_total_videos = sum(len(iter_videos(c)) for c in courses)
         self._job_completed_videos = 0
         self._job_course_offsets = {}
@@ -585,7 +849,7 @@ class App(ctk.CTk):
                     self._ff_log(f"--- course: {course.name} ---", replace_live=False)
 
                     try:
-                        convert_course(
+                        result = convert_course(
                             course,
                             self.paths,
                             settings,
@@ -595,6 +859,19 @@ class App(ctk.CTk):
                             on_progress=self._emit_progress,
                             should_stop=self._stop.is_set,
                         )
+                        item = self._session_stats.add_course(
+                            result.name,
+                            result.original_size,
+                            result.final_size,
+                        )
+                        self._app_log(
+                            f"Course result: {result.name}: "
+                            f"{format_gib_or_mib(result.original_size)} → "
+                            f"{format_gib_or_mib(result.final_size)} "
+                            f"(freed {format_gib_or_mib(item.freed_bytes)}, "
+                            f"{item.ratio * 100:.1f}%)"
+                        )
+                        self.after(0, self._refresh_savings_labels)
                     except FFmpegCancelled:
                         self._app_log("Stopped by user.")
                         break
@@ -613,6 +890,9 @@ class App(ctk.CTk):
                             f"Job: {self._job_total_videos}/{self._job_total_videos} videos (100%)",
                         )
                     )
+                if self._session_stats.courses:
+                    self._app_log(self._session_stats.summary_line())
+                    self.after(0, self._refresh_savings_labels)
             except (
                 ToolError,
                 FileNotFoundError,
@@ -630,10 +910,7 @@ class App(ctk.CTk):
             finally:
                 cleanup_conversion_temps(self.paths.tmp)
                 self.after(0, self._session_guard.stop)
-                self.after(
-                    0,
-                    lambda: self._app_log("Windows guard OFF"),
-                )
+                self.after(0, lambda: self._app_log("Windows guard OFF"))
                 self.after(0, lambda: self._set_running(False))
                 self.after(0, self.refresh_courses)
                 self.after(
@@ -644,6 +921,28 @@ class App(ctk.CTk):
 
         self._worker = threading.Thread(target=worker, daemon=True)
         self._worker.start()
+
+    def _refresh_savings_labels(self) -> None:
+        stats = self._session_stats
+        last = stats.last_course()
+        if last is None:
+            self.last_course_label.configure(text="Last course: —")
+        else:
+            self.last_course_label.configure(
+                text=(
+                    f"Last: {format_gib_or_mib(last.freed_bytes)} freed "
+                    f"({last.ratio * 100:.1f}%)"
+                )
+            )
+        self.session_freed_label.configure(
+            text=f"Session freed: {format_gib_or_mib(stats.freed_bytes)}"
+        )
+        if stats.courses:
+            self.session_rate_label.configure(
+                text=f"{stats.ratio * 100:.1f}% · {stats.mib_per_hour:.0f} MiB/h"
+            )
+        else:
+            self.session_rate_label.configure(text="—")
 
 
 def main() -> int:

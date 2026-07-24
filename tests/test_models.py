@@ -8,6 +8,8 @@ from smart_convert_nvenc.models import (
     ConvertSettings,
     EncodeProfile,
     VideoCodec,
+    already_target_codec,
+    probe_codec_is,
 )
 
 
@@ -44,3 +46,16 @@ def test_convert_settings_profiles(settings: ConvertSettings) -> None:
     assert av1.codec is VideoCodec.AV1
     assert av1.cq == settings.av1_cq
     assert av1.container_ext == ".mkv"
+    assert settings.skip_same_codec is True
+
+
+def test_probe_codec_helpers() -> None:
+    assert probe_codec_is("hevc", VideoCodec.HEVC)
+    assert probe_codec_is("hvc1", VideoCodec.HEVC)
+    assert probe_codec_is("av01", VideoCodec.AV1)
+    assert not probe_codec_is("h264", VideoCodec.HEVC)
+    assert already_target_codec("h264") is None
+    assert already_target_codec("hevc") is VideoCodec.HEVC
+    assert already_target_codec("av1") is VideoCodec.AV1
+    assert already_target_codec("hevc", force=VideoCodec.AV1) is None
+    assert already_target_codec("hevc", force=VideoCodec.HEVC) is VideoCodec.HEVC

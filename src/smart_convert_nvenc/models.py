@@ -10,6 +10,47 @@ class VideoCodec(str, Enum):
     AV1 = "av1"
 
 
+# ffprobe codec_name values that count as already-encoded targets
+_HEVC_PROBE_NAMES = frozenset({"hevc", "h265", "hev1", "hvc1"})
+_AV1_PROBE_NAMES = frozenset({"av1", "av01"})
+
+
+def normalize_probe_codec(name: str | None) -> str | None:
+    if not name:
+        return None
+    return name.strip().lower()
+
+
+def probe_codec_is(name: str | None, codec: VideoCodec) -> bool:
+    normalized = normalize_probe_codec(name)
+    if normalized is None:
+        return False
+    if codec is VideoCodec.HEVC:
+        return normalized in _HEVC_PROBE_NAMES
+    if codec is VideoCodec.AV1:
+        return normalized in _AV1_PROBE_NAMES
+    raise AssertionError(f"Unhandled codec: {codec}")
+
+
+def already_target_codec(
+    probe_name: str | None,
+    *,
+    force: VideoCodec | None = None,
+) -> VideoCodec | None:
+    """If source is already a codec we would keep, return that codec; else None.
+
+    - force set → skip only when source matches that codec
+    - auto → skip when source is already HEVC or AV1
+    """
+    if force is not None:
+        return force if probe_codec_is(probe_name, force) else None
+    if probe_codec_is(probe_name, VideoCodec.HEVC):
+        return VideoCodec.HEVC
+    if probe_codec_is(probe_name, VideoCodec.AV1):
+        return VideoCodec.AV1
+    return None
+
+
 class AudioMode(str, Enum):
     COPY = "copy"
     AAC = "aac"
@@ -68,6 +109,7 @@ class ConvertSettings:
     dry_run: bool = False
     force_codec: VideoCodec | None = None
     keep_samples: bool = False
+    skip_same_codec: bool = True
 
     def hevc_profile(self) -> EncodeProfile:
         return EncodeProfile(

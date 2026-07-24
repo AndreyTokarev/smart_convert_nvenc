@@ -154,7 +154,36 @@ def test_convert_course_assemble_compressed(
     assert "encode" in progress_events
 
 
-def test_convert_course_outbox_exists(course_layout: CoursePaths, settings: ConvertSettings) -> None:
+def test_convert_course_no_videos_passthrough(
+    course_layout: CoursePaths, settings: ConvertSettings
+) -> None:
+    course = course_layout.inbox / "PdfOnly"
+    course.mkdir()
+    (course / "doc.pdf").write_bytes(b"x" * 500)
+    with patch("smart_convert_nvenc.course.require_nvenc"):
+        result = convert_course(course, course_layout, settings)
+    assert result.videos_total == 0
+    assert result.compressed_course is False
+    assert (course_layout.outbox / "PdfOnly" / "doc.pdf").exists()
+
+
+def test_convert_course_no_videos_dry_run(
+    course_layout: CoursePaths, settings: ConvertSettings
+) -> None:
+    course = course_layout.inbox / "PdfOnly"
+    course.mkdir()
+    (course / "doc.pdf").write_bytes(b"x" * 500)
+    dry = ConvertSettings(
+        sample_seconds=settings.sample_seconds,
+        min_savings=0.10,
+        dry_run=True,
+        audio=settings.audio,
+    )
+    with patch("smart_convert_nvenc.course.require_nvenc"):
+        result = convert_course(course, course_layout, dry)
+    assert course.exists()
+    assert result.videos_total == 0
+
     course = _make_course(course_layout.inbox, "Clash")
     (course_layout.outbox / "Clash").mkdir()
     with (

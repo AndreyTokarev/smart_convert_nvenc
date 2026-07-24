@@ -215,7 +215,59 @@ def test_convert_video_reject_weak_full(tmp_path: Path, settings: ConvertSetting
     assert decision.output == src.resolve()
 
 
-def test_convert_video_cancelled(tmp_path: Path, settings: ConvertSettings) -> None:
+def test_convert_video_skips_already_hevc(tmp_path: Path, settings: ConvertSettings) -> None:
+    src = tmp_path / "a.mp4"
+    src.write_bytes(b"x" * 1000)
+    info = MediaInfo(
+        path=str(src),
+        size_bytes=1000,
+        duration_sec=50.0,
+        video_codec="hevc",
+        width=640,
+        height=360,
+        has_audio=True,
+    )
+    with (
+        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
+        patch("smart_convert_nvenc.pipeline.encode_file") as encode,
+    ):
+        decision = convert_video(src, settings)
+    assert decision.compressed is False
+    encode.assert_not_called()
+
+
+def test_convert_video_force_av1_does_not_skip_hevc(
+    tmp_path: Path, settings: ConvertSettings
+) -> None:
+    src = tmp_path / "a.mp4"
+    src.write_bytes(b"x" * 1000)
+    info = MediaInfo(
+        path=str(src),
+        size_bytes=1000,
+        duration_sec=50.0,
+        video_codec="hevc",
+        width=640,
+        height=360,
+        has_audio=True,
+    )
+    forced = ConvertSettings(
+        sample_seconds=settings.sample_seconds,
+        min_savings=0.10,
+        dry_run=True,
+        force_codec=VideoCodec.AV1,
+        audio=settings.audio,
+        skip_same_codec=True,
+    )
+    with (
+        patch("smart_convert_nvenc.pipeline.require_nvenc"),
+        patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
+    ):
+        decision = convert_video(src, forced)
+    assert decision.compressed is True
+    assert decision.profile is not None
+    assert decision.profile.codec is VideoCodec.AV1
+
     src = tmp_path / "a.mp4"
     src.write_bytes(b"x")
     with (

@@ -15,6 +15,7 @@ from .models import (
     SampleResult,
     VideoCodec,
     VideoDecision,
+    already_target_codec,
 )
 from .probe import probe_media, require_nvenc
 from .progress import clamp01, parse_ffmpeg_time_seconds
@@ -159,13 +160,31 @@ def convert_video(
             else settings.av1_profile()
         )
 
-    seek = sample_seek_seconds(info, settings)
-    sample_len = min(settings.sample_seconds, info.duration_sec)
-    racing = effective_force is None
-
     def _emit_phase(phase: str, local: float) -> None:
         if on_phase_progress:
             on_phase_progress(phase, clamp01(local))
+
+    if settings.skip_same_codec:
+        target = effective_force.codec if effective_force is not None else None
+        matched = already_target_codec(info.video_codec, force=target)
+        if matched is not None:
+            _log(
+                log,
+                f"  skip encode (already {matched.value}: {info.video_codec})",
+            )
+            _emit_phase("done", 1.0)
+            return VideoDecision(
+                source=input_path,
+                original_size=info.size_bytes,
+                compressed=False,
+                output=input_path,
+                profile=None,
+                projected_or_final_size=info.size_bytes,
+            )
+
+    seek = sample_seek_seconds(info, settings)
+    sample_len = min(settings.sample_seconds, info.duration_sec)
+    racing = effective_force is None
 
     def _make_ffmpeg_cb(phase: str, duration: float) -> Callable[[str], None] | None:
         if not on_ffmpeg_progress and not on_phase_progress and not show_encode_progress:

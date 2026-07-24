@@ -50,6 +50,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Race HEVC vs AV1 on every video (default: race once, reuse winner)",
     )
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument(
+        "--reencode-same-codec",
+        action="store_true",
+        help="Do not skip videos already in HEVC/AV1 (or the forced codec)",
+    )
     return p
 
 
@@ -92,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
             audio=audio,
             dry_run=args.dry_run,
             force_codec=force,
+            skip_same_codec=not args.reencode_same_codec,
         )
 
         if args.course:
