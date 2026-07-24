@@ -303,11 +303,13 @@ def test_convert_video_force_av1_does_not_skip_hevc(
     with (
         patch("smart_convert_nvenc.pipeline.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         patch("smart_convert_nvenc.pipeline.probe_media", return_value=info),
+        patch("smart_convert_nvenc.pipeline.has_av1_nvenc", return_value=True),
     ):
         decision = convert_video(src, forced)
     assert decision.compressed is True
     assert decision.profile is not None
     assert decision.profile.codec is VideoCodec.AV1
+    assert decision.profile.backend is EncoderBackend.GPU
 
     src = tmp_path / "a.mp4"
     src.write_bytes(b"x")
