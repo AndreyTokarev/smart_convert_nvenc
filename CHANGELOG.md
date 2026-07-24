@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-### Removed
+- GPU mode accepts FFmpeg builds that only expose `hevc_nvenc` (no `av1_nvenc`, e.g. BtbN n7.1); AV1 sample is skipped in that case.
 
 ## [0.1.4] — 2026-07-25
 

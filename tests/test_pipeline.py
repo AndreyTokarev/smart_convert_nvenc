@@ -69,6 +69,25 @@ def test_choose_winner_skip_low_savings(hevc_profile: EncodeProfile, av1_profile
     assert report.worth_encoding is False
 
 
+def test_choose_winner_hevc_only(hevc_profile: EncodeProfile) -> None:
+    report = choose_winner(
+        hevc=SampleResult(
+            profile=hevc_profile,
+            path="h.mp4",
+            size_bytes=100,
+            elapsed_sec=1.0,
+        ),
+        av1=None,
+        original_bytes=10_000,
+        duration_sec=100.0,
+        sample_seconds=10.0,
+        min_savings=0.10,
+        force_profile=None,
+    )
+    assert report.winner is hevc_profile
+    assert report.worth_encoding is True
+
+
 def test_choose_winner_force(hevc_profile: EncodeProfile) -> None:
     report = choose_winner(
         hevc=None,

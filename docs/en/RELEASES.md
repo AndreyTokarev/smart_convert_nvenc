@@ -25,6 +25,22 @@ Each zip includes:
 - **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, downloaded at build time from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
 - **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
 
+## Why three commands / why the zip used to have three exes
+
+The app has **three jobs**:
+
+| Job | From source (`uv`) | Release zip (v0.1.4+) |
+|-----|--------------------|------------------------|
+| One video file | `uv run smart-convert …` | `smart-convert video.mp4 …` |
+| Course inbox→outbox | `uv run smart-convert-course …` | `smart-convert course …` |
+| Desktop GUI | `uv run smart-convert-gui` | `smart-convert` / `smart-convert gui` |
+
+Those map to three `[project.scripts]` entry points in `pyproject.toml` (`cli`, `course_cli`, `gui`). That is convenient when developing with `uv`: each command stays small and does not force-load the GUI stack for a simple CLI run.
+
+**Through v0.1.3**, the release zip mirrored that 1:1 — PyInstaller built **three** one-file binaries (`smart-convert`, `smart-convert-course`, `smart-convert-gui`). Same code, three wrappers; the zip looked cluttered and ~tripled download size for little gain for end users.
+
+**From v0.1.4**, the zip ships **one** `smart-convert` binary with a small launcher that dispatches by argv (GUI by default). The three `uv run …` scripts remain for source installs.
+
 ## FFmpeg in the zip
 
 - Win/Linux release zips **include** a recent FFmpeg under `ffmpeg/bin/`. The app prefers that over PATH (`SMART_CONVERT_FFMPEG_DIR` can override).

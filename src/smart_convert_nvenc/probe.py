@@ -56,9 +56,19 @@ def list_ffmpeg_encoders() -> set[str]:
     return names
 
 
-def has_nvenc(encoders: set[str] | None = None) -> bool:
+def has_hevc_nvenc(encoders: set[str] | None = None) -> bool:
     names = encoders if encoders is not None else list_ffmpeg_encoders()
-    return "hevc_nvenc" in names and "av1_nvenc" in names
+    return "hevc_nvenc" in names
+
+
+def has_av1_nvenc(encoders: set[str] | None = None) -> bool:
+    names = encoders if encoders is not None else list_ffmpeg_encoders()
+    return "av1_nvenc" in names
+
+
+def has_nvenc(encoders: set[str] | None = None) -> bool:
+    """True if GPU encode is usable. HEVC NVENC is enough (AV1 NVENC is optional)."""
+    return has_hevc_nvenc(encoders)
 
 
 def has_cpu_encoders(encoders: set[str] | None = None) -> bool:
@@ -69,8 +79,7 @@ def has_cpu_encoders(encoders: set[str] | None = None) -> bool:
 def require_nvenc() -> None:
     if not has_nvenc():
         raise ToolError(
-            "FFmpeg без нужных NVENC-энкодеров: hevc_nvenc, av1_nvenc. "
-            "Нужна сборка с NVENC и GPU RTX 40xx (для AV1 encode), "
+            "FFmpeg без hevc_nvenc. Нужна сборка с NVENC и драйвер NVIDIA, "
             "либо используйте --encoder cpu / auto."
         )
 
@@ -92,14 +101,17 @@ def resolve_encoder_backend(
     names = encoders if encoders is not None else list_ffmpeg_encoders()
     nvenc = has_nvenc(names)
     cpu = has_cpu_encoders(names)
+    av1 = has_av1_nvenc(names)
 
     if requested is EncoderBackend.GPU:
         if not nvenc:
             raise ToolError(
-                "Encoder=gpu, но NVENC недоступен (нужны hevc_nvenc и av1_nvenc). "
+                "Encoder=gpu, но NVENC недоступен (нужен hevc_nvenc). "
                 "Попробуйте --encoder auto или --encoder cpu."
             )
-        return EncoderBackend.GPU, "encoder: gpu (NVENC)"
+        note = "encoder: gpu (NVENC hevc"
+        note += ", av1)" if av1 else "; av1_nvenc отсутствует — race только HEVC)"
+        return EncoderBackend.GPU, note
 
     if requested is EncoderBackend.CPU:
         if not cpu:
@@ -110,14 +122,16 @@ def resolve_encoder_backend(
 
     if requested is EncoderBackend.AUTO:
         if nvenc:
-            return EncoderBackend.GPU, "encoder: gpu (auto — NVENC available)"
+            note = "encoder: gpu (auto — NVENC hevc"
+            note += ", av1)" if av1 else "; no av1_nvenc)"
+            return EncoderBackend.GPU, note
         if cpu:
             return (
                 EncoderBackend.CPU,
                 "encoder: cpu (auto-fallback — NVENC unavailable)",
             )
         raise ToolError(
-            "Encoder=auto: нет ни NVENC (hevc_nvenc/av1_nvenc), "
+            "Encoder=auto: нет ни NVENC (hevc_nvenc), "
             "ни CPU (libx265/libsvtav1)."
         )
 
@@ -133,7 +147,10 @@ def validate_environment(
     resolved, note = resolve_encoder_backend(encoder, encoders=names)
     lines = [*describe_tools(), note]
     if resolved is EncoderBackend.GPU:
-        lines.append("encoders: hevc_nvenc, av1_nvenc")
+        enc_bits = ["hevc_nvenc"]
+        if has_av1_nvenc(names):
+            enc_bits.append("av1_nvenc")
+        lines.append("encoders: " + ", ".join(enc_bits))
     else:
         lines.append("encoders: libx265, libsvtav1")
     return lines

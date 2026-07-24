@@ -15,7 +15,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Fixed
 
-### Removed
+- Режим gpu принимает FFmpeg только с `hevc_nvenc` (без `av1_nvenc`, как у BtbN n7.1); sample AV1 в этом случае пропускается.
 
 ## [0.1.4] — 2026-07-25
 

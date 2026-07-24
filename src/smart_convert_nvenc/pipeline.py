@@ -18,7 +18,7 @@ from .models import (
     VideoDecision,
     already_target_codec,
 )
-from .probe import probe_media, resolve_encoder_backend
+from .probe import has_av1_nvenc, probe_media, resolve_encoder_backend, ToolError
 from .progress import clamp01, parse_ffmpeg_speed, parse_ffmpeg_time_seconds
 
 
@@ -106,8 +106,16 @@ def choose_winner(
             disclaimer=DISCLAIMER_SIZE_AT_CQ,
         )
 
-    assert hevc is not None and av1 is not None
-    winner_sample = av1 if av1.size_bytes < hevc.size_bytes else hevc
+    if hevc is None and av1 is None:
+        raise ValueError("Need at least one sample result (hevc and/or av1)")
+    if hevc is None:
+        winner_sample = av1
+        assert winner_sample is not None
+    elif av1 is None:
+        winner_sample = hevc
+    else:
+        winner_sample = av1 if av1.size_bytes < hevc.size_bytes else hevc
+
     scale = duration_sec / sample_seconds if sample_seconds > 0 else 1.0
     projected = int(winner_sample.size_bytes * scale)
     savings = 1.0 - (projected / original_bytes) if original_bytes > 0 else 0.0
@@ -179,6 +187,18 @@ def convert_video(
             backend=backend,
         )
 
+    if (
+        backend is EncoderBackend.GPU
+        and effective_force is not None
+        and effective_force.codec is VideoCodec.AV1
+        and not has_av1_nvenc()
+    ):
+        raise ToolError(
+            "Force AV1 + encoder=gpu, но в FFmpeg нет av1_nvenc "
+            "(часто так на сборках без RTX 40xx / старых ветках). "
+            "Выберите HEVC, encoder=cpu/auto, или FFmpeg с av1_nvenc."
+        )
+
     def _emit_phase(phase: str, local: float, speed: float | None = None) -> None:
         if on_phase_progress:
             on_phase_progress(phase, clamp01(local), speed)
@@ -239,17 +259,25 @@ def convert_video(
                 should_stop=should_stop,
             )
             _emit_phase("sample_hevc", 1.0)
-            av1 = run_sample(
-                input_path=input_path,
-                work_dir=work,
-                profile=settings.av1_profile(backend=backend),
-                settings=settings,
-                seek=seek,
-                log=log,
-                on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
-                should_stop=should_stop,
-            )
-            _emit_phase("sample_av1", 1.0)
+            can_av1 = backend is EncoderBackend.CPU or has_av1_nvenc()
+            if can_av1:
+                av1 = run_sample(
+                    input_path=input_path,
+                    work_dir=work,
+                    profile=settings.av1_profile(backend=backend),
+                    settings=settings,
+                    seek=seek,
+                    log=log,
+                    on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
+                    should_stop=should_stop,
+                )
+                _emit_phase("sample_av1", 1.0)
+            else:
+                _log(
+                    log,
+                    "  skip AV1 sample (av1_nvenc not in this FFmpeg; HEVC-only race)",
+                )
+                _emit_phase("sample_av1", 1.0)
 
         report = choose_winner(
             hevc=hevc,

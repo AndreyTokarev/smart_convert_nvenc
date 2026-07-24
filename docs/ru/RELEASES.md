@@ -25,6 +25,22 @@ Zip в GitHub Releases — задел на будущее; считайте их
 - **Windows / Linux:** также `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, скачивается при сборке с тега `latest` — не bleeding-edge `master`, который часто требует более новый NVENC API драйвера)
 - **macOS:** FFmpeg **не** кладётся в архив (у BtbN нет macOS-артефактов)
 
+## Почему три команды / почему раньше в zip было три exe
+
+У приложения **три задачи**:
+
+| Задача | Из исходников (`uv`) | Zip релиза (с v0.1.4) |
+|--------|----------------------|------------------------|
+| Один видеофайл | `uv run smart-convert …` | `smart-convert video.mp4 …` |
+| Курсы inbox→outbox | `uv run smart-convert-course …` | `smart-convert course …` |
+| GUI | `uv run smart-convert-gui` | `smart-convert` / `smart-convert gui` |
+
+Это три `[project.scripts]` в `pyproject.toml` (`cli`, `course_cli`, `gui`). Так удобнее при разработке через `uv`: CLI не тащит GUI-стек без нужды.
+
+**До v0.1.3 включительно** release zip повторял это 1:1 — PyInstaller собирал **три** one-file бинарника. Один и тот же код, три обёртки; zip выглядел перегруженным и почти утраивал размер без пользы для пользователя.
+
+**С v0.1.4** в zip один `smart-convert` с лаунчером по argv (GUI по умолчанию). Три команды `uv run …` для запуска из исходников **остаются**.
+
 ## FFmpeg в zip
 
 - В Win/Linux-релизах FFmpeg **включён** в `ffmpeg/bin/`. Приложение предпочитает его PATH (`SMART_CONVERT_FFMPEG_DIR` перекрывает).

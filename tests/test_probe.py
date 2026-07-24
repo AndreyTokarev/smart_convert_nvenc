@@ -77,11 +77,12 @@ def test_resolve_encoder_cpu_requires_libs() -> None:
 
 
 def test_resolve_encoder_gpu_ok_and_missing() -> None:
-    names = {"hevc_nvenc", "av1_nvenc"}
+    names = {"hevc_nvenc"}  # av1_nvenc optional (absent on some FFmpeg builds)
     backend, note = resolve_encoder_backend(EncoderBackend.GPU, encoders=names)
     assert backend is EncoderBackend.GPU
     assert "gpu" in note
-    with pytest.raises(ToolError, match="NVENC|nvenc"):
+    assert "av1_nvenc" in note or "HEVC" in note or "hevc" in note
+    with pytest.raises(ToolError, match="hevc_nvenc|NVENC"):
         resolve_encoder_backend(EncoderBackend.GPU, encoders={"libx265", "libsvtav1"})
 
 

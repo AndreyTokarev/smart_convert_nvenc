@@ -78,6 +78,8 @@ uv sync --group dev   # tests / contrib
 | `uv run smart-convert-course` | Courses from inbox |
 | `uv run smart-convert-gui` | Desktop UI |
 
+Three scripts for source installs; the **release zip** ships a single `smart-convert` with the same modes — see [RELEASES.md](./RELEASES.md) (“Why three commands…”).
+
 ## 6. Folder model (ADR-0001)
 
 Default layout next to the repo:

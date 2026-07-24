@@ -83,6 +83,8 @@ uv sync --group dev
 | `uv run smart-convert-course` | Курсы из inbox |
 | `uv run smart-convert-gui` | Графический интерфейс |
 
+Три скрипта — для запуска из исходников; в **release zip** один `smart-convert` с теми же режимами — см. [RELEASES.md](./RELEASES.md) («Почему три команды…»).
+
 ## 6. Модель папок (ADR-0001)
 
 По умолчанию рядом с репозиторием:
