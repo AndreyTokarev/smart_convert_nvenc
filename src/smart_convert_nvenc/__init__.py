@@ -1,3 +1,3 @@
 """Smart convert for course video archives via NVIDIA NVENC."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

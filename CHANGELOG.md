@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.2] — 2026-07-25
+
+### Added
+
 - Queue ordering by size: videos inside a course and courses in CLI/GUI run largest-first so freed space shows up sooner.
 - FFmpeg `speed=` shown in the GUI file progress line (e.g. `encode 45% 12.9x`).
 - GUI log ring-buffers (app 2000 / FFmpeg 1000 lines) so overnight runs do not grow Textboxes without bound.
@@ -22,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-### Removed
+- GUI error dialog no longer crashes with `NameError` on `exc` (Python 3.12 clears except-bound names before delayed `after` callbacks).
 
 ## [0.1.1] — 2026-07-24
 
@@ -50,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AndreyTokarev/smart_convert_nvenc/releases/tag/v0.1.0

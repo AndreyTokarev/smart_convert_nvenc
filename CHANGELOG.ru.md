@@ -11,6 +11,16 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.2] — 2026-07-25
+
+### Added
+
 - Очередь по размеру: видео внутри курса и курсы в CLI/GUI — сначала самые крупные, чтобы быстрее видеть freed space.
 - В строке прогресса GUI показывается FFmpeg `speed=` (например `encode 45% 12.9x`).
 - Ring-buffer логов GUI (app 2000 / FFmpeg 1000 строк), чтобы overnight-прогон не раздувал Textbox.
@@ -22,7 +32,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Fixed
 
-### Removed
+- Диалог ошибки GUI больше не падает с `NameError` на `exc` (в Python 3.12 имя из `except` очищается до отложенного `after`).
 
 ## [0.1.1] — 2026-07-24
 
@@ -50,6 +60,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AndreyTokarev/smart_convert_nvenc/releases/tag/v0.1.0

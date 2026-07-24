@@ -942,8 +942,12 @@ class App(ctk.CTk):
                 if isinstance(exc, FFmpegCancelled):
                     self._app_log("Stopped by user.")
                 else:
-                    self._app_log(f"ERROR: {exc}")
-                    self.after(0, lambda: messagebox.showerror("Smart Convert", str(exc)))
+                    err_text = str(exc)
+                    self._app_log(f"ERROR: {err_text}")
+                    self.after(
+                        0,
+                        lambda msg=err_text: messagebox.showerror("Smart Convert", msg),
+                    )
             finally:
                 cleanup_conversion_temps(self.paths.tmp)
                 self.after(0, self._session_guard.stop)

@@ -32,8 +32,8 @@ English: [../en/RELEASES.md](../en/RELEASES.md).
 3. Закоммитить и поставить тег, совпадающий с версией:
 
 ```powershell
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 Либо вручную Actions → **Release** → Run workflow.

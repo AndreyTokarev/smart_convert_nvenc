@@ -37,8 +37,8 @@ macOS/Linux packages exist so the app can run where Python packaging is awkward,
 3. Commit, then tag matching the version:
 
 ```powershell
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 Or run the **Release** workflow manually (`workflow_dispatch`) from the Actions tab.
