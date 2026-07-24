@@ -13,14 +13,24 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Changed
 
+### Fixed
+
+### Removed
+
+## [0.1.4] — 2026-07-25
+
+### Added
+
+- Один бинарник релиза `smart-convert`: GUI (по умолчанию), `course …` или один видеофайл.
+
+### Changed
+
 - В zip кладётся BtbN **n7.1** FFmpeg (не `master`), чтобы NVENC работал на чуть более старых драйверах.
 - Флаги AQ NVENC: `-spatial-aq` / `-temporal-aq` (как требует свежий FFmpeg).
 
 ### Fixed
 
 - В ошибках FFmpeg теперь хвост лога (видны сообщения про драйвер/NVENC).
-
-### Removed
 
 ## [0.1.3] — 2026-07-25
 
@@ -80,7 +90,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.0...v0.1.1

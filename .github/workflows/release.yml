@@ -49,21 +49,16 @@ jobs:
           uv sync --group release
           uv pip install pyinstaller
 
-      - name: Build CLI binaries
+      - name: Build unified binary
         shell: bash
         run: |
           set -euo pipefail
+          # One onefile binary: GUI (default) / course / single-file via launcher.
+          # console=True so CLI modes work; GUI hides the console on Windows.
           uv run pyinstaller \
             --noconfirm --clean --onefile --name "smart-convert" \
-            scripts/pyi_smart_convert.py
-          uv run pyinstaller \
-            --noconfirm --clean --onefile --name "smart-convert-course" \
-            scripts/pyi_smart_convert_course.py
-          uv run pyinstaller \
-            --noconfirm --clean --onefile --windowed \
-            --name "smart-convert-gui" \
             --collect-all customtkinter \
-            scripts/pyi_smart_convert_gui.py
+            scripts/pyi_smart_convert.py
 
       - name: Stage release folder
         shell: bash
@@ -72,19 +67,22 @@ jobs:
           OUT="dist/smart_convert_nvenc-${{ matrix.artifact }}"
           mkdir -p "$OUT"
           cp dist/smart-convert${{ matrix.ext }} "$OUT/"
-          cp dist/smart-convert-course${{ matrix.ext }} "$OUT/"
-          cp dist/smart-convert-gui${{ matrix.ext }} "$OUT/"
           cp README.md LICENSE "$OUT/"
           chmod +x scripts/fetch_ffmpeg.sh
           scripts/fetch_ffmpeg.sh "${{ matrix.artifact }}" "$OUT"
           printf '%s\n' \
-            '# smart_convert_nvenc release binaries' \
+            '# smart_convert_nvenc release binary' \
             '' \
-            'STATUS: early project — these binaries are EXPERIMENTAL and not meaningfully tested.' \
+            'STATUS: early project — this binary is EXPERIMENTAL and not meaningfully tested.' \
             'The supported / working way to run is from source (git clone + uv sync + uv run).' \
             'Use this zip at your own risk until that disclaimer is removed from the docs.' \
             '' \
-            'These are standalone builds of the CLI/GUI entrypoints.' \
+            '## Usage (single smart-convert binary)' \
+            '' \
+            '- Double-click / `smart-convert` — GUI' \
+            '- `smart-convert course [opts]` — courses inbox → outbox' \
+            '- `smart-convert video.mp4 [opts]` — one file' \
+            '- `smart-convert --help` — overview' \
             '' \
             '## FFmpeg' \
             '' \
@@ -94,14 +92,12 @@ jobs:
             '- NVIDIA GPU + driver still required for NVENC (AV1 encode typically needs RTX 40-series).' \
             '- GUI needs a desktop session (Windows / macOS / Linux with Tk).' \
             '' \
-            '## Binaries' \
+            '## Layout' \
             '' \
-            '- `smart-convert` — single file' \
-            '- `smart-convert-course` — course inbox/outbox pipeline' \
-            '- `smart-convert-gui` — desktop UI' \
+            '- `smart-convert` (+ `.exe` on Windows)' \
             '- `ffmpeg/bin/` — bundled ffmpeg + ffprobe (Win/Linux)' \
             '' \
-            'NVENC itself is Windows/Linux with NVIDIA; macOS builds are for CLI/GUI packaging compatibility but encode still needs FFmpeg+NVENC hardware where available.' \
+            'NVENC itself is Windows/Linux with NVIDIA; macOS builds are for packaging compatibility but encode still needs FFmpeg+NVENC hardware where available.' \
             > "$OUT/README-RELEASE.txt"
 
       - name: Upload artifact
@@ -153,9 +149,11 @@ jobs:
           name: ${{ steps.tag.outputs.name }}
           generate_release_notes: true
           body: |
-            **Early project:** standalone binaries are **experimental and not meaningfully tested**. Prefer running **from source** (`uv sync` / `uv run`). Use these zips at your own risk.
+            **Early project:** standalone binary is **experimental and not meaningfully tested**. Prefer running **from source** (`uv sync` / `uv run`). Use these zips at your own risk.
 
-            **Windows / Linux:** FFmpeg (BtbN GPL **n7.1**, at build time) is bundled under `ffmpeg/bin/`.
+            **One binary:** `smart-convert` — GUI (default) / `course` / single file.
+
+            **Windows / Linux:** FFmpeg (BtbN GPL **n7.1**) under `ffmpeg/bin/`.
             **macOS:** install FFmpeg yourself (not bundled).
 
             NVIDIA GPU + driver still required for NVENC.

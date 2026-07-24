@@ -20,9 +20,7 @@ On each git tag `v*` (example: `v0.1.0`), [`.github/workflows/release.yml`](../.
 
 Each zip includes:
 
-- `smart-convert`
-- `smart-convert-course`
-- `smart-convert-gui`
+- **`smart-convert`** — one binary: GUI (default) / `course …` / single file
 - `README.md`, `LICENSE`, `README-RELEASE.txt`
 - **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n7.1** static, downloaded at build time from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
 - **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
@@ -43,8 +41,8 @@ macOS/Linux packages exist so the app can run where Python packaging is awkward,
 3. Commit, then tag matching the version:
 
 ```powershell
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.4
+git push origin v0.1.4
 ```
 
 Or run the **Release** workflow manually (`workflow_dispatch`) from the Actions tab.
@@ -55,9 +53,7 @@ CLI/GUI expose the same version via `smart-convert --version` / window title.
 
 ```powershell
 uv sync --group release
-uv run pyinstaller --onefile --name smart-convert scripts/pyi_smart_convert.py
-uv run pyinstaller --onefile --name smart-convert-course scripts/pyi_smart_convert_course.py
-uv run pyinstaller --onefile --windowed --collect-all customtkinter --name smart-convert-gui scripts/pyi_smart_convert_gui.py
+uv run pyinstaller --onefile --name smart-convert --collect-all customtkinter scripts/pyi_smart_convert.py
 ```
 
-Outputs land in `dist/`.
+Outputs land in `dist/`. Then optionally: `scripts/fetch_ffmpeg.sh windows-amd64 dist/smart_convert_nvenc-windows-amd64`.
