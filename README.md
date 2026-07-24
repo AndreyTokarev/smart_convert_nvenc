@@ -2,14 +2,18 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+**[English](README.md)** · **[Русский](README.ru.md)**
+
 Compress **video course archives** with **NVIDIA NVENC**: race HEVC vs AV1 on a short sample, full-encode only when it saves space, decide at the **course folder** level (`inbox → tmp → outbox`).
 
 Built as a **fast personal MVP**, now open source under **MIT**.
 
 | Language | Docs |
 |----------|------|
-| **English** | [docs/en/USER_GUIDE.md](docs/en/USER_GUIDE.md) · [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md) · [docs/en/RELEASES.md](docs/en/RELEASES.md) |
-| **Русский** | [docs/ru/USER_GUIDE.md](docs/ru/USER_GUIDE.md) · [docs/ru/ARCHITECTURE.md](docs/ru/ARCHITECTURE.md) · [docs/ru/RELEASES.md](docs/ru/RELEASES.md) |
+| **English** | [USER_GUIDE](docs/en/USER_GUIDE.md) · [ARCHITECTURE](docs/en/ARCHITECTURE.md) · [RELEASES](docs/en/RELEASES.md) · [refactoring plan](docs/en/refactoring-plan.md) · [ADRs](docs/en/adr/README.md) |
+| **Русский** | [руководство](docs/ru/USER_GUIDE.md) · [архитектура](docs/ru/ARCHITECTURE.md) · [релизы](docs/ru/RELEASES.md) · [план рефакторинга](docs/ru/refactoring-plan.md) · [ADR](docs/ru/adr/README.md) |
+
+Full index: [docs/README.md](docs/README.md).
 
 ## Why
 
@@ -64,7 +68,7 @@ courses/outbox/  ← results
 ## Releases (standalone)
 
 Tag `v*` → GitHub Actions builds Windows / Linux / macOS zips (PyInstaller).  
-**FFmpeg + NVIDIA NVENC still required** on the machine. Details: [docs/en/RELEASES.md](docs/en/RELEASES.md).
+**FFmpeg + NVIDIA NVENC still required** on the machine. Details: [docs/en/RELEASES.md](docs/en/RELEASES.md) · [docs/ru/RELEASES.md](docs/ru/RELEASES.md).
 
 ## License
 
@@ -73,6 +77,6 @@ Tag `v*` → GitHub Actions builds Windows / Linux / macOS zips (PyInstaller).
 ## More documentation
 
 - Index: [docs/README.md](docs/README.md)
-- Product decisions: [docs/refactoring-plan.md](docs/refactoring-plan.md)
-- Feature port roadmap: [docs/feature-port-plan.md](docs/feature-port-plan.md)
-- ADRs: [docs/adr/](docs/adr/)
+- Product decisions: [EN](docs/en/refactoring-plan.md) · [RU](docs/ru/refactoring-plan.md)
+- Feature port roadmap: [EN](docs/en/feature-port-plan.md) · [RU](docs/ru/feature-port-plan.md)
+- ADRs: [EN](docs/en/adr/) · [RU](docs/ru/adr/)

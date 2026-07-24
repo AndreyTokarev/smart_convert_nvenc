@@ -34,8 +34,8 @@ Compress a video-course archive with NVIDIA NVENC so that:
 
 Accepted ADRs:
 
-- [ADR-0001](../adr/0001-course-inbox-outbox-tmp.md) — folder pipeline
-- [ADR-0002](../adr/0002-course-folder-naming.md) — short names + optional `course.json`
+- [ADR-0001](./adr/0001-course-inbox-outbox-tmp.md) — folder pipeline
+- [ADR-0002](./adr/0002-course-folder-naming.md) — short names + optional `course.json`
 
 ## Layers
 

@@ -17,6 +17,7 @@ htmlcov/
 
 # Local-only community drafts (not for the public repo)
 docs/community/VK_POST_EN.md
+docs/community/VK_POST_RU.md
 
 # Course media (keep folder READMEs only)
 courses/inbox/**

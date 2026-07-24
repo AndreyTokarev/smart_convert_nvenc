@@ -1,6 +1,8 @@
 # inbox
 
-Put a full **course folder** here, for example:
+**EN:** Put a full **course folder** here, for example:
+
+**RU:** Положите сюда целую **папку курса**, например:
 
 ```text
 courses/inbox/[0000] 20 Sick Licks/
@@ -10,7 +12,7 @@ courses/inbox/[0000] 20 Sick Licks/
   slides.pdf
 ```
 
-Optional `course.json` example:
+Optional `course.json` / опциональный `course.json`:
 
 ```json
 {
@@ -24,3 +26,7 @@ Optional `course.json` example:
 ```
 
 After processing, the course leaves this folder and appears under `courses/outbox/` (including `course.json` if present).
+
+После обработки курс уходит из этой папки в `courses/outbox/` (вместе с `course.json`, если был).
+
+ADR-0002: [EN](../../docs/en/adr/0002-course-folder-naming.md) · [RU](../../docs/ru/adr/0002-course-folder-naming.md).

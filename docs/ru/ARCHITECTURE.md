@@ -34,8 +34,8 @@ English: [../en/ARCHITECTURE.md](../en/ARCHITECTURE.md).
 
 Решения зафиксированы в ADR:
 
-- [ADR-0001](../adr/0001-course-inbox-outbox-tmp.md) — конвейер папок
-- [ADR-0002](../adr/0002-course-folder-naming.md) — короткие имена + опциональный `course.json`
+- [ADR-0001](./adr/0001-course-inbox-outbox-tmp.md) — конвейер папок
+- [ADR-0002](./adr/0002-course-folder-naming.md) — короткие имена + опциональный `course.json`
 
 ## Слои
 

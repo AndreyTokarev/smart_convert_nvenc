@@ -231,4 +231,4 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 - CQ profiles + optional standalone pack
 - Duplicates, batch reports, later VMAF
 
-Details: [../feature-port-plan.md](../feature-port-plan.md), [../refactoring-plan.md](../refactoring-plan.md).
+Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

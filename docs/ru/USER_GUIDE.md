@@ -244,4 +244,4 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 - F5: профили CQ, опционально pack exe
 - F6: дубликаты, batch-отчёт, позже VMAF
 
-Детали: [../feature-port-plan.md](../feature-port-plan.md), [../refactoring-plan.md](../refactoring-plan.md).
+Детали: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

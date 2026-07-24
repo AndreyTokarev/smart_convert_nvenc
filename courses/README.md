@@ -1,13 +1,15 @@
-# Courses
+# Courses / Курсы
 
-Default pipeline directories (see [ADR-0001](../docs/adr/0001-course-inbox-outbox-tmp.md)).
+Default pipeline directories (see ADR-0001: [EN](../docs/en/adr/0001-course-inbox-outbox-tmp.md) · [RU](../docs/ru/adr/0001-course-inbox-outbox-tmp.md)).
 
-| Folder | Role |
-|--------|------|
-| [inbox/](./inbox/) | Source course folders go here |
-| [outbox/](./outbox/) | Result: compressed course, or original if compression was not worth it |
-| [tmp/](./tmp/) | Encode work area; do not put source courses here manually |
+Каталоги конвейера по умолчанию (см. ADR-0001).
+
+| Folder / Папка | Role / Роль |
+|----------------|-------------|
+| [inbox/](./inbox/) | Source course folders / исходные папки курсов |
+| [outbox/](./outbox/) | Result: compressed or original / результат: сжатый или исходный |
+| [tmp/](./tmp/) | Encode work area / рабочая зона encode (не кладите сюда исходники вручную) |
 
 Override with `--courses-root` / `--inbox` / `--outbox` / `--tmp` or `SMART_CONVERT_*` env vars.
 
-Course media is not stored in git.
+Course media is not stored in git. / Медиа курсов в git не хранятся.
