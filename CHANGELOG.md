@@ -11,18 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Named encode presets in `profiles.toml` (`default`, `course`) with CLI `--profile` (flags override).
-- Local Windows build helper `scripts/build.ps1` and `docs/*/BUILD.md`.
-- Duplicate scanner (report only): `smart-convert duplicates` / `smart-convert-duplicates` — exact file copies (size+SHA-256) and same course folder names across inbox/outbox.
-- Course batch writes `session-report.md` (Markdown totals + per-course table); `--session-report PATH` / `--no-session-report`.
-- Overwrite existing `outbox/<course>` by default (GUI checkbox + `--overwrite-outbox` / `--no-overwrite-outbox`).
-- Skip macOS AppleDouble `._*` (and similar junk) so they are not treated as videos for encode.
-
 ### Changed
 
 ### Fixed
 
 ### Removed
+
+## [0.1.7] — 2026-07-26
+
+### Added
+
+- Named encode presets in `profiles.toml` (`default`, `course`) with CLI `--profile` (flags override).
+- Local Windows build helper `scripts/build.ps1` and `docs/*/BUILD.md`.
+- Duplicate scanner (report only): `smart-convert duplicates` / `smart-convert-duplicates` — exact file copies (size+SHA-256) and same course folder names across inbox/outbox.
+- Course batch writes `session-report.md` (Markdown totals + per-course table); `--session-report PATH` / `--no-session-report`.
+- Overwrite existing `outbox/<course>` by default (GUI checkbox + `--overwrite-outbox` / `--no-overwrite-outbox`).
+
+### Fixed
+
+- Skip macOS AppleDouble `._*` (and similar junk) so they are not treated as videos for encode.
 
 ## [0.1.6] — 2026-07-25
 
@@ -110,7 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4

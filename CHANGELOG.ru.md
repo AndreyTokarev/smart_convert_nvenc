@@ -11,18 +11,25 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
-- Именованные пресеты в `profiles.toml` (`default`, `course`) и CLI `--profile` (флаги перекрывают).
-- Локальный helper сборки `scripts/build.ps1` и `docs/*/BUILD.md`.
-- Поиск дубликатов (только отчёт): `smart-convert duplicates` / `smart-convert-duplicates` — точные копии файлов (size+SHA-256) и одинаковые имена курсов в inbox/outbox.
-- Batch курсов пишет `session-report.md` (итоги + таблица); `--session-report PATH` / `--no-session-report`.
-- По умолчанию перезапись существующего `outbox/<course>` (чекбокс GUI + `--overwrite-outbox` / `--no-overwrite-outbox`).
-- Игнор macOS AppleDouble `._*` (и похожего junk) — не считаем их видео для encode.
-
 ### Changed
 
 ### Fixed
 
 ### Removed
+
+## [0.1.7] — 2026-07-26
+
+### Added
+
+- Именованные пресеты в `profiles.toml` (`default`, `course`) и CLI `--profile` (флаги перекрывают).
+- Локальный helper сборки `scripts/build.ps1` и `docs/*/BUILD.md`.
+- Поиск дубликатов (только отчёт): `smart-convert duplicates` / `smart-convert-duplicates` — точные копии файлов (size+SHA-256) и одинаковые имена курсов в inbox/outbox.
+- Batch курсов пишет `session-report.md` (итоги + таблица); `--session-report PATH` / `--no-session-report`.
+- По умолчанию перезапись существующего `outbox/<course>` (чекбокс GUI + `--overwrite-outbox` / `--no-overwrite-outbox`).
+
+### Fixed
+
+- Игнор macOS AppleDouble `._*` (и похожего junk) — не считаем их видео для encode.
 
 ## [0.1.6] — 2026-07-25
 
@@ -110,7 +117,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.3...v0.1.4
