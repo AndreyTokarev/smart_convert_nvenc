@@ -1,0 +1,25 @@
+# Named encode presets for CLI (--profile). CLI flags override these values.
+
+[default]
+description = "Balanced defaults for a single file (size@CQ race)."
+sample_seconds = 30.0
+sample_offset_ratio = 0.25
+min_savings = 0.10
+min_course_savings = 0.10
+hevc_cq = 28
+av1_cq = 32
+preset = "p6"
+audio = "copy"
+encoder = "gpu"
+
+[course]
+description = "More aggressive archive profile: shorter sample, higher CQ, Opus audio."
+sample_seconds = 20.0
+sample_offset_ratio = 0.25
+min_savings = 0.10
+min_course_savings = 0.10
+hevc_cq = 32
+av1_cq = 36
+preset = "p6"
+audio = "opus:96"
+encoder = "gpu"

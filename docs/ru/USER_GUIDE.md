@@ -183,12 +183,15 @@ uv run smart-convert-gui
 
 Режимы энкодера: `gpu` (только NVENC, по умолчанию), `cpu` (libx265 / libsvtav1), `auto` (NVENC если есть, иначе CPU).
 
+Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Флаг `--profile`; остальные CLI-флаги перекрывают профиль.
+
 ## 10. CLI
 
 ### Один файл
 
 ```powershell
 uv run smart-convert lesson.mp4
+uv run smart-convert lesson.mp4 --profile course
 uv run smart-convert lesson.mp4 --dry-run
 uv run smart-convert lesson.mp4 --force-codec hevc --cq-hevc 30
 uv run smart-convert lesson.mp4 --encoder auto
@@ -201,6 +204,7 @@ uv run smart-convert lesson.mp4 --reencode-same-codec
 
 ```powershell
 uv run smart-convert-course
+uv run smart-convert-course --profile course
 uv run smart-convert-course "My Course Name"
 uv run smart-convert-course --encoder auto
 uv run smart-convert-course --courses-root E:\archive\courses
@@ -234,6 +238,7 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 | Модуль | Роль |
 |--------|------|
+| `profiles.py` | Именованные пресеты из `data/profiles.toml` |
 | `pipeline.py` | Race + encode одного файла |
 | `course.py` | Обход курса, assemble outbox |
 | `encode.py` | argv NVENC, temp, retry без hwaccel |
@@ -253,9 +258,8 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 ## 15. Roadmap (высокоуровнево)
 
-- F2: добить отчёты / сортировку по размеру
-- F3: ring-buffer логов, throttle progress
-- F5: профили CQ, опционально pack exe
-- F6: дубликаты, batch-отчёт, позже VMAF
+- Отчёт о дубликатах (без автоудаления)
+- Batch session-report в файл
+- Позже: VMAF / гибрид
 
 Детали: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

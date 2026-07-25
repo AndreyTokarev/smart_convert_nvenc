@@ -58,6 +58,7 @@ jobs:
           uv run pyinstaller \
             --noconfirm --clean --onefile --name "smart-convert" \
             --collect-all customtkinter \
+            --collect-data smart_convert_nvenc \
             scripts/pyi_smart_convert.py
 
       - name: Stage release folder

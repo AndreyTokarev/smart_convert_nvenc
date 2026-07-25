@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Named encode presets in `profiles.toml` (`default`, `course`) with CLI `--profile` (flags override).
+- Local Windows build helper `scripts/build.ps1` and `docs/*/BUILD.md`.
+
 ### Changed
 
 ### Fixed

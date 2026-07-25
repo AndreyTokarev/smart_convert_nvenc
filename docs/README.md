@@ -15,6 +15,7 @@ All user-facing and design docs are maintained **in both languages**: `docs/en/`
 | User guide | [en/USER_GUIDE.md](./en/USER_GUIDE.md) | [ru/USER_GUIDE.md](./ru/USER_GUIDE.md) |
 | Architecture | [en/ARCHITECTURE.md](./en/ARCHITECTURE.md) | [ru/ARCHITECTURE.md](./ru/ARCHITECTURE.md) |
 | Releases (Win/Linux/macOS) | [en/RELEASES.md](./en/RELEASES.md) | [ru/RELEASES.md](./ru/RELEASES.md) |
+| Local build (PyInstaller) | [en/BUILD.md](./en/BUILD.md) | [ru/BUILD.md](./ru/BUILD.md) |
 
 ## Design & history
 

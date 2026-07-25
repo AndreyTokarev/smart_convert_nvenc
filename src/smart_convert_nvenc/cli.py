@@ -5,12 +5,14 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
+from .models import VideoCodec
 from .pipeline import convert_one
 from .probe import ToolError, validate_environment
+from .profiles import get_profile, list_profile_names
 
 
 def build_parser() -> argparse.ArgumentParser:
+    profiles = list_profile_names()
     p = argparse.ArgumentParser(
         prog="smart-convert",
         description=(
@@ -24,32 +26,57 @@ def build_parser() -> argparse.ArgumentParser:
         version=f"%(prog)s {__version__}",
     )
     p.add_argument("input", type=Path, help="Путь к видеофайлу")
-    p.add_argument("--sample-sec", type=float, default=30.0, help="Длина тестового фрагмента (сек)")
+    p.add_argument(
+        "--profile",
+        default="default",
+        choices=profiles,
+        help="Named preset from profiles.toml (CLI flags override)",
+    )
+    p.add_argument(
+        "--sample-sec",
+        type=float,
+        default=None,
+        help="Длина тестового фрагмента (сек; default: from profile)",
+    )
     p.add_argument(
         "--offset-ratio",
         type=float,
-        default=0.25,
-        help="Старт сэмпла как доля длительности (0.25 = 25%%)",
+        default=None,
+        help="Старт сэмпла как доля длительности (default: from profile)",
     )
     p.add_argument(
         "--min-savings",
         type=float,
-        default=0.10,
-        help="Минимальная прогнозная экономия (0.10 = 10%%), иначе skip",
+        default=None,
+        help="Минимальная прогнозная экономия (default: from profile)",
     )
-    p.add_argument("--cq-hevc", type=int, default=28, help="CQ/CRF для HEVC")
-    p.add_argument("--cq-av1", type=int, default=32, help="CQ/CRF для AV1")
-    p.add_argument("--preset", default="p6", help="NVENC preset p1..p7 (CPU: mapped to x265/SVT)")
+    p.add_argument(
+        "--cq-hevc",
+        type=int,
+        default=None,
+        help="CQ/CRF для HEVC (default: from profile)",
+    )
+    p.add_argument(
+        "--cq-av1",
+        type=int,
+        default=None,
+        help="CQ/CRF для AV1 (default: from profile)",
+    )
+    p.add_argument(
+        "--preset",
+        default=None,
+        help="NVENC preset p1..p7 (CPU: mapped to x265/SVT; default: from profile)",
+    )
     p.add_argument(
         "--encoder",
         choices=["gpu", "cpu", "auto"],
-        default="gpu",
+        default=None,
         help="gpu=NVENC only; cpu=libx265/libsvtav1; auto=NVENC if available else CPU",
     )
     p.add_argument(
         "--audio",
-        default="copy",
-        help="Аудио финального файла: copy | aac[:kbps] | opus[:kbps]",
+        default=None,
+        help="Аудио финального файла: copy | aac[:kbps] | opus[:kbps] (default: from profile)",
     )
     p.add_argument(
         "--force-codec",
@@ -78,25 +105,23 @@ def _safe_print(message: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        encoder = EncoderBackend(args.encoder)
-        for line in validate_environment(encoder):
-            _safe_print(f"env: {line}")
-        audio = AudioSettings.parse(args.audio)
-        force = VideoCodec(args.force_codec) if args.force_codec else None
-        settings = ConvertSettings(
+        profile = get_profile(args.profile)
+        settings = profile.to_convert_settings(
             sample_seconds=args.sample_sec,
             sample_offset_ratio=args.offset_ratio,
             min_savings=args.min_savings,
             hevc_cq=args.cq_hevc,
             av1_cq=args.cq_av1,
             preset=args.preset,
-            audio=audio,
+            audio=args.audio,
+            encoder=args.encoder,
             dry_run=args.dry_run,
-            force_codec=force,
+            force_codec=VideoCodec(args.force_codec) if args.force_codec else None,
             keep_samples=args.keep_samples,
             skip_same_codec=not args.reencode_same_codec,
-            encoder=encoder,
         )
+        for line in validate_environment(settings.encoder):
+            _safe_print(f"env: {line}")
         convert_one(args.input, settings, log=_safe_print)
         return 0
     except (ToolError, FileNotFoundError, ValueError, RuntimeError) as exc:

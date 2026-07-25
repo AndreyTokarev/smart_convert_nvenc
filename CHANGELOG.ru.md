@@ -11,6 +11,9 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
+- Именованные пресеты в `profiles.toml` (`default`, `course`) и CLI `--profile` (флаги перекрывают).
+- Локальный helper сборки `scripts/build.ps1` и `docs/*/BUILD.md`.
+
 ### Changed
 
 ### Fixed

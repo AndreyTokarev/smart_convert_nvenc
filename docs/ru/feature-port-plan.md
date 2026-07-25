@@ -2,7 +2,7 @@
 
 English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 
-- **Статус:** F1–F4 done; F5–F6 pending  
+- **Статус:** F1–F5 done; F6 partial (F6.4 done)  
 - **Дата:** 2026-07-24  
 - **Контекст:** `D:\projects\python\video_converter` — предыдущий личный сервис (Flet + NVENC). Решено не допиливать его, а собрать **smart_convert_nvenc** с нуля под архив курсов. Ниже — что из старого опыта переносим сюда, в каком порядке, и чего сознательно не тащим.
 
@@ -108,9 +108,9 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 
 | # | Задача | Ориентир | Куда |
 |---|--------|----------|------|
-| F5.1 | Вынести CQ/preset/defaults в `profiles.toml` или JSON (без опечаток presers) | PROFILES.md | `src/.../data/profiles.toml` |
-| F5.2 | Профиль «course» (агрессивнее CQ, опц. audio opus) | — | profiles + CLI `--profile` |
-| F5.3 | Скрипт сборки standalone exe + doc | BUILD.md / PyInstaller или аналог | `scripts/build.ps1`, `docs/BUILD.md` |
+| F5.1 | Вынести CQ/preset/defaults в `profiles.toml` или JSON (без опечаток presers) | PROFILES.md | `src/.../data/profiles.toml` — **сделано** |
+| F5.2 | Профиль «course» (агрессивнее CQ, опц. audio opus) | — | profiles + CLI `--profile` — **сделано** |
+| F5.3 | Скрипт сборки standalone exe + doc | BUILD.md / PyInstaller или аналог | `scripts/build.ps1`, `docs/*/BUILD.md` — **сделано** |
 | F5.4 | Vendor/PATH strategy для FFmpeg — **сделано** (BtbN в Win/Linux zip + `SMART_CONVERT_FFMPEG_DIR` / PATH fallback) |
 
 **Критерий готовности:** один профиль запускается флагом; (опционально) есть инструкция/скрипт сборки exe.
@@ -159,11 +159,11 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 | F2 | done | 2026-07-24 | Session freed MiB/%/MiB/h; итоги курса; видео+курсы по размеру ↓; `speed=` в прогрессе GUI |
 | F3 | done | 2026-07-24 | Persist настроек; Open inbox/outbox; confirm при закрытии; ring-buffer логов; progress drain — только latest |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
-| F5 | partial | 2026-07-25 | F5.4 FFmpeg vendor в Win/Linux release zip |
+| F5 | done | 2026-07-26 | F5.1–F5.3 profiles.toml + `--profile` + build.ps1/BUILD.md; F5.4 FFmpeg vendor |
 | F6 | partial | 2026-07-25 | F6.4 CPU encode force + auto-fallback landed |
 
 ---
 
 ## Связь с общим планом
 
-Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F4 done; следующий фокус — F5 профили / F6 дубликаты по необходимости.
+Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F5 done; следующий фокус — F6 дубликаты / session-report / VMAF по необходимости.

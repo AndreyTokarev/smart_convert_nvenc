@@ -178,10 +178,13 @@ Settings file:
 
 Encoder modes: `gpu` (NVENC only, default), `cpu` (libx265 / libsvtav1), `auto` (NVENC if present, else CPU).
 
+Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Use `--profile`; other CLI flags override the profile.
+
 ## 10. CLI examples
 
 ```powershell
 uv run smart-convert lesson.mp4
+uv run smart-convert lesson.mp4 --profile course
 uv run smart-convert lesson.mp4 --dry-run --force-codec hevc
 uv run smart-convert lesson.mp4 --encoder auto
 uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
@@ -189,6 +192,7 @@ uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
 uv run smart-convert lesson.mp4 --reencode-same-codec
 
 uv run smart-convert-course
+uv run smart-convert-course --profile course
 uv run smart-convert-course "My Course Name"
 uv run smart-convert-course --encoder auto
 uv run smart-convert-course --courses-root E:\archive\courses
@@ -221,6 +225,7 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Module | Role |
 |--------|------|
+| `profiles.py` | Load named presets from `data/profiles.toml` |
 | `pipeline.py` | Per-file race + encode |
 | `course.py` | Course walk + outbox assemble |
 | `encode.py` | NVENC argv, temps, hwaccel retry |
@@ -240,9 +245,8 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-- Finish session reporting / size-descending queues
-- Log ring-buffer / progress throttle
-- CQ profiles + optional standalone pack
-- Duplicates, batch reports, later VMAF
+- Duplicates report (no auto-delete)
+- Batch session report to file
+- Later: VMAF / hybrid quality metric
 
 Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

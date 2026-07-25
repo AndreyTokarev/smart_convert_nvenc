@@ -17,12 +17,20 @@ def test_cli_build_parser() -> None:
     assert args.force_codec == "hevc"
     assert args.dry_run is True
     assert args.encoder == "auto"
+    assert args.profile == "default"
+
+
+def test_cli_build_parser_profile_course() -> None:
+    parser = cli.build_parser()
+    args = parser.parse_args(["video.mp4", "--profile", "course"])
+    assert args.profile == "course"
 
 
 def test_course_cli_build_parser_encoder() -> None:
     parser = course_cli.build_parser()
-    args = parser.parse_args(["--encoder", "cpu"])
+    args = parser.parse_args(["--encoder", "cpu", "--profile", "course"])
     assert args.encoder == "cpu"
+    assert args.profile == "course"
 
 def test_cli_main_success(tmp_path: Path) -> None:
     video = tmp_path / "a.mp4"
@@ -99,9 +107,12 @@ def test_course_cli_runs_named_course(tmp_path: Path) -> None:
         patch("smart_convert_nvenc.course_cli.WindowsSessionGuard") as guard_cls,
     ):
         guard = guard_cls.return_value
-        code = course_cli.main(["C1", "--force-codec", "av1"])
+        code = course_cli.main(["C1", "--force-codec", "av1", "--profile", "course"])
     assert code == 0
     convert.assert_called_once()
+    settings = convert.call_args.args[2]
+    assert settings.hevc_cq == 32
+    assert settings.av1_cq == 36
     guard.start.assert_called_once()
     guard.stop.assert_called_once()
 

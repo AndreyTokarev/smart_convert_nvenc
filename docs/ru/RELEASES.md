@@ -69,7 +69,11 @@ CLI/GUI показывают ту же версию: `smart-convert --version` /
 
 ```powershell
 uv sync --group release
-uv run pyinstaller --onefile --name smart-convert --collect-all customtkinter scripts/pyi_smart_convert.py
+uv run pyinstaller --noconfirm --clean --onefile --name smart-convert `
+  --collect-all customtkinter --collect-data smart_convert_nvenc `
+  scripts/pyi_smart_convert.py
 ```
+
+Или: `scripts/build.ps1` (−WithFfmpeg опционально). См. [BUILD.md](./BUILD.md).
 
 Артефакты — в `dist/`. Опционально: `scripts/fetch_ffmpeg.sh windows-amd64 dist/smart_convert_nvenc-windows-amd64`.

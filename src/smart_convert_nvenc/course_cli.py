@@ -6,14 +6,16 @@ from pathlib import Path
 
 from . import __version__
 from .course import convert_course, list_course_dirs
-from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
+from .models import VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
+from .profiles import get_profile, list_profile_names
 from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
 
 
 def build_parser() -> argparse.ArgumentParser:
+    profiles = list_profile_names()
     p = argparse.ArgumentParser(
         prog="smart-convert-course",
         description=(
@@ -36,25 +38,31 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--inbox", type=Path, default=None)
     p.add_argument("--outbox", type=Path, default=None)
     p.add_argument("--tmp", type=Path, default=None)
-    p.add_argument("--sample-sec", type=float, default=20.0)
-    p.add_argument("--offset-ratio", type=float, default=0.25)
-    p.add_argument("--min-savings", type=float, default=0.10, help="Per-video min savings")
+    p.add_argument(
+        "--profile",
+        default="default",
+        choices=profiles,
+        help="Named preset from profiles.toml (CLI flags override). Use 'course' for archive CQ/Opus.",
+    )
+    p.add_argument("--sample-sec", type=float, default=None)
+    p.add_argument("--offset-ratio", type=float, default=None)
+    p.add_argument("--min-savings", type=float, default=None, help="Per-video min savings")
     p.add_argument(
         "--min-course-savings",
         type=float,
-        default=0.10,
-        help="Whole-course min savings to keep compression",
+        default=None,
+        help="Whole-course min savings to keep compression (default: from profile)",
     )
-    p.add_argument("--cq-hevc", type=int, default=28)
-    p.add_argument("--cq-av1", type=int, default=32)
-    p.add_argument("--preset", default="p6")
+    p.add_argument("--cq-hevc", type=int, default=None)
+    p.add_argument("--cq-av1", type=int, default=None)
+    p.add_argument("--preset", default=None)
     p.add_argument(
         "--encoder",
         choices=["gpu", "cpu", "auto"],
-        default="gpu",
+        default=None,
         help="gpu=NVENC only; cpu=libx265/libsvtav1; auto=NVENC if available else CPU",
     )
-    p.add_argument("--audio", default="copy")
+    p.add_argument("--audio", default=None)
     p.add_argument("--force-codec", choices=["hevc", "av1"], default=None)
     p.add_argument(
         "--race-each",
@@ -91,28 +99,28 @@ def main(argv: list[str] | None = None) -> int:
             tmp=args.tmp,
         )
         paths.ensure()
-        encoder = EncoderBackend(args.encoder)
-        for line in validate_environment(encoder):
-            _safe_print(f"env: {line}")
-        removed = cleanup_conversion_temps(paths.tmp)
-        if removed:
-            _safe_print(f"Cleaned {len(removed)} leftover conversion temp(s)")
-
-        audio = AudioSettings.parse(args.audio)
-        force = VideoCodec(args.force_codec) if args.force_codec else None
-        settings = ConvertSettings(
+        profile = get_profile(args.profile)
+        settings = profile.to_convert_settings(
             sample_seconds=args.sample_sec,
             sample_offset_ratio=args.offset_ratio,
             min_savings=args.min_savings,
             hevc_cq=args.cq_hevc,
             av1_cq=args.cq_av1,
             preset=args.preset,
-            audio=audio,
+            audio=args.audio,
+            encoder=args.encoder,
             dry_run=args.dry_run,
-            force_codec=force,
+            force_codec=VideoCodec(args.force_codec) if args.force_codec else None,
             skip_same_codec=not args.reencode_same_codec,
-            encoder=encoder,
         )
+        min_course_savings = (
+            profile.min_course_savings if args.min_course_savings is None else args.min_course_savings
+        )
+        for line in validate_environment(settings.encoder):
+            _safe_print(f"env: {line}")
+        removed = cleanup_conversion_temps(paths.tmp)
+        if removed:
+            _safe_print(f"Cleaned {len(removed)} leftover conversion temp(s)")
 
         if args.course:
             course_dir = paths.inbox / args.course
@@ -134,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
                     course_dir,
                     paths,
                     settings,
-                    min_course_savings=args.min_course_savings,
+                    min_course_savings=min_course_savings,
                     race_once=not args.race_each,
                     log=_safe_print,
                 )
