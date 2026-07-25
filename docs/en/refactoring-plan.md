@@ -2,7 +2,7 @@
 
 Русский: [../ru/refactoring-plan.md](../ru/refactoring-plan.md).
 
-Status: decisions accepted (1B 2C 3A 4C) — MVP implementation  
+Status: decisions accepted (1C 2C 3A 4C) — F1–F6 done
 Basis: [review-codec-advice.md](./review-codec-advice.md), source chat [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md)
 
 ## Product goal (why this exists)

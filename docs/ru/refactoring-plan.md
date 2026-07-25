@@ -2,7 +2,7 @@
 
 English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
-Статус: решения приняты (1B 2C 3A 4C) — реализация MVP  
+Статус: решения приняты (1C 2C 3A 4C) — F1–F6 done  
 Основание: [review-codec-advice.md](./review-codec-advice.md), исходный чат [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md)
 
 ## Цель продукта (зачем это существует)
@@ -200,7 +200,7 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
 | # | Вопрос | Варианты | Решение | Статус | Дата | Комментарий |
 |---|--------|----------|---------|--------|------|-------------|
-| 1 | Метрика выбора победителя | A VMAF обязателен / B без VMAF + дисклеймер / C гибрид | B | принято | 2026-07-24 | MVP: size@CQ + дисклеймер; VMAF позже |
+| 1 | Метрика выбора победителя | A VMAF обязателен / B без VMAF + дисклеймер / C гибрид | C | принято | 2026-07-26 | Было B для MVP; F6.3 — гибрид (`vmaf=auto`) |
 | 2 | CLI vs GUI | A только CLI / B CLI+GUI сразу / C CLI сейчас, GUI следом | C | принято | 2026-07-24 | Сначала CLI, GUI следом |
 | 3 | NVENC vs CPU | A только NVENC / B + fallback CPU / C режимы gpu/cpu/auto | A | принято | 2026-07-24 | Только NVENC в MVP |
 | 4 | Аудио в финале | A copy / B всегда перекодировать / C copy + опция | C | принято | 2026-07-24 | copy по умолчанию; `--audio` опционально |
