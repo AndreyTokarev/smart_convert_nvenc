@@ -8,6 +8,13 @@ English. Русский: [../ru/RELEASES.md](../ru/RELEASES.md).
 The project is at the very beginning: the **supported / working** way to run the app is **from source** (`git clone` + `uv sync` + `uv run …`).  
 GitHub Release zips are convenience artifacts for later; treat them as **unsupported / use at your own risk** until this note is removed.
 
+### Support bar checklist (R3.3 — before removing “unsupported”)
+
+- [ ] Maintainer runs `uv run python scripts/smoke_nvenc.py --encode` on Windows + NVIDIA (driver OK for bundled FFmpeg n8.1)
+- [ ] Smoke a one-file CLI encode and a short course dry-run from the release zip (or from source with the same FFmpeg)
+- [ ] Record date / GPU / driver / FFmpeg build in this section
+- [ ] Then soften or remove the unsupported wording above
+
 ## What GitHub Releases contain
 
 On each git tag `v*` (example: `v0.1.8`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:

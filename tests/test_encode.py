@@ -77,9 +77,38 @@ def test_video_args_hevc_and_av1(hevc: EncodeProfile, av1: EncodeProfile) -> Non
     assert "hevc_nvenc" in hevc_args
     assert "-tag:v" in hevc_args
     assert "hvc1" in hevc_args
+    assert "-multipass" not in hevc_args
+    assert "-rc-lookahead" not in hevc_args
     av1_args = video_args(av1)
     assert "av1_nvenc" in av1_args
     assert "hvc1" not in av1_args
+
+
+def test_video_args_nvenc_multipass_and_lookahead() -> None:
+    profile = EncodeProfile(
+        codec=VideoCodec.HEVC,
+        cq=28,
+        backend=EncoderBackend.GPU,
+        multipass=True,
+        rc_lookahead=20,
+    )
+    args = video_args(profile)
+    assert args[args.index("-multipass") + 1] == "fullres"
+    assert args[args.index("-rc-lookahead") + 1] == "20"
+
+
+def test_video_args_cpu_ignores_multipass() -> None:
+    profile = EncodeProfile(
+        codec=VideoCodec.HEVC,
+        cq=28,
+        backend=EncoderBackend.CPU,
+        multipass=True,
+        rc_lookahead=32,
+    )
+    args = video_args(profile)
+    assert "-multipass" not in args
+    assert "-rc-lookahead" not in args
+    assert "libx265" in args
 
 
 def test_video_args_cpu_preset_extremes() -> None:

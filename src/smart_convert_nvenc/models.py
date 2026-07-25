@@ -102,6 +102,8 @@ class EncodeProfile:
     preset: str = "p6"
     container_ext: str = ".mp4"
     backend: EncoderBackend = EncoderBackend.GPU
+    multipass: bool = False
+    rc_lookahead: int = 0
 
     @property
     def nvenc_name(self) -> str:
@@ -124,6 +126,7 @@ class EncodeProfile:
 class ConvertSettings:
     sample_seconds: float = 30.0
     sample_offset_ratio: float = 0.25
+    sample_fragments: int = 1
     min_savings: float = 0.10
     hevc_cq: int = 28
     av1_cq: int = 32
@@ -136,6 +139,8 @@ class ConvertSettings:
     encoder: EncoderBackend = EncoderBackend.GPU
     vmaf: VmafMode = VmafMode.AUTO
     vmaf_min: float = 90.0
+    nvenc_multipass: bool = False
+    nvenc_lookahead: int = 0
 
     def hevc_profile(self, *, backend: EncoderBackend = EncoderBackend.GPU) -> EncodeProfile:
         if backend is EncoderBackend.AUTO:
@@ -146,6 +151,8 @@ class ConvertSettings:
             preset=self.preset,
             container_ext=".mp4",
             backend=backend,
+            multipass=self.nvenc_multipass,
+            rc_lookahead=self.nvenc_lookahead,
         )
 
     def av1_profile(self, *, backend: EncoderBackend = EncoderBackend.GPU) -> EncodeProfile:
@@ -157,6 +164,8 @@ class ConvertSettings:
             preset=self.preset,
             container_ext=".mkv",
             backend=backend,
+            multipass=self.nvenc_multipass,
+            rc_lookahead=self.nvenc_lookahead,
         )
 
 

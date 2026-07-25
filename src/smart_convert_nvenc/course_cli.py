@@ -7,6 +7,7 @@ from pathlib import Path
 from . import __version__
 from .course import convert_course, list_course_dirs
 from .course_meta import load_course_meta
+from .log_sink import tee_log
 from .models import VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
@@ -48,6 +49,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--sample-sec", type=float, default=None)
     p.add_argument("--offset-ratio", type=float, default=None)
+    p.add_argument(
+        "--sample-fragments",
+        type=int,
+        default=None,
+        help="Average N sample clips for race (default: from profile)",
+    )
     p.add_argument("--min-savings", type=float, default=None, help="Per-video min savings")
     p.add_argument(
         "--min-course-savings",
@@ -71,6 +78,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Hybrid VMAF for sample race (default: from profile)",
     )
     p.add_argument("--vmaf-min", type=float, default=None)
+    p.add_argument(
+        "--nvenc-multipass",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="NVENC multipass fullres (off by default)",
+    )
+    p.add_argument(
+        "--nvenc-lookahead",
+        type=int,
+        default=None,
+        help="NVENC rc-lookahead (0=off)",
+    )
+    p.add_argument(
+        "--log-file",
+        type=Path,
+        default=None,
+        help="Append app log lines to this file",
+    )
     p.add_argument("--audio", default=None)
     p.add_argument("--force-codec", choices=["hevc", "av1"], default=None)
     p.add_argument(
@@ -134,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         settings = profile.to_convert_settings(
             sample_seconds=args.sample_sec,
             sample_offset_ratio=args.offset_ratio,
+            sample_fragments=args.sample_fragments,
             min_savings=args.min_savings,
             hevc_cq=args.cq_hevc,
             av1_cq=args.cq_av1,
@@ -142,6 +168,8 @@ def main(argv: list[str] | None = None) -> int:
             encoder=args.encoder,
             vmaf=args.vmaf,
             vmaf_min=args.vmaf_min,
+            nvenc_multipass=args.nvenc_multipass,
+            nvenc_lookahead=args.nvenc_lookahead,
             dry_run=args.dry_run,
             force_codec=VideoCodec(args.force_codec) if args.force_codec else None,
             skip_same_codec=not args.reencode_same_codec,
@@ -149,11 +177,12 @@ def main(argv: list[str] | None = None) -> int:
         min_course_savings = (
             profile.min_course_savings if args.min_course_savings is None else args.min_course_savings
         )
+        log = tee_log(_safe_print, args.log_file)
         for line in validate_environment(settings.encoder):
-            _safe_print(f"env: {line}")
+            log(f"env: {line}")
         removed = cleanup_conversion_temps(paths.tmp)
         if removed:
-            _safe_print(f"Cleaned {len(removed)} leftover conversion temp(s)")
+            log(f"Cleaned {len(removed)} leftover conversion temp(s)")
 
         if args.course:
             course_dir = paths.inbox / args.course
@@ -163,12 +192,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             courses = list_course_dirs(paths.inbox, by_size=True)
             if not courses:
-                _safe_print(f"No course folders in {paths.inbox}")
+                log(f"No course folders in {paths.inbox}")
                 return 0
 
         guard = WindowsSessionGuard()
         guard.start()
-        _safe_print("Windows guard ON (sleep blocked, pending reboot aborted while running)")
+        log("Windows guard ON (sleep blocked, pending reboot aborted while running)")
         session = SessionStats()
         try:
             for course_dir in courses:
@@ -179,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
                     min_course_savings=min_course_savings,
                     race_once=not args.race_each,
                     overwrite_outbox=bool(args.overwrite_outbox),
-                    log=_safe_print,
+                    log=log,
                 )
                 meta = load_course_meta(course_dir)
                 session.add_course(
@@ -196,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
                     year=meta.year if meta else None,
                 )
             if session.courses:
-                _safe_print(session.summary_line())
+                log(session.summary_line())
                 if not args.no_session_report:
                     report_arg = args.session_report
                     if report_arg is None or report_arg == Path("__AUTO__"):
@@ -204,10 +233,10 @@ def main(argv: list[str] | None = None) -> int:
                     else:
                         report_path = report_arg
                     written = write_session_report(session, report_path)
-                    _safe_print(f"Session report: {written}")
+                    log(f"Session report: {written}")
         finally:
             guard.stop()
-            _safe_print("Windows guard OFF")
+            log("Windows guard OFF")
         return 0
     except (ToolError, FileNotFoundError, FileExistsError, ValueError, RuntimeError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

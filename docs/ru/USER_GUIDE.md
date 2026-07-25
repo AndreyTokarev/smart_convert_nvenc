@@ -155,7 +155,7 @@ courses/
 
 ## 8. Как выбирается кодек
 
-1. Берётся сэмпл (по умолчанию ~20–30 с, со смещением ~25% длительности).
+1. Берётся один или несколько сэмплов (по умолчанию один клип ~20–30 с, смещение ~25% длительности). `--sample-fragments N` усредняет размер/VMAF по N равномерно расставленным клипам (один код-путь для любого N).
 2. Кодируется HEVC (CQ по умолчанию 28) и AV1 (CQ 32) на сэмпле **только видео** (`-an`), чтобы race по размеру не искажался аудио и seek по MPEG-TS не ломал mux.
    - Режим gpu: HEVC через `hevc_nvenc`. AV1 — `av1_nvenc`, если есть (в bundled n8.1 есть); иначе fallback **libsvtav1** (CPU).
 3. Победитель:
@@ -164,6 +164,10 @@ courses/
 4. Размер проецируется на полную длительность; если прогнозная экономия < `min_savings` → skip полного encode файла.
 5. После полного encode повторная проверка фактического размера.
 6. На уровне курса — суммарный порог `min_course_savings`.
+
+**CQ vs CRF:** поля `hevc_cq` / `av1_cq` на GPU идут в NVENC `-cq`, на CPU — в libx265/libsvtav1 `-crf`. **Одно и то же число — не равное качество** между бэкендами. В профилях одно значение ради простоты; при `--encoder cpu` подстраивайте отдельно.
+
+Опционально (выкл. по умолчанию): `--nvenc-multipass` / `--nvenc-lookahead N` (медленнее).
 
 **Дисклеймер:** сравнение size@разных CQ — **не** равное качество. С включённым VMAF качество учитывается гибридным правилом выше; полный encode всё равно требует достаточной прогнозной экономии размера.
 
@@ -212,6 +216,9 @@ uv run smart-convert lesson.mp4 --encoder auto
 uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
 uv run smart-convert lesson.mp4 --vmaf off
+uv run smart-convert lesson.mp4 --sample-fragments 3
+uv run smart-convert lesson.mp4 --nvenc-multipass --nvenc-lookahead 20
+uv run smart-convert lesson.mp4 --log-file %APPDATA%\smart_convert_nvenc\app.log
 uv run smart-convert lesson.mp4 --reencode-same-codec
 ```
 
@@ -229,6 +236,8 @@ uv run smart-convert-course --no-overwrite-outbox
 ```
 
 После пачки курсов итоги пишутся в `courses/session-report.md` (`--session-report PATH` / `--no-session-report`).
+
+Опциональный лог-файл: `--log-file PATH` (stdout остаётся; рядом с settings удобно `%APPDATA%\smart_convert_nvenc\app.log`).
 
 ### Дубликаты (только отчёт)
 
@@ -258,7 +267,14 @@ uv sync --group dev
 uv run pytest --cov=smart_convert_nvenc --cov-report=term-missing
 ```
 
-GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён из метрики покрытия.
+GPU не нужен для unit-тестов: encode/ffprobe мокаются. `gui.py` исключён из метрики покрытия.
+
+Опциональный NVENC smoke (машина мейнтейнера, не CI):
+
+```powershell
+uv run python scripts/smoke_nvenc.py
+uv run python scripts/smoke_nvenc.py --encode
+```
 
 ## 13. Архитектура модулей (кратко)
 
@@ -278,6 +294,7 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 | `probe.py` | ffprobe + validate_environment |
 | `gui.py` / `gui_layout.py` / `gui_course_list.py` / `gui_job.py` / `gui_paths.py` / `gui_settings.py` | UI shell + панели + persist |
 | `course_meta.py` | ADR-0002: чтение/нормализация `course.json` |
+| `log_sink.py` | Опциональный append-лог (`--log-file`) |
 | `session.py` | Σ freed / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |

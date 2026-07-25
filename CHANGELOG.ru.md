@@ -14,10 +14,15 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - План оставшейся работы (R1–R3): [docs/ru/remaining-work-plan.md](docs/ru/remaining-work-plan.md) · [docs/en/remaining-work-plan.md](docs/en/remaining-work-plan.md). Включает гейт R1.0 (разбиение GUI), единый `course_meta` и seed профиля как у CLI (после thermo-nuclear review).
 - R1.0: GUI разбит на `gui_theme` / `gui_layout` / `gui_course_list` / `gui_job` / `gui_paths` (`gui.py` — тонкая оболочка).
 - R1.1–R1.4: `course_meta.py` (ADR-0002); title из course.json в GUI и session-report; выбор профиля в GUI через `get_profile → to_convert_settings`; дубликаты по JSON title (+ пересечение publishers).
+- R2.1: `--sample-fragments N` — усреднение размера/VMAF по N клипам (один path для N=1).
+- R2.2: опциональный NVENC `--nvenc-multipass` / `--nvenc-lookahead` (выкл. по умолчанию).
+- R3.1: опциональный `--log-file` через `log_sink.py`.
+- R3.2: smoke-скрипт `scripts/smoke_nvenc.py` (не CI).
 
 ### Changed
 
 - Гигиена refactoring-plan: сделанные Phase 0–4 + ядро Phase 5 отмечены; smoke/file-logs Phase 5 явно отложены в R3; заголовок решений `3C`; Phase B same-volume отмечен; ARCHITECTURE/USER_GUIDE ссылаются на remaining-work-plan без дублирования чеклиста.
+- Документация: CQ≠CRF для GPU vs CPU; в RELEASES чеклист R3.3 (формулировка «неподдерживаемые» пока остаётся).
 
 ### Fixed
 

@@ -2,8 +2,8 @@
 
 English: [../en/remaining-work-plan.md](../en/remaining-work-plan.md).
 
-- **Статус:** R0–R1 сделаны; R2–R3 ожидают
-- **Дата:** 2026-07-26 (правка после thermo-nuclear review; R1 реализован)
+- **Статус:** R0–R2 сделаны; R3.1–R3.2 сделаны; **R3.3 ожидает** (нужен smoke на GPU мейнтейнера)
+- **Дата:** 2026-07-26 (правка после thermo-nuclear review; R1–R2 + R3.1–R3.2 реализованы)
 - **Контекст:** После F1–F6 и релиза **v0.1.8** обязательный feature-port и продуктовый roadmap закрыты. Здесь — **что ещё нет**: polish UX архива, опции честности/качества encode, ops/release hardening.
 
 Связанные документы:
@@ -91,9 +91,9 @@ R0 (гигиена планов) → R1.0 (разбиение GUI) → R1.1–R1
 
 | # | Задача | Заметки |
 |---|--------|---------|
-| R2.1 | Multi-fragment sample (N клипов → средний размер / VMAF) | `pipeline.py`; `--sample-fragments N` (default `1`); один path для любого N |
-| R2.2 | Опциональный NVENC multipass / lookahead | поля settings/profile → один argv assembler в `encode.py`; **выкл. по умолчанию** |
-| R2.3 | Задокументированное CQ↔CRF для CPU vs NVENC (или отдельные CRF defaults) | `profiles.toml` + USER_GUIDE; не намекать «одно число = одно качество» |
+| R2.1 | Multi-fragment sample (N клипов → средний размер / VMAF) | сделано |
+| R2.2 | Опциональный NVENC multipass / lookahead | сделано (выкл. по умолчанию) |
+| R2.3 | Задокументированное CQ↔CRF для CPU vs NVENC (или отдельные CRF defaults) | сделано (USER_GUIDE + комментарии profiles.toml) |
 
 **Критерий готовности:** `--sample-fragments 3` в тестах с моками; CRF defaults для CPU в доках; multipass — opt-in.
 
@@ -103,9 +103,9 @@ R0 (гигиена планов) → R1.0 (разбиение GUI) → R1.1–R1
 
 | # | Задача | Заметки |
 |---|--------|---------|
-| R3.1 | Опциональный лог-файл (путь в settings / `%APPDATA%`) | отдельный sink-модуль; ring-buffer GUI без изменений; CLI/session могут подключить тот же sink |
-| R3.2 | Опциональный GPU smoke (skip без NVENC) | `scripts/smoke_nvenc.py` и/или opt-in тест; в CI **не** обязателен |
-| R3.3 | Планка поддержки release zip + smoke Win+NVIDIA; затем смягчить/убрать «unsupported» в [RELEASES.md](./RELEASES.md) | только после зафиксированного smoke |
+| R3.1 | Опциональный лог-файл (путь в settings / `%APPDATA%`) | сделано (`log_sink.py`, `--log-file`) |
+| R3.2 | Опциональный GPU smoke (skip без NVENC) | сделано (`scripts/smoke_nvenc.py`; не CI) |
+| R3.3 | Планка поддержки release zip + smoke Win+NVIDIA; затем смягчить/убрать «unsupported» в [RELEASES.md](./RELEASES.md) | **ожидает** — пока только чеклист |
 
 **Критерий готовности:** путь лога в доках; smoke-скрипт есть; RELEASES меняется только после реального smoke.
 
@@ -128,5 +128,6 @@ R0 (гигиена планов) → R1.0 (разбиение GUI) → R1.1–R1
 | R0 | сделано | 2026-07-26 | Гигиена + backlog; R0.4 правки review |
 | R1.0 | сделано | 2026-07-26 | Разбиение GUI |
 | R1.1–R1.4 | сделано | 2026-07-26 | `course_meta`, профиль в GUI, метаданные в отчётах |
-| R2 | ожидает | — | |
-| R3 | ожидает | — | |
+| R2 | сделано | 2026-07-26 | fragments, multipass/lookahead, CQ≠CRF в доках |
+| R3.1–R3.2 | сделано | 2026-07-26 | `log_sink` + `scripts/smoke_nvenc.py` |
+| R3.3 | ожидает | — | смягчение RELEASES только после smoke мейнтейнера |

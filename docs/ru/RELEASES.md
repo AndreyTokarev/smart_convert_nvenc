@@ -8,6 +8,13 @@ English: [../en/RELEASES.md](../en/RELEASES.md).
 Проект в самом начале: **рабочий / поддерживаемый** способ запуска — **из исходников** (`git clone` + `uv sync` + `uv run …`).  
 Zip в GitHub Releases — задел на будущее; считайте их **неподдерживаемыми / на свой риск**, пока эта пометка не снята.
 
+### Чеклист планки поддержки (R3.3 — до снятия «неподдерживаемых»)
+
+- [ ] Мейнтейнер: `uv run python scripts/smoke_nvenc.py --encode` на Windows + NVIDIA (драйвер ок для bundled FFmpeg n8.1)
+- [ ] Smoke: encode одного файла и короткий course dry-run из release zip (или из исходников с тем же FFmpeg)
+- [ ] Записать дату / GPU / драйвер / сборку FFmpeg в этот раздел
+- [ ] Затем смягчить или убрать формулировку «неподдерживаемые» выше
+
 ## Что лежит в GitHub Releases
 
 На каждый git-тег `v*` (например `v0.1.8`) workflow [`.github/workflows/release.yml`](../../.github/workflows/release.yml) собирает **PyInstaller** one-file бинарники:

@@ -17,6 +17,7 @@ class NamedProfile:
     description: str
     sample_seconds: float
     sample_offset_ratio: float
+    sample_fragments: int
     min_savings: float
     min_course_savings: float
     hevc_cq: int
@@ -26,12 +27,15 @@ class NamedProfile:
     encoder: str
     vmaf: str
     vmaf_min: float
+    nvenc_multipass: bool
+    nvenc_lookahead: int
 
     def to_convert_settings(
         self,
         *,
         sample_seconds: float | None = None,
         sample_offset_ratio: float | None = None,
+        sample_fragments: int | None = None,
         min_savings: float | None = None,
         hevc_cq: int | None = None,
         av1_cq: int | None = None,
@@ -40,6 +44,8 @@ class NamedProfile:
         encoder: str | None = None,
         vmaf: str | None = None,
         vmaf_min: float | None = None,
+        nvenc_multipass: bool | None = None,
+        nvenc_lookahead: int | None = None,
         dry_run: bool = False,
         force_codec: VideoCodec | None = None,
         keep_samples: bool = False,
@@ -53,6 +59,9 @@ class NamedProfile:
             sample_offset_ratio=(
                 self.sample_offset_ratio if sample_offset_ratio is None else sample_offset_ratio
             ),
+            sample_fragments=(
+                self.sample_fragments if sample_fragments is None else sample_fragments
+            ),
             min_savings=self.min_savings if min_savings is None else min_savings,
             hevc_cq=self.hevc_cq if hevc_cq is None else hevc_cq,
             av1_cq=self.av1_cq if av1_cq is None else av1_cq,
@@ -65,6 +74,12 @@ class NamedProfile:
             encoder=EncoderBackend(enc_raw),
             vmaf=VmafMode(vmaf_raw),
             vmaf_min=self.vmaf_min if vmaf_min is None else vmaf_min,
+            nvenc_multipass=(
+                self.nvenc_multipass if nvenc_multipass is None else nvenc_multipass
+            ),
+            nvenc_lookahead=(
+                self.nvenc_lookahead if nvenc_lookahead is None else nvenc_lookahead
+            ),
         )
 
 
@@ -75,6 +90,7 @@ def _parse_profile(name: str, raw: dict[str, Any]) -> NamedProfile:
             description=str(raw.get("description", "")),
             sample_seconds=float(raw["sample_seconds"]),
             sample_offset_ratio=float(raw["sample_offset_ratio"]),
+            sample_fragments=int(raw.get("sample_fragments", 1)),
             min_savings=float(raw["min_savings"]),
             min_course_savings=float(raw.get("min_course_savings", raw["min_savings"])),
             hevc_cq=int(raw["hevc_cq"]),
@@ -84,6 +100,8 @@ def _parse_profile(name: str, raw: dict[str, Any]) -> NamedProfile:
             encoder=str(raw["encoder"]),
             vmaf=str(raw.get("vmaf", "auto")),
             vmaf_min=float(raw.get("vmaf_min", 90.0)),
+            nvenc_multipass=bool(raw.get("nvenc_multipass", False)),
+            nvenc_lookahead=int(raw.get("nvenc_lookahead", 0)),
         )
     except KeyError as exc:
         raise ValueError(f"Profile '{name}' missing required key: {exc.args[0]}") from exc

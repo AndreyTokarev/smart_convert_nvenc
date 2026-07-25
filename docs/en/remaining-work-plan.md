@@ -2,8 +2,8 @@
 
 Русский: [../ru/remaining-work-plan.md](../ru/remaining-work-plan.md).
 
-- **Status:** R0–R1 done; R2–R3 pending
-- **Date:** 2026-07-26 (revised after thermo-nuclear review; R1 implemented)
+- **Status:** R0–R2 done; R3.1–R3.2 done; **R3.3 pending** (needs maintainer GPU smoke evidence)
+- **Date:** 2026-07-26 (revised after thermo-nuclear review; R1–R2 + R3.1–R3.2 implemented)
 - **Context:** After F1–F6 and release **v0.1.8**, the required feature-port and product roadmap are complete. This plan tracks what is **still missing**: archive UX polish, encode honesty/quality options, and ops/release hardening.
 
 Related:
@@ -91,9 +91,9 @@ Suggested extract (behavior-preserving):
 
 | # | Task | Notes |
 |---|------|--------|
-| R2.1 | Multi-fragment sample (N clips → average size / VMAF) | `pipeline.py`; `--sample-fragments N` (default `1`); one path for all N |
-| R2.2 | Optional NVENC multipass / lookahead | settings/profile fields → single argv assembler in `encode.py`; **off by default** |
-| R2.3 | Documented CQ↔CRF mapping for CPU vs NVENC (or separate CRF defaults in profiles) | `profiles.toml` + USER_GUIDE; do not imply “same number = same quality” |
+| R2.1 | Multi-fragment sample (N clips → average size / VMAF) | done |
+| R2.2 | Optional NVENC multipass / lookahead | done (off by default) |
+| R2.3 | Documented CQ↔CRF mapping for CPU vs NVENC (or separate CRF defaults in profiles) | done (USER_GUIDE + profiles.toml comments) |
 
 **Done when:** `--sample-fragments 3` works under mocked tests; CPU CRF defaults documented; multipass is opt-in.
 
@@ -103,9 +103,9 @@ Suggested extract (behavior-preserving):
 
 | # | Task | Notes |
 |---|------|--------|
-| R3.1 | Optional session/app log file (path in settings / `%APPDATA%`) | new sink module; GUI ring-buffer unchanged; CLI/session may attach the same sink |
-| R3.2 | Optional GPU smoke (skip if no NVENC) | `scripts/smoke_nvenc.py` and/or opt-in test; **not** required in CI |
-| R3.3 | Release zip support bar: checklist + smoke on Win+NVIDIA; then soften/remove “unsupported” in [RELEASES.md](./RELEASES.md) | only after recorded smoke evidence |
+| R3.1 | Optional session/app log file (path in settings / `%APPDATA%`) | done (`log_sink.py`, `--log-file`) |
+| R3.2 | Optional GPU smoke (skip if no NVENC) | done (`scripts/smoke_nvenc.py`; not CI) |
+| R3.3 | Release zip support bar: checklist + smoke on Win+NVIDIA; then soften/remove “unsupported” in [RELEASES.md](./RELEASES.md) | **pending** — checklist only until smoke recorded |
 
 **Done when:** log path documented; smoke script exists; RELEASES wording updated only after a real smoke pass.
 
@@ -128,5 +128,6 @@ Suggested extract (behavior-preserving):
 | R0 | done | 2026-07-26 | Hygiene + backlog; R0.4 review fixes |
 | R1.0 | done | 2026-07-26 | GUI split (`gui_layout` / `gui_course_list` / `gui_job` / …) |
 | R1.1–R1.4 | done | 2026-07-26 | `course_meta`, profile picker, session/dupe metadata |
-| R2 | pending | — | |
-| R3 | pending | — | |
+| R2 | done | 2026-07-26 | fragments, multipass/lookahead, CQ≠CRF docs |
+| R3.1–R3.2 | done | 2026-07-26 | `log_sink` + `scripts/smoke_nvenc.py` |
+| R3.3 | pending | — | softens RELEASES only after maintainer smoke |

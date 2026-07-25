@@ -82,6 +82,10 @@ def video_args(profile: EncodeProfile) -> list[str]:
         ]
         if profile.codec is VideoCodec.HEVC:
             args.extend(["-tag:v", "hvc1"])
+        if profile.multipass:
+            args.extend(["-multipass", "fullres"])
+        if profile.rc_lookahead > 0:
+            args.extend(["-rc-lookahead", str(profile.rc_lookahead)])
         return args
     if backend is EncoderBackend.CPU:
         if profile.codec is VideoCodec.HEVC:

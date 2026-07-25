@@ -19,6 +19,8 @@ from smart_convert_nvenc.pipeline import (
     convert_one,
     convert_video,
     output_path_for,
+    run_samples_averaged,
+    sample_seek_list,
     sample_seek_seconds,
 )
 
@@ -39,6 +41,49 @@ def test_sample_seek_seconds(media_info: MediaInfo, settings: ConvertSettings) -
         has_audio=False,
     )
     assert sample_seek_seconds(short, settings) == 0.0
+
+
+def test_sample_seek_list_n1_matches_single(media_info: MediaInfo, settings: ConvertSettings) -> None:
+    assert sample_seek_list(media_info, settings) == [sample_seek_seconds(media_info, settings)]
+
+
+def test_sample_seek_list_even_spacing(media_info: MediaInfo) -> None:
+    settings = ConvertSettings(sample_seconds=20.0, sample_fragments=3)
+    # duration 100, max_start=80 → 0, 40, 80
+    assert sample_seek_list(media_info, settings) == pytest.approx([0.0, 40.0, 80.0])
+
+
+def test_run_samples_averaged_averages_sizes(
+    tmp_path: Path, hevc_profile: EncodeProfile, settings: ConvertSettings
+) -> None:
+    src = tmp_path / "in.mp4"
+    src.write_bytes(b"x")
+    sizes = iter([1000, 3000])
+
+    def _fake_encode(**kwargs: object) -> float:
+        out = Path(str(kwargs["output_path"]))
+        out.write_bytes(b"y" * next(sizes))
+        return 0.5
+
+    multi = ConvertSettings(
+        sample_seconds=settings.sample_seconds,
+        sample_offset_ratio=settings.sample_offset_ratio,
+        sample_fragments=2,
+        min_savings=settings.min_savings,
+        audio=settings.audio,
+    )
+    with patch("smart_convert_nvenc.pipeline.encode_file", side_effect=_fake_encode):
+        result = run_samples_averaged(
+            input_path=src,
+            work_dir=tmp_path,
+            profile=hevc_profile,
+            settings=multi,
+            seeks=[0.0, 10.0],
+            sample_seconds=10.0,
+            want_vmaf=False,
+        )
+    assert result.size_bytes == 2000
+    assert result.elapsed_sec == pytest.approx(1.0)
 
 
 def test_choose_winner_av1_smaller(hevc_profile: EncodeProfile, av1_profile: EncodeProfile) -> None:

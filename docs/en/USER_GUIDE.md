@@ -150,7 +150,7 @@ Any folder name is valid — the tool **never renames**.
 
 ## 8. Codec selection
 
-1. Take a sample (default ~20–30s, offset ~25% of duration).
+1. Take sample fragment(s) (default one ~20–30s clip, offset ~25% of duration). Use `--sample-fragments N` to average size/VMAF over N evenly spaced clips (same code path for N=1).
 2. Encode HEVC (default CQ 28) and AV1 (CQ 32) on the sample with **video only** (`-an`) so the size race is not skewed by audio and MPEG-TS seek stays reliable.
    - GPU mode: HEVC uses `hevc_nvenc`. AV1 uses `av1_nvenc` when present (bundled n8.1 includes it); otherwise **libsvtav1** (CPU) as fallback.
 3. Winner:
@@ -159,6 +159,10 @@ Any folder name is valid — the tool **never renames**.
 4. Size is projected to full duration; if projected savings < `min_savings` → skip full encode for that file.
 5. After full encode, re-check real size.
 6. Course-level threshold: `min_course_savings`.
+
+**CQ vs CRF:** profile fields `hevc_cq` / `av1_cq` are passed as NVENC `-cq` on GPU and as libx265/libsvtav1 `-crf` on CPU. **The same integer is not equal quality** across backends — do not treat “CQ 28 on NVENC” as “CRF 28 on x265”. Profiles keep one number for simplicity; tune separately if you switch `--encoder cpu`.
+
+Optional GPU quality knobs (off by default): `--nvenc-multipass` / `--nvenc-lookahead N` (slower).
 
 **Disclaimer:** size@different CQ is **not** equal quality. With VMAF enabled, quality is considered via the hybrid rule above; full encode still requires enough projected size savings.
 
@@ -204,6 +208,9 @@ uv run smart-convert lesson.mp4 --encoder auto
 uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
 uv run smart-convert lesson.mp4 --vmaf off
+uv run smart-convert lesson.mp4 --sample-fragments 3
+uv run smart-convert lesson.mp4 --nvenc-multipass --nvenc-lookahead 20
+uv run smart-convert lesson.mp4 --log-file %APPDATA%\smart_convert_nvenc\app.log
 uv run smart-convert lesson.mp4 --reencode-same-codec
 
 uv run smart-convert-course
@@ -216,6 +223,8 @@ uv run smart-convert-course --no-overwrite-outbox
 ```
 
 After a course batch, Markdown totals land in `courses/session-report.md` (override with `--session-report PATH`, skip with `--no-session-report`).
+
+Optional app log file: `--log-file PATH` (stdout still prints; suggested default next to settings: `%APPDATA%\smart_convert_nvenc\app.log`).
 
 ### Duplicates (report only)
 
@@ -245,7 +254,14 @@ uv sync --group dev
 uv run pytest --cov=smart_convert_nvenc --cov-report=term-missing
 ```
 
-No GPU required. `gui.py` is omitted from coverage metrics.
+No GPU required for unit tests. `gui.py` is omitted from coverage metrics.
+
+Optional NVENC smoke (maintainer machine, not CI):
+
+```powershell
+uv run python scripts/smoke_nvenc.py
+uv run python scripts/smoke_nvenc.py --encode
+```
 
 ## 13. Module map
 
@@ -265,6 +281,7 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 | `probe.py` | ffprobe + env validation |
 | `gui.py` / `gui_layout.py` / `gui_course_list.py` / `gui_job.py` / `gui_paths.py` / `gui_settings.py` | UI shell + panels + persistence |
 | `course_meta.py` | ADR-0002 `course.json` load/normalize/display |
+| `log_sink.py` | Optional file append sink (`--log-file`) |
 | `session.py` | Freed bytes / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | Sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |

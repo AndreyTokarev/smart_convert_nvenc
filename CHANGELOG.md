@@ -14,10 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remaining work backlog plan (R1–R3): [docs/en/remaining-work-plan.md](docs/en/remaining-work-plan.md) · [docs/ru/remaining-work-plan.md](docs/ru/remaining-work-plan.md). Includes R1.0 GUI split gate, single `course_meta` boundary, and CLI-parity profile seeding (post thermo-nuclear review).
 - R1.0: split GUI into `gui_theme` / `gui_layout` / `gui_course_list` / `gui_job` / `gui_paths` (`gui.py` stays a thin shell).
 - R1.1–R1.4: `course_meta.py` (ADR-0002); course.json title in GUI list + session-report; GUI profile picker (`default`/`course`) via `get_profile → to_convert_settings`; duplicate report groups by JSON title (+ publisher overlap note).
+- R2.1: `--sample-fragments N` averages sample size/VMAF over N evenly spaced clips (one path for N=1).
+- R2.2: optional NVENC `--nvenc-multipass` / `--nvenc-lookahead` (off by default; profiles.toml fields).
+- R3.1: optional `--log-file` via `log_sink.py` (stdout tee).
+- R3.2: maintainer GPU smoke script `scripts/smoke_nvenc.py` (not CI).
 
 ### Changed
 
 - Refactoring-plan hygiene: shipped Phase 0–4 + Phase 5 core marked done; Phase 5 smoke/file-logs explicitly deferred to R3; decision header `3C`; Phase B same-volume checked; ARCHITECTURE/USER_GUIDE point at remaining-work-plan without duplicating the checklist.
+- Docs: CQ≠CRF honesty for GPU vs CPU; RELEASES R3.3 support-bar checklist (wording still “unsupported” until smoke).
 
 ### Fixed
 

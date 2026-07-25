@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .log_sink import tee_log
 from .models import VideoCodec
 from .pipeline import convert_one
 from .probe import ToolError, validate_environment
@@ -86,6 +87,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Min VMAF to prefer smaller codec among candidates (default: from profile)",
     )
     p.add_argument(
+        "--sample-fragments",
+        type=int,
+        default=None,
+        help="Number of sample clips to average (default: from profile, usually 1)",
+    )
+    p.add_argument(
+        "--nvenc-multipass",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable NVENC -multipass fullres (off by default; slower)",
+    )
+    p.add_argument(
+        "--nvenc-lookahead",
+        type=int,
+        default=None,
+        help="NVENC -rc-lookahead frames (0=off; default: from profile)",
+    )
+    p.add_argument(
+        "--log-file",
+        type=Path,
+        default=None,
+        help="Append app log lines to this file (in addition to stdout)",
+    )
+    p.add_argument(
         "--audio",
         default=None,
         help="Аудио финального файла: copy | aac[:kbps] | opus[:kbps] (default: from profile)",
@@ -121,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
         settings = profile.to_convert_settings(
             sample_seconds=args.sample_sec,
             sample_offset_ratio=args.offset_ratio,
+            sample_fragments=args.sample_fragments,
             min_savings=args.min_savings,
             hevc_cq=args.cq_hevc,
             av1_cq=args.cq_av1,
@@ -129,14 +155,17 @@ def main(argv: list[str] | None = None) -> int:
             encoder=args.encoder,
             vmaf=args.vmaf,
             vmaf_min=args.vmaf_min,
+            nvenc_multipass=args.nvenc_multipass,
+            nvenc_lookahead=args.nvenc_lookahead,
             dry_run=args.dry_run,
             force_codec=VideoCodec(args.force_codec) if args.force_codec else None,
             keep_samples=args.keep_samples,
             skip_same_codec=not args.reencode_same_codec,
         )
+        log = tee_log(_safe_print, args.log_file)
         for line in validate_environment(settings.encoder):
-            _safe_print(f"env: {line}")
-        convert_one(args.input, settings, log=_safe_print)
+            log(f"env: {line}")
+        convert_one(args.input, settings, log=log)
         return 0
     except (ToolError, FileNotFoundError, ValueError, RuntimeError) as exc:
         print(f"Ошибка: {exc}", file=sys.stderr)

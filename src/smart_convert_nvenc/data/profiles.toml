@@ -1,9 +1,13 @@
 # Named encode presets for CLI (--profile). CLI flags override these values.
+#
+# hevc_cq / av1_cq: used as NVENC -cq on GPU, and as libx265/libsvtav1 -crf on CPU.
+# The same integer is NOT equal quality across GPU vs CPU — see USER_GUIDE.
 
 [default]
 description = "Balanced defaults for a single file (size@CQ race)."
 sample_seconds = 30.0
 sample_offset_ratio = 0.25
+sample_fragments = 1
 min_savings = 0.10
 min_course_savings = 0.10
 hevc_cq = 28
@@ -13,11 +17,14 @@ audio = "copy"
 encoder = "gpu"
 vmaf = "auto"
 vmaf_min = 90.0
+nvenc_multipass = false
+nvenc_lookahead = 0
 
 [course]
 description = "More aggressive archive profile: shorter sample, higher CQ, Opus audio."
 sample_seconds = 20.0
 sample_offset_ratio = 0.25
+sample_fragments = 1
 min_savings = 0.10
 min_course_savings = 0.10
 hevc_cq = 32
@@ -27,3 +34,5 @@ audio = "opus:96"
 encoder = "gpu"
 vmaf = "auto"
 vmaf_min = 90.0
+nvenc_multipass = false
+nvenc_lookahead = 0

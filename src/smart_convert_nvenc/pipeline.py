@@ -69,6 +69,20 @@ def sample_seek_seconds(info: MediaInfo, settings: ConvertSettings) -> float:
     return min(max_start, info.duration_sec * settings.sample_offset_ratio)
 
 
+def sample_seek_list(info: MediaInfo, settings: ConvertSettings) -> list[float]:
+    """Seek starts for sample fragments. N=1 matches ``sample_seek_seconds``."""
+    n = max(1, int(settings.sample_fragments))
+    if n == 1:
+        return [sample_seek_seconds(info, settings)]
+    if info.duration_sec <= settings.sample_seconds:
+        return [0.0] * n
+    max_start = max(0.0, info.duration_sec - settings.sample_seconds)
+    if n == 1 or max_start <= 0:
+        return [0.0]
+    # Evenly spaced from 0 .. max_start (inclusive endpoints)
+    return [max_start * i / (n - 1) for i in range(n)]
+
+
 def run_sample(
     *,
     input_path: Path,
@@ -79,14 +93,20 @@ def run_sample(
     log: LogFn | None = None,
     on_progress: Callable[[str], None] | None = None,
     should_stop: StopCheck | None = None,
+    fragment_index: int = 0,
 ) -> SampleResult:
-    out = work_dir / f"sample_{profile.codec.value}{profile.container_ext}"
+    stem = f"sample_{profile.codec.value}"
+    if fragment_index:
+        stem = f"{stem}_{fragment_index}"
+    out = work_dir / f"{stem}{profile.container_ext}"
     backend_label = profile.backend.value
     quality = "CRF" if profile.backend is EncoderBackend.CPU else "CQ"
     _log(
         log,
         f"  sample {profile.codec.value.upper()} "
-        f"({backend_label}, {quality}={profile.cq}, preset={profile.preset})...",
+        f"({backend_label}, {quality}={profile.cq}, preset={profile.preset}"
+        f"{f', frag={fragment_index + 1}' if fragment_index or settings.sample_fragments > 1 else ''}"
+        f")...",
     )
     elapsed = encode_file(
         input_path=input_path,
@@ -102,6 +122,67 @@ def run_sample(
     size = out.stat().st_size
     _log(log, f"    -> {_format_mb(size)} in {elapsed:.1f}s")
     return SampleResult(profile=profile, path=str(out), size_bytes=size, elapsed_sec=elapsed)
+
+
+def run_samples_averaged(
+    *,
+    input_path: Path,
+    work_dir: Path,
+    profile: EncodeProfile,
+    settings: ConvertSettings,
+    seeks: list[float],
+    sample_seconds: float,
+    want_vmaf: bool,
+    log: LogFn | None = None,
+    on_progress: Callable[[str], None] | None = None,
+    should_stop: StopCheck | None = None,
+) -> SampleResult:
+    """Encode one or more sample fragments; average size (and VMAF if requested)."""
+    sizes: list[int] = []
+    vmafs: list[float] = []
+    elapsed_total = 0.0
+    last_path = ""
+    for i, seek in enumerate(seeks):
+        sample = run_sample(
+            input_path=input_path,
+            work_dir=work_dir,
+            profile=profile,
+            settings=settings,
+            seek=seek,
+            log=log,
+            on_progress=on_progress,
+            should_stop=should_stop,
+            fragment_index=i if len(seeks) > 1 else 0,
+        )
+        sizes.append(sample.size_bytes)
+        elapsed_total += sample.elapsed_sec
+        last_path = sample.path
+        if want_vmaf:
+            scored = _with_vmaf(
+                sample,
+                reference=input_path,
+                seek=seek,
+                sample_seconds=sample_seconds,
+                log=log,
+                should_stop=should_stop,
+            )
+            if scored.vmaf is not None:
+                vmafs.append(scored.vmaf)
+    avg_size = int(sum(sizes) / len(sizes))
+    avg_vmaf = (sum(vmafs) / len(vmafs)) if vmafs else None
+    if len(seeks) > 1:
+        _log(
+            log,
+            f"    avg over {len(seeks)} fragments: {_format_mb(avg_size)}"
+            + (f", VMAF={avg_vmaf:.2f}" if avg_vmaf is not None else ""),
+        )
+    return SampleResult(
+        profile=profile,
+        path=last_path,
+        size_bytes=avg_size,
+        elapsed_sec=elapsed_total,
+        vmaf=avg_vmaf,
+    )
 
 
 def choose_winner(
@@ -259,6 +340,8 @@ def convert_video(
                 preset=effective_force.preset,
                 container_ext=effective_force.container_ext,
                 backend=backend,
+                multipass=effective_force.multipass,
+                rc_lookahead=effective_force.rc_lookahead,
             )
 
     if (
@@ -294,7 +377,7 @@ def convert_video(
                 projected_or_final_size=info.size_bytes,
             )
 
-    seek = sample_seek_seconds(info, settings)
+    seeks = sample_seek_list(info, settings)
     sample_len = min(settings.sample_seconds, info.duration_sec)
     racing = effective_force is None
 
@@ -322,12 +405,16 @@ def convert_video(
         if racing:
             want_vmaf = _want_vmaf(settings)
             _log(log, f"  [!] {DISCLAIMER_VMAF if want_vmaf else DISCLAIMER_SIZE_AT_CQ}")
-            hevc = run_sample(
+            if len(seeks) > 1:
+                _log(log, f"  sample fragments: {len(seeks)}")
+            hevc = run_samples_averaged(
                 input_path=input_path,
                 work_dir=work,
                 profile=settings.hevc_profile(backend=backend),
                 settings=settings,
-                seek=seek,
+                seeks=seeks,
+                sample_seconds=sample_len,
+                want_vmaf=want_vmaf,
                 log=log,
                 on_progress=_make_ffmpeg_cb("sample_hevc", sample_len),
                 should_stop=should_stop,
@@ -347,37 +434,19 @@ def convert_video(
                         log,
                         "  AV1 sample via libsvtav1 (cpu) — no av1_nvenc in FFmpeg",
                     )
-                av1 = run_sample(
+                av1 = run_samples_averaged(
                     input_path=input_path,
                     work_dir=work,
                     profile=av1_profile,
                     settings=settings,
-                    seek=seek,
+                    seeks=seeks,
+                    sample_seconds=sample_len,
+                    want_vmaf=want_vmaf,
                     log=log,
                     on_progress=_make_ffmpeg_cb("sample_av1", sample_len),
                     should_stop=should_stop,
                 )
             _emit_phase("sample_av1", 1.0)
-
-            if want_vmaf:
-                if hevc is not None:
-                    hevc = _with_vmaf(
-                        hevc,
-                        reference=input_path,
-                        seek=seek,
-                        sample_seconds=sample_len,
-                        log=log,
-                        should_stop=should_stop,
-                    )
-                if av1 is not None:
-                    av1 = _with_vmaf(
-                        av1,
-                        reference=input_path,
-                        seek=seek,
-                        sample_seconds=sample_len,
-                        log=log,
-                        should_stop=should_stop,
-                    )
 
         report = choose_winner(
             hevc=hevc,

@@ -17,11 +17,14 @@ def test_default_profile_matches_legacy_defaults() -> None:
     profile = get_profile("default")
     settings = profile.to_convert_settings()
     assert settings.sample_seconds == 30.0
+    assert settings.sample_fragments == 1
     assert settings.hevc_cq == 28
     assert settings.av1_cq == 32
     assert settings.preset == "p6"
     assert settings.audio.mode is AudioMode.COPY
     assert settings.encoder is EncoderBackend.GPU
+    assert settings.nvenc_multipass is False
+    assert settings.nvenc_lookahead == 0
 
 
 def test_course_profile_is_more_aggressive() -> None:
@@ -37,12 +40,22 @@ def test_course_profile_is_more_aggressive() -> None:
 
 def test_cli_overrides_profile_values() -> None:
     profile = get_profile("default")
-    settings = profile.to_convert_settings(hevc_cq=40, audio="aac:64", encoder="cpu")
+    settings = profile.to_convert_settings(
+        hevc_cq=40,
+        audio="aac:64",
+        encoder="cpu",
+        sample_fragments=3,
+        nvenc_multipass=True,
+        nvenc_lookahead=16,
+    )
     assert settings.hevc_cq == 40
     assert settings.av1_cq == 32
     assert settings.audio.mode is AudioMode.AAC
     assert settings.audio.bitrate_k == 64
     assert settings.encoder is EncoderBackend.CPU
+    assert settings.sample_fragments == 3
+    assert settings.nvenc_multipass is True
+    assert settings.nvenc_lookahead == 16
 
 
 def test_unknown_profile() -> None:
