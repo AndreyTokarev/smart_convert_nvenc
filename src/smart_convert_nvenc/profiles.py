@@ -6,7 +6,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
+from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec, VmafMode
 
 _PROFILES_RESOURCE = files("smart_convert_nvenc.data").joinpath("profiles.toml")
 
@@ -24,6 +24,8 @@ class NamedProfile:
     preset: str
     audio: str
     encoder: str
+    vmaf: str
+    vmaf_min: float
 
     def to_convert_settings(
         self,
@@ -36,6 +38,8 @@ class NamedProfile:
         preset: str | None = None,
         audio: str | None = None,
         encoder: str | None = None,
+        vmaf: str | None = None,
+        vmaf_min: float | None = None,
         dry_run: bool = False,
         force_codec: VideoCodec | None = None,
         keep_samples: bool = False,
@@ -43,6 +47,7 @@ class NamedProfile:
     ) -> ConvertSettings:
         enc_raw = encoder if encoder is not None else self.encoder
         audio_raw = audio if audio is not None else self.audio
+        vmaf_raw = vmaf if vmaf is not None else self.vmaf
         return ConvertSettings(
             sample_seconds=self.sample_seconds if sample_seconds is None else sample_seconds,
             sample_offset_ratio=(
@@ -58,6 +63,8 @@ class NamedProfile:
             keep_samples=keep_samples,
             skip_same_codec=skip_same_codec,
             encoder=EncoderBackend(enc_raw),
+            vmaf=VmafMode(vmaf_raw),
+            vmaf_min=self.vmaf_min if vmaf_min is None else vmaf_min,
         )
 
 
@@ -75,6 +82,8 @@ def _parse_profile(name: str, raw: dict[str, Any]) -> NamedProfile:
             preset=str(raw["preset"]),
             audio=str(raw["audio"]),
             encoder=str(raw["encoder"]),
+            vmaf=str(raw.get("vmaf", "auto")),
+            vmaf_min=float(raw.get("vmaf_min", 90.0)),
         )
     except KeyError as exc:
         raise ValueError(f"Profile '{name}' missing required key: {exc.args[0]}") from exc

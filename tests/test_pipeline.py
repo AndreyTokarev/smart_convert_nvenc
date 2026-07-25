@@ -56,6 +56,51 @@ def test_choose_winner_av1_smaller(hevc_profile: EncodeProfile, av1_profile: Enc
     assert report.worth_encoding is True
 
 
+def test_choose_winner_prefers_smaller_above_vmaf_min(
+    hevc_profile: EncodeProfile, av1_profile: EncodeProfile
+) -> None:
+    hevc = SampleResult(
+        profile=hevc_profile, path="h", size_bytes=900, elapsed_sec=1.0, vmaf=95.0
+    )
+    av1 = SampleResult(
+        profile=av1_profile, path="a", size_bytes=800, elapsed_sec=1.0, vmaf=92.0
+    )
+    report = choose_winner(
+        hevc=hevc,
+        av1=av1,
+        original_bytes=20_000,
+        duration_sec=100.0,
+        sample_seconds=10.0,
+        min_savings=0.10,
+        force_profile=None,
+        vmaf_min=90.0,
+    )
+    assert report.winner.codec is VideoCodec.AV1
+    assert "VMAF" in report.disclaimer
+
+
+def test_choose_winner_higher_vmaf_when_below_min(
+    hevc_profile: EncodeProfile, av1_profile: EncodeProfile
+) -> None:
+    hevc = SampleResult(
+        profile=hevc_profile, path="h", size_bytes=500, elapsed_sec=1.0, vmaf=70.0
+    )
+    av1 = SampleResult(
+        profile=av1_profile, path="a", size_bytes=900, elapsed_sec=1.0, vmaf=88.0
+    )
+    report = choose_winner(
+        hevc=hevc,
+        av1=av1,
+        original_bytes=20_000,
+        duration_sec=100.0,
+        sample_seconds=10.0,
+        min_savings=0.10,
+        force_profile=None,
+        vmaf_min=90.0,
+    )
+    assert report.winner.codec is VideoCodec.AV1
+
+
 def test_choose_winner_skip_low_savings(hevc_profile: EncodeProfile, av1_profile: EncodeProfile) -> None:
     report = choose_winner(
         hevc=_sample(hevc_profile, 900),

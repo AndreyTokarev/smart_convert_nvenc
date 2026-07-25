@@ -182,6 +182,8 @@ Encoder modes: `gpu` (NVENC only, default), `cpu` (libx265 / libsvtav1), `auto` 
 
 Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Use `--profile`; other CLI flags override the profile.
 
+VMAF hybrid (optional): `--vmaf auto` (default) uses libvmaf when the FFmpeg build has it; `--vmaf off` keeps size@CQ only; `--vmaf on` requires libvmaf.
+
 ## 10. CLI examples
 
 ```powershell
@@ -260,6 +262,6 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-- Later: VMAF / hybrid quality metric
+Feature-port plan F1–F6 is complete. Further work is product polish as needed.
 
 Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

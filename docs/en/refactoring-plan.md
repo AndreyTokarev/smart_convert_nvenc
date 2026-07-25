@@ -200,7 +200,7 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 
 | # | Question | Options | Decision | Status | Date | Comment |
 |---|----------|---------|----------|--------|------|---------|
-| 1 | Winner selection metric | A VMAF required / B no VMAF + disclaimer / C hybrid | B | accepted | 2026-07-24 | MVP: size@CQ + disclaimer; VMAF later |
+| 1 | Winner selection metric | A VMAF required / B no VMAF + disclaimer / C hybrid | C | accepted | 2026-07-26 | Was B for MVP; F6.3 landed hybrid (`vmaf=auto`) |
 | 2 | CLI vs GUI | A CLI only / B CLI+GUI at once / C CLI now, GUI next | C | accepted | 2026-07-24 | CLI first, GUI next |
 | 3 | NVENC vs CPU | A NVENC only / B + CPU fallback / C gpu/cpu/auto modes | A | accepted | 2026-07-24 | NVENC only in MVP |
 | 4 | Final audio | A copy / B always re-encode / C copy + option | C | accepted | 2026-07-24 | copy by default; `--audio` optional |

@@ -15,7 +15,7 @@ from . import __version__
 from .course import convert_course, iter_videos, list_course_dirs, tree_size
 from .ffmpeg_runner import FFmpegCancelled, kill_active_subprocesses
 from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
-from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec
+from .models import AudioSettings, ConvertSettings, EncoderBackend, VideoCodec, VmafMode
 from .paths import CoursePaths, resolve_course_paths
 from .probe import ToolError, validate_environment
 from .progress import ProgressUpdate, clamp01, trim_textbox_line_count
@@ -112,6 +112,7 @@ class App(ctk.CTk):
         self.preset_var.set(s.preset)
         self.codec_var.set(s.codec if s.codec in {"auto", "hevc", "av1"} else "auto")
         self.encoder_var.set(s.encoder if s.encoder in {"gpu", "cpu", "auto"} else "gpu")
+        self.vmaf_var.set(s.vmaf if s.vmaf in {"off", "auto", "on"} else "auto")
         self.skip_same_codec_var.set(bool(s.skip_same_codec))
         self.overwrite_outbox_var.set(bool(s.overwrite_outbox))
         self.inbox_var.set(str(self.paths.inbox))
@@ -132,6 +133,7 @@ class App(ctk.CTk):
             encoder=self.encoder_var.get().strip(),
             skip_same_codec=bool(self.skip_same_codec_var.get()),
             overwrite_outbox=bool(self.overwrite_outbox_var.get()),
+            vmaf=self.vmaf_var.get().strip(),
         )
 
     def _persist_settings(self) -> None:
@@ -283,6 +285,7 @@ class App(ctk.CTk):
         self.preset_var = tk.StringVar(value="p6")
         self.codec_var = tk.StringVar(value="auto")
         self.encoder_var = tk.StringVar(value="gpu")
+        self.vmaf_var = tk.StringVar(value="auto")
         self.skip_same_codec_var = tk.BooleanVar(value=True)
         self.overwrite_outbox_var = tk.BooleanVar(value=True)
 
@@ -330,6 +333,28 @@ class App(ctk.CTk):
             enc_row,
             variable=self.encoder_var,
             values=["gpu", "cpu", "auto"],
+            width=120,
+            height=28,
+            font=self._font_ui,
+            fg_color=COLORS["panel2"],
+            button_color=COLORS["border"],
+            button_hover_color=COLORS["accent"],
+        ).pack(side="left")
+
+        vmaf_row = ctk.CTkFrame(fields, fg_color="transparent")
+        vmaf_row.pack(fill="x", padx=10, pady=2)
+        ctk.CTkLabel(
+            vmaf_row,
+            text="VMAF",
+            width=100,
+            anchor="w",
+            font=self._font_ui,
+            text_color=COLORS["muted"],
+        ).pack(side="left")
+        ctk.CTkOptionMenu(
+            vmaf_row,
+            variable=self.vmaf_var,
+            values=["auto", "off", "on"],
             width=120,
             height=28,
             font=self._font_ui,
@@ -817,6 +842,9 @@ class App(ctk.CTk):
         enc_raw = self.encoder_var.get().strip().lower()
         if enc_raw not in {"gpu", "cpu", "auto"}:
             enc_raw = "gpu"
+        vmaf_raw = self.vmaf_var.get().strip().lower()
+        if vmaf_raw not in {"off", "auto", "on"}:
+            vmaf_raw = "auto"
         return ConvertSettings(
             sample_seconds=float(self.sample_var.get()),
             min_savings=float(self.min_savings_var.get()),
@@ -827,6 +855,7 @@ class App(ctk.CTk):
             force_codec=force,
             skip_same_codec=bool(self.skip_same_codec_var.get()),
             encoder=EncoderBackend(enc_raw),
+            vmaf=VmafMode(vmaf_raw),
         )
 
     def _selected_courses(self) -> list[Path]:

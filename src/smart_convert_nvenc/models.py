@@ -18,6 +18,14 @@ class EncoderBackend(str, Enum):
     AUTO = "auto"
 
 
+class VmafMode(str, Enum):
+    """Hybrid quality metric (F6.3): size@CQ by default; VMAF when available/forced."""
+
+    OFF = "off"
+    AUTO = "auto"
+    ON = "on"
+
+
 # ffprobe codec_name values that count as already-encoded targets
 _HEVC_PROBE_NAMES = frozenset({"hevc", "h265", "hev1", "hvc1"})
 _AV1_PROBE_NAMES = frozenset({"av1", "av01"})
@@ -128,6 +136,8 @@ class ConvertSettings:
     keep_samples: bool = False
     skip_same_codec: bool = True
     encoder: EncoderBackend = EncoderBackend.GPU
+    vmaf: VmafMode = VmafMode.AUTO
+    vmaf_min: float = 90.0
 
     def hevc_profile(self, *, backend: EncoderBackend = EncoderBackend.GPU) -> EncodeProfile:
         if backend is EncoderBackend.AUTO:
@@ -169,6 +179,7 @@ class SampleResult:
     path: str
     size_bytes: int
     elapsed_sec: float
+    vmaf: float | None = None
 
 
 @dataclass(frozen=True)
@@ -195,7 +206,12 @@ class VideoDecision:
 
 DISCLAIMER_SIZE_AT_CQ = (
     "Сравнение по размеру при разных CQ (HEVC vs AV1) — не равное качество. "
-    "Для курсов этого обычно достаточно; VMAF в MVP не используется."
+    "Для курсов этого обычно достаточно."
+)
+
+DISCLAIMER_VMAF = (
+    "Победитель по VMAF (≥ порога) среди кандидатов, иначе выше VMAF; "
+    "полный encode всё ещё только при достаточной прогнозной экономии размера."
 )
 
 VIDEO_EXTENSIONS = {

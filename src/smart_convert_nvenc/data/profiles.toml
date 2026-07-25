@@ -11,6 +11,8 @@ av1_cq = 32
 preset = "p6"
 audio = "copy"
 encoder = "gpu"
+vmaf = "auto"
+vmaf_min = 90.0
 
 [course]
 description = "More aggressive archive profile: shorter sample, higher CQ, Opus audio."
@@ -23,3 +25,5 @@ av1_cq = 36
 preset = "p6"
 audio = "opus:96"
 encoder = "gpu"
+vmaf = "auto"
+vmaf_min = 90.0

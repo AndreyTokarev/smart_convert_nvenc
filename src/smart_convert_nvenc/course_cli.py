@@ -63,6 +63,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="gpu=NVENC only; cpu=libx265/libsvtav1; auto=NVENC if available else CPU",
     )
+    p.add_argument(
+        "--vmaf",
+        choices=["off", "auto", "on"],
+        default=None,
+        help="Hybrid VMAF for sample race (default: from profile)",
+    )
+    p.add_argument("--vmaf-min", type=float, default=None)
     p.add_argument("--audio", default=None)
     p.add_argument("--force-codec", choices=["hevc", "av1"], default=None)
     p.add_argument(
@@ -132,6 +139,8 @@ def main(argv: list[str] | None = None) -> int:
             preset=args.preset,
             audio=args.audio,
             encoder=args.encoder,
+            vmaf=args.vmaf,
+            vmaf_min=args.vmaf_min,
             dry_run=args.dry_run,
             force_codec=VideoCodec(args.force_codec) if args.force_codec else None,
             skip_same_codec=not args.reencode_same_codec,

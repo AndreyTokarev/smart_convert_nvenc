@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Hybrid VMAF for sample race (`--vmaf off|auto|on`, `--vmaf-min`, GUI VMAF menu): when libvmaf is present, pick among codecs meeting the VMAF floor by size; otherwise fall back to size@CQ.
+
 ### Changed
 
 ### Fixed

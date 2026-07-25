@@ -187,6 +187,8 @@ uv run smart-convert-gui
 
 Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Флаг `--profile`; остальные CLI-флаги перекрывают профиль.
 
+Гибридный VMAF: `--vmaf auto` (по умолчанию) включает libvmaf, если он есть в FFmpeg; `--vmaf off` — только size@CQ; `--vmaf on` требует libvmaf.
+
 ## 10. CLI
 
 ### Один файл
@@ -273,6 +275,6 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 ## 15. Roadmap (высокоуровнево)
 
-- Позже: VMAF / гибрид
+План переноса F1–F6 закрыт. Дальше — точечный polish по необходимости.
 
 Детали: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

@@ -2,7 +2,7 @@
 
 Русский: [../ru/feature-port-plan.md](../ru/feature-port-plan.md).
 
-- **Status:** F1–F5 done; F6 partial (F6.1–F6.2, F6.4 done; F6.3 VMAF later)  
+- **Status:** F1–F6 done (F6.3 hybrid VMAF)  
 - **Date:** 2026-07-24  
 - **Context:** `D:\projects\python\video_converter` — previous personal service (Flet + NVENC). Decided not to extend it, but build **smart_convert_nvenc** from scratch for the course archive. Below: what to port from old experience, in what order, and what we deliberately do not carry over.
 
@@ -121,7 +121,7 @@ Related docs from the old project (reference only, do not copy blindly):
 |---|------|
 | F6.1 | Find duplicate courses/files (report, no auto-delete) — **done** (`duplicates` / `smart-convert-duplicates`) |
 | F6.2 | Batch report for course batch to file (`session-report.md`) — **done** |
-| F6.3 | VMAF/hybrid (decision 1B → later C) |
+| F6.3 | VMAF/hybrid (decision 1B → later C) — **done** (`vmaf=auto|off|on`, threshold `vmaf_min`) |
 | F6.4 | CPU fallback x265/SVT-AV1 — **done** (`encoder`: gpu/cpu/auto; no CQ↔CRF recalibration) |
 
 ---
@@ -160,10 +160,10 @@ Do not start F5 pack until Stop and temp are stable (F1).
 | F3 | done | 2026-07-24 | Settings persist; Open inbox/outbox; confirm on close; log ring-buffer; progress drain keeps latest only |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | done | 2026-07-26 | F5.1–F5.3 profiles.toml + `--profile` + build.ps1/BUILD.md; F5.4 FFmpeg vendor |
-| F6 | partial | 2026-07-26 | F6.1 duplicates; F6.2 session-report.md; F6.4 CPU encode |
+| F6 | done | 2026-07-26 | F6.1 duplicates; F6.2 session-report; F6.3 hybrid VMAF; F6.4 CPU encode |
 
 ---
 
 ## Link to overall plan
 
-Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; F1–F5 done; next focus — F6 duplicates / session report / VMAF as needed.
+Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; F1–F6 done.

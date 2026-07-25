@@ -11,6 +11,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
+- Гибридный VMAF для sample race (`--vmaf off|auto|on`, `--vmaf-min`, меню VMAF в GUI): при наличии libvmaf выбираем среди кодеков с VMAF ≥ порога меньший размер; иначе size@CQ.
+
 ### Changed
 
 ### Fixed
