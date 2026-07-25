@@ -183,7 +183,7 @@ uv run smart-convert-gui
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — список, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (вкл. по умолчанию)
+- **Settings** — Profile (`default`/`course`), sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (вкл. по умолчанию)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — журнал и live-строка ffmpeg
 
@@ -195,7 +195,7 @@ uv run smart-convert-gui
 
 Режимы энкодера: `gpu` (только NVENC, по умолчанию), `cpu` (libx265 / libsvtav1), `auto` (NVENC если есть, иначе CPU).
 
-Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Флаг CLI `--profile` (в GUI выбора профиля пока нет); остальные флаги перекрывают профиль.
+Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). CLI `--profile` или меню **Profile** в GUI; выбор профиля сидирует поля encode (виджеты потом перекрывают, как флаги CLI).
 
 VMAF: меню **VMAF** в GUI или `--vmaf auto|off|on` / `--vmaf-min`.
 
@@ -276,7 +276,8 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 | `encode.py` | argv NVENC/CPU, temp, retry без hwaccel |
 | `ffmpeg_runner.py` | Popen registry, cancel, taskkill |
 | `probe.py` | ffprobe + validate_environment |
-| `gui.py` / `gui_settings.py` | UI + persist |
+| `gui.py` / `gui_layout.py` / `gui_course_list.py` / `gui_job.py` / `gui_paths.py` / `gui_settings.py` | UI shell + панели + persist |
+| `course_meta.py` | ADR-0002: чтение/нормализация `course.json` |
 | `session.py` | Σ freed / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |
@@ -290,6 +291,6 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 ## 15. Roadmap (высокоуровнево)
 
-План переноса F1–F6 закрыт. Дальше — точечный polish по необходимости.
+План переноса F1–F6 закрыт. **R1 сделан**; дальше [remaining-work-plan.md](./remaining-work-plan.md) **R2–R3**.
 
-Детали: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).
+Также: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

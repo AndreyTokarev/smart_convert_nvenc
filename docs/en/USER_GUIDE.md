@@ -178,7 +178,7 @@ Blocks:
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — list, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (on by default)
+- **Settings** — Profile (`default`/`course`), sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (on by default)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — journal + live ffmpeg line
 
@@ -190,7 +190,7 @@ Settings file:
 
 Encoder modes: `gpu` (NVENC only, default), `cpu` (libx265 / libsvtav1), `auto` (NVENC if present, else CPU).
 
-Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Use CLI `--profile` (no GUI profile picker yet); other CLI flags override the profile.
+Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). CLI `--profile` or GUI **Profile** menu; choosing a profile seeds encode fields (then widgets override, same as CLI flags).
 
 VMAF: GUI **VMAF** menu or `--vmaf auto|off|on` / `--vmaf-min`.
 
@@ -263,7 +263,8 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 | `encode.py` | NVENC/CPU argv, temps, hwaccel retry |
 | `ffmpeg_runner.py` | Popen registry, cancel, taskkill |
 | `probe.py` | ffprobe + env validation |
-| `gui.py` / `gui_settings.py` | UI + persistence |
+| `gui.py` / `gui_layout.py` / `gui_course_list.py` / `gui_job.py` / `gui_paths.py` / `gui_settings.py` | UI shell + panels + persistence |
+| `course_meta.py` | ADR-0002 `course.json` load/normalize/display |
 | `session.py` | Freed bytes / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | Sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |
@@ -277,6 +278,6 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-Feature-port plan **F1–F6 is complete**. Remaining product polish as needed (e.g. consume `course.json` in GUI/reports, GUI profile picker).
+Feature-port plan **F1–F6 is complete**. Remaining work **R1 is done**; next is [remaining-work-plan.md](./remaining-work-plan.md) **R2–R3**.
 
-Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).
+Also: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

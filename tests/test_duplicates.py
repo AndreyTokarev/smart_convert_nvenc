@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from smart_convert_nvenc import duplicates_cli
@@ -71,6 +72,37 @@ def test_find_duplicate_course_names(tmp_path: Path) -> None:
     text = format_report(report)
     assert "Same course folder name" in text
     assert "Course A" in text or "course a" in text
+
+
+def test_find_duplicate_course_titles(tmp_path: Path) -> None:
+    inbox = tmp_path / "inbox"
+    outbox = tmp_path / "outbox"
+    a = inbox / "Folder A"
+    b = outbox / "Folder B"
+    a.mkdir(parents=True)
+    b.mkdir(parents=True)
+    payload = {
+        "schema": 1,
+        "title": "Same Title",
+        "publishers": ["Acme"],
+        "authors": [],
+        "notes": "",
+    }
+    (a / "course.json").write_text(json.dumps(payload), encoding="utf-8")
+    (b / "course.json").write_text(json.dumps(payload), encoding="utf-8")
+    (a / "note.txt").write_text("x", encoding="utf-8")
+    (b / "note.txt").write_text("y", encoding="utf-8")
+
+    from smart_convert_nvenc.duplicates import find_duplicate_course_titles
+
+    groups = find_duplicate_course_titles([inbox, outbox])
+    assert len(groups) == 1
+    assert groups[0].title == "Same Title"
+    assert groups[0].publishers_overlap is True
+    report = scan_duplicates([inbox, outbox], min_size=0)
+    text = format_report(report)
+    assert "Same course.json title" in text
+    assert "Same Title" in text
 
 
 def test_format_report_empty(tmp_path: Path) -> None:

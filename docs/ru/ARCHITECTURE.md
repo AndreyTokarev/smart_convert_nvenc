@@ -88,8 +88,4 @@ GUI и CLI **делят одно ядро** — без копипасты ffmpeg
 
 ## Расширение
 
-Хорошие точки роста без ломки ADR-0001:
-
-- чтение `course.json` в GUI/отчётах (файл уже сохраняется);
-- выбор профиля в GUI (CLI `--profile` уже есть);
-- более богатый поиск дубликатов по title/publishers из JSON.
+Дальнейшая работа — в [remaining-work-plan.md](./remaining-work-plan.md) (R1.0 разбиение GUI → R1 UX → R2 encode → R3 ops). Чеклист backlog здесь не дублировать.

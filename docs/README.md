@@ -23,6 +23,7 @@ All user-facing and design docs are maintained **in both languages**: `docs/en/`
 |--|---------|---------|
 | Refactoring / decision journal | [en/refactoring-plan.md](./en/refactoring-plan.md) | [ru/refactoring-plan.md](./ru/refactoring-plan.md) |
 | Feature port plan (F1–F6) | [en/feature-port-plan.md](./en/feature-port-plan.md) | [ru/feature-port-plan.md](./ru/feature-port-plan.md) |
+| Remaining work (R1–R3) | [en/remaining-work-plan.md](./en/remaining-work-plan.md) | [ru/remaining-work-plan.md](./ru/remaining-work-plan.md) |
 | Codec chat review | [en/review-codec-advice.md](./en/review-codec-advice.md) | [ru/review-codec-advice.md](./ru/review-codec-advice.md) |
 | Source chat archive | [en/chat-optimal-mpeg4-codec.md](./en/chat-optimal-mpeg4-codec.md) | [ru/chat-optimal-mpeg4-codec.md](./ru/chat-optimal-mpeg4-codec.md) |
 | ADR index | [en/adr/README.md](./en/adr/README.md) | [ru/adr/README.md](./ru/adr/README.md) |

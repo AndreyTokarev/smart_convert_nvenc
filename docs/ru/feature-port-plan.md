@@ -166,4 +166,4 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 
 ## Связь с общим планом
 
-Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F6 done.
+Обновляет дорожную карту в [refactoring-plan.md](./refactoring-plan.md): конвейер и GUI уже сделаны; F1–F6 done. Дальше: [remaining-work-plan.md](./remaining-work-plan.md).

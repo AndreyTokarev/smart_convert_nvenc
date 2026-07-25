@@ -48,6 +48,7 @@ def test_markdown_session_report(tmp_path: Path) -> None:
     text = stats.markdown_report()
     assert "# Session report" in text
     assert "Course\\|One" in text
+    assert "| Title |" in text
     assert "2/3" in text
     path = write_session_report(stats, tmp_path / "session-report.md")
     assert path.read_text(encoding="utf-8") == text

@@ -166,4 +166,4 @@ Do not start F5 pack until Stop and temp are stable (F1).
 
 ## Link to overall plan
 
-Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; F1–F6 done.
+Updates the roadmap in [refactoring-plan.md](./refactoring-plan.md): pipeline and GUI are done; F1–F6 done. Follow-ups: [remaining-work-plan.md](./remaining-work-plan.md).

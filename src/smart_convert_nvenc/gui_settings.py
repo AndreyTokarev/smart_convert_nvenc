@@ -29,6 +29,7 @@ class GuiSettings:
     inbox: str = ""
     outbox: str = ""
     tmp: str = ""
+    profile: str = "default"
     sample_sec: str = "20"
     min_savings: str = "0.10"
     cq_hevc: str = "28"
@@ -54,6 +55,7 @@ class GuiSettings:
             inbox=str(paths.inbox),
             outbox=str(paths.outbox),
             tmp=str(paths.tmp),
+            profile=self.profile,
             sample_sec=self.sample_sec,
             min_savings=self.min_savings,
             cq_hevc=self.cq_hevc,

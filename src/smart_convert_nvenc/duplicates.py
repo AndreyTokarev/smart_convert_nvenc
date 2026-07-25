@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .course import list_course_dirs, tree_size
+from .course_meta import CourseMeta, load_course_meta, normalize_title, publishers_overlap
 from .models import is_video_media
 
 
@@ -59,10 +60,21 @@ class DuplicateNameGroup:
 
 
 @dataclass(frozen=True)
+class DuplicateTitleGroup:
+    """Courses that share a normalized course.json title (optional publisher overlap)."""
+
+    title: str
+    paths: tuple[Path, ...]
+    sizes: tuple[int, ...]
+    publishers_overlap: bool
+
+
+@dataclass(frozen=True)
 class DuplicateReport:
     roots: tuple[Path, ...]
     file_groups: tuple[DuplicateFileGroup, ...]
     name_groups: tuple[DuplicateNameGroup, ...]
+    title_groups: tuple[DuplicateTitleGroup, ...] = ()
 
     @property
     def file_group_count(self) -> int:
@@ -71,6 +83,10 @@ class DuplicateReport:
     @property
     def name_group_count(self) -> int:
         return len(self.name_groups)
+
+    @property
+    def title_group_count(self) -> int:
+        return len(self.title_groups)
 
     @property
     def wasted_bytes(self) -> int:
@@ -125,6 +141,48 @@ def find_duplicate_course_names(roots: Iterable[Path]) -> list[DuplicateNameGrou
     return groups
 
 
+def find_duplicate_course_titles(roots: Iterable[Path]) -> list[DuplicateTitleGroup]:
+    """Group courses by normalized ``course.json`` title (report only)."""
+    by_title: dict[str, list[tuple[Path, CourseMeta]]] = defaultdict(list)
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for course in list_course_dirs(root, by_size=False):
+            meta = load_course_meta(course)
+            if meta is None or not meta.title.strip():
+                continue
+            key = normalize_title(meta.title)
+            by_title[key].append((course.resolve(), meta))
+
+    groups: list[DuplicateTitleGroup] = []
+    for key, items in by_title.items():
+        # Unique paths (same course scanned twice via overlapping roots)
+        unique_map: dict[Path, CourseMeta] = {}
+        for path, meta in items:
+            unique_map.setdefault(path, meta)
+        if len(unique_map) < 2:
+            continue
+        paths = tuple(sorted(unique_map, key=lambda p: str(p).lower()))
+        metas = [unique_map[p] for p in paths]
+        overlap = any(
+            publishers_overlap(metas[i], metas[j])
+            for i in range(len(metas))
+            for j in range(i + 1, len(metas))
+        )
+        sizes = tuple(tree_size(p) for p in paths)
+        display = metas[0].title.strip()
+        groups.append(
+            DuplicateTitleGroup(
+                title=display,
+                paths=paths,
+                sizes=sizes,
+                publishers_overlap=overlap,
+            )
+        )
+    groups.sort(key=lambda g: (-sum(g.sizes), g.title.casefold()))
+    return groups
+
+
 def scan_duplicates(
     roots: Iterable[Path],
     *,
@@ -138,6 +196,7 @@ def scan_duplicates(
             find_duplicate_files(root_list, min_size=min_size, videos_only=videos_only)
         ),
         name_groups=tuple(find_duplicate_course_names(root_list)),
+        title_groups=tuple(find_duplicate_course_titles(root_list)),
     )
 
 
@@ -148,6 +207,7 @@ def format_report(report: DuplicateReport) -> str:
         f"Roots: {', '.join(str(r) for r in report.roots)}",
         f"Exact file groups: {report.file_group_count}",
         f"Same course-name groups: {report.name_group_count}",
+        f"Same course.json title groups: {report.title_group_count}",
         f"Potential wasted (exact copies): {report.wasted_bytes / (1024 * 1024):.2f} MiB",
         "",
         "No files were deleted (report only).",
@@ -181,6 +241,21 @@ def format_report(report: DuplicateReport) -> str:
             lines.append("")
     else:
         lines.append("## Same course folder name")
+        lines.append("")
+        lines.append("None found.")
+        lines.append("")
+
+    if report.title_groups:
+        lines.append("## Same course.json title")
+        lines.append("")
+        for i, group in enumerate(report.title_groups, start=1):
+            overlap = " (publishers overlap)" if group.publishers_overlap else ""
+            lines.append(f"### Group {i} — `{group.title}`{overlap}")
+            for path, size in zip(group.paths, group.sizes, strict=True):
+                lines.append(f"- `{path}` ({size / (1024 * 1024):.2f} MiB)")
+            lines.append("")
+    else:
+        lines.append("## Same course.json title")
         lines.append("")
         lines.append("None found.")
         lines.append("")

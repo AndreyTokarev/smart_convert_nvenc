@@ -88,8 +88,4 @@ Unit tests mock subprocess/ffmpeg. Coverage gate 90% excluding `gui.py`.
 
 ## Extension points
 
-Safe growth without breaking ADR-0001:
-
-- consume `course.json` in GUI/reports (file already preserved);
-- GUI profile picker (CLI `--profile` already works);
-- richer duplicate matching using JSON title/publishers.
+Follow-ups live in [remaining-work-plan.md](./remaining-work-plan.md) (R1.0 GUI split → R1 UX → R2 encode → R3 ops). Do not duplicate the backlog checklist here.

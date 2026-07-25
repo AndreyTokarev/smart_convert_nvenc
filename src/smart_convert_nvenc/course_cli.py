@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import __version__
 from .course import convert_course, list_course_dirs
+from .course_meta import load_course_meta
 from .models import VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
@@ -180,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
                     overwrite_outbox=bool(args.overwrite_outbox),
                     log=_safe_print,
                 )
+                meta = load_course_meta(course_dir)
                 session.add_course(
                     result.name,
                     result.original_size,
@@ -188,6 +190,10 @@ def main(argv: list[str] | None = None) -> int:
                     videos_compressed=result.videos_compressed,
                     videos_total=result.videos_total,
                     outbox_path=str(result.outbox_path),
+                    title=meta.title if meta and meta.title.strip() else None,
+                    publishers=meta.publishers if meta else (),
+                    authors=meta.authors if meta else (),
+                    year=meta.year if meta else None,
                 )
             if session.courses:
                 _safe_print(session.summary_line())

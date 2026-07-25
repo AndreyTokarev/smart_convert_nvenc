@@ -2,7 +2,7 @@
 
 English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
-Статус: решения приняты (1C 2C 3A 4C) — F1–F6 done  
+Статус: решения приняты (1C 2C 3C 4C 5) — F1–F6 done; остаток → [remaining-work-plan.md](./remaining-work-plan.md)  
 Основание: [review-codec-advice.md](./review-codec-advice.md), исходный чат [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md)
 
 ## Цель продукта (зачем это существует)
@@ -36,58 +36,58 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
 ## Фазы
 
+> Чекбоксы ниже отражают **уже сделанный** MVP/core. Открытые хвосты (разбиение GUI, course.json UX, multi-fragment, multipass, логи в файл, GPU smoke, CQ↔CRF) — в [remaining-work-plan.md](./remaining-work-plan.md) как R1–R3. Smoke/логи Phase 5 намеренно остаются `[ ]`.
+
 ### Фаза 0 — Каркас репозитория
 
-- [ ] Структура пакетов, например:
+- [x] Структура пакетов:
   - `src/smart_convert_nvenc/` — ядро
   - `src/smart_convert_nvenc/cli.py`
-  - `src/smart_convert_nvenc/gui.py` (опционально позже)
-  - `docs/` — уже есть
-- [ ] Зависимости через `uv` (`customtkinter` только для GUI extra)
-- [ ] Проверка окружения: `ffmpeg`, `hevc_nvenc`, `av1_nvenc`
-- [ ] README: установка FFmpeg (gyan), запуск через `uv run`
+  - `src/smart_convert_nvenc/gui.py`
+  - `docs/` — bilingual
+- [x] Зависимости через `uv` (`customtkinter` для GUI)
+- [x] Проверка окружения: `ffmpeg`, `hevc_nvenc` (обязателен); `av1_nvenc` опционален
+- [x] README: FFmpeg / `uv run`
 
 ### Фаза 1 — Честный бенчмарк (ядро)
 
-- [ ] Извлечение метаданных исходника (`ffprobe`: длительность, кодек, битрейт, размер)
-- [ ] Сэмплирование:
-  - не с `t=0`, а offset (например 10–25% длительности)
-  - опция: N фрагментов → усреднение
-- [ ] Два прогона NVENC на сэмпле с **одинаковым аудио** (`-c:a copy`)
-- [ ] Режим сравнения (выбрать один как default, второй — advanced):
-  - **A (рекомендуемый старт):** один целевой CQ-профиль на кодек + **VMAF** сэмпла vs исходный фрагмент; победитель = лучший size при VMAF ≥ порога **или** лучший VMAF при size ≤ бюджета
-  - **B (проще, без libvmaf):** калибровка CQ бинарным поиском под целевой VMAF/SSIM *или* под целевой битрейт и сравнение качества
-- [ ] Порог: полный encode только если `projected_full_size < original_size * (1 - min_savings)`
-- [ ] Отчёт теста: размеры, время, CQ, VMAF (если есть), выбранный кодек, причина отказа
+- [x] Извлечение метаданных исходника (`ffprobe`: длительность, кодек, битрейт, размер)
+- [x] Сэмплирование со смещением (по умолчанию ~25% длительности); multi-fragment → [remaining-work R2.1](./remaining-work-plan.md)
+- [x] Два прогона encode на сэмпле с **одинаковым аудио** (`-c:a copy` / `-an` для race)
+- [x] Сравнение: гибридный VMAF при наличии `libvmaf`, иначе size@CQ + дисклеймер (решение 1C)
+- [x] Порог: полный encode только если прогнозная экономия ≥ `min_savings`
+- [x] Отчёт: размеры, время, CQ, выбранный кодек, причины skip (VMAF при включении)
 
 ### Фаза 2 — Полный encode
 
-- [ ] Общие пресеты NVENC: `p6`/`p7`, `-tune hq`, AQ, опционально multipass/lookahead
-- [ ] HEVC: `-tag:v hvc1`, профиль 8/10-bit по источнику (не форсить `main10` вслепую)
-- [ ] AV1: контейнер `.mkv` (или `.mp4` если совместимость ок)
-- [ ] Аудио финального файла: отдельная политика (`copy` / AAC / Opus), не смешивать с логикой выбора видеокодека
-- [ ] Вывод рядом с исходником + суффикс кодека; опция overwrite
+- [x] Общие пресеты NVENC: `p6`/`p7`, `-tune hq`, AQ (multipass/lookahead → [remaining-work R2.2](./remaining-work-plan.md))
+- [x] HEVC: `-tag:v hvc1`
+- [x] AV1: контейнер `.mkv`
+- [x] Аудио финального файла: отдельная политика (`copy` / AAC / Opus)
+- [x] Вывод с суффиксом кодека; перезапись outbox курса
 
 ### Фаза 3 — CLI
 
-- [ ] `uv run smart-convert path/to/video.mp4`
-- [ ] Флаги: `--sample-sec`, `--offset`, `--min-savings`, `--preset`, `--cq-hevc`, `--cq-av1`, `--dry-run`, `--force-codec`
-- [ ] Код выхода ≠ 0 при ошибке FFmpeg / отсутствии NVENC
+- [x] `uv run smart-convert path/to/video.mp4`
+- [x] Флаги: `--sample-sec`, `--offset`, `--min-savings`, `--preset`, `--cq-hevc`, `--cq-av1`, `--dry-run`, `--force-codec`, плюс encoder/VMAF/profile/audio
+- [x] Код выхода ≠ 0 при ошибке FFmpeg / отсутствии нужных энкодеров
 
 ### Фаза 4 — GUI (после стабильного ядра)
 
-- [ ] Тонкая обёртка над тем же API, что CLI
-- [ ] Обновления UI только через main thread (`after`)
-- [ ] Stop = kill process group / `taskkill` на Windows надёжно
-- [ ] Прогресс из парсинга `out_time` / `time=`
-- [ ] Не блокировать UI; один worker + очередь логов
+- [x] Тонкая обёртка над тем же API, что CLI
+- [x] Обновления UI только через main thread (`after`)
+- [x] Stop = `taskkill` на Windows надёжно
+- [x] Прогресс из парсинга `out_time` / `time=`
+- [x] Не блокировать UI; один worker + очередь логов
 
 ### Фаза 5 — Качество и устойчивость
 
-- [ ] Юнит-тесты сборки команд FFmpeg (без реального encode)
-- [ ] Опциональный smoke на коротком файле, если GPU доступен
-- [ ] Логи в файл; временные сэмплы в `%TEMP%` / `.cache`, не рядом с исходником по умолчанию
-- [ ] Обработка путей с пробелами/Unicode (Windows)
+> Сделанное ядро vs отложенное: smoke и логи в файл остаются открытыми в [remaining-work-plan.md](./remaining-work-plan.md) R3 — Phase 5 **не** закрыта целиком.
+
+- [x] Юнит-тесты сборки команд FFmpeg (без реального encode); coverage ≥90%
+- [ ] Опциональный GPU smoke → [remaining-work R3.2](./remaining-work-plan.md)
+- [ ] Логи в файл → [remaining-work R3.1](./remaining-work-plan.md); temp — уникальные `*.conv.<id>.*`
+- [x] Обработка путей с пробелами/Unicode (Windows)
 
 ---
 
@@ -242,8 +242,7 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 - [x] Конфликт имён в `outbox/` → перезапись по умолчанию; отказ: `--no-overwrite-outbox` / чекбокс GUI
 - [x] CLI: `smart-convert-course` [имя]
 - [x] GUI: `smart-convert-gui`
-- [ ] Рекомендация: inbox/outbox/tmp на одном томе (документировано в ADR)
-
+- [x] Рекомендация: inbox/outbox/tmp на одном томе (документировано в ADR-0001)
 ## Вне скоупа (пока)
 
 - Загрузка в облако / стриминг-профили
@@ -255,6 +254,6 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
 ## Следующий шаг
 
-1. ~~MVP / конвейер / GUI / Windows guard / feature-port F1–F6~~ — в master.
-2. Точечный polish: использование `course.json` в GUI/отчётах, выбор профиля в GUI.
-3. ~~Релиз гибридного VMAF~~ — **v0.1.8**.
+1. ~~MVP / конвейер / GUI / Windows guard / feature-port F1–F6 / v0.1.8~~ — сделано.
+2. ~~R1 (разбиение GUI + course.json + профиль + дубликаты по title)~~ — сделано.
+3. Выполнять [remaining-work-plan.md](./remaining-work-plan.md): **R2** (encode), затем **R3** (ops/release).

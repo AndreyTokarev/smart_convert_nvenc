@@ -31,6 +31,10 @@ class CourseSavings:
     videos_compressed: int = 0
     videos_total: int = 0
     outbox_path: str | None = None
+    title: str | None = None
+    publishers: tuple[str, ...] = ()
+    authors: tuple[str, ...] = ()
+    year: int | None = None
 
     @property
     def freed_bytes(self) -> int:
@@ -58,6 +62,10 @@ class SessionStats:
         videos_compressed: int = 0,
         videos_total: int = 0,
         outbox_path: str | None = None,
+        title: str | None = None,
+        publishers: tuple[str, ...] = (),
+        authors: tuple[str, ...] = (),
+        year: int | None = None,
     ) -> CourseSavings:
         item = CourseSavings(
             name=name,
@@ -67,6 +75,10 @@ class SessionStats:
             videos_compressed=videos_compressed,
             videos_total=videos_total,
             outbox_path=outbox_path,
+            title=title,
+            publishers=publishers,
+            authors=authors,
+            year=year,
         )
         self.courses.append(item)
         return item
@@ -129,8 +141,12 @@ class SessionStats:
             lines.append("No courses processed.")
             lines.append("")
         else:
-            lines.append("| Course | Before | After | Freed | Videos | Compressed | Outbox |")
-            lines.append("|--------|--------|-------|-------|--------|------------|--------|")
+            lines.append(
+                "| Course | Title | Before | After | Freed | Videos | Compressed | Outbox |"
+            )
+            lines.append(
+                "|--------|-------|--------|-------|-------|--------|------------|--------|"
+            )
             for course in self.courses:
                 vids = (
                     f"{course.videos_compressed}/{course.videos_total}"
@@ -138,11 +154,13 @@ class SessionStats:
                     else "—"
                 )
                 out = f"`{course.outbox_path}`" if course.outbox_path else "—"
+                title = (course.title or "—").replace("|", "\\|")
                 lines.append(
                     "| "
                     + " | ".join(
                         [
                             course.name.replace("|", "\\|"),
+                            title,
                             format_gib_or_mib(course.original_bytes),
                             format_gib_or_mib(course.final_bytes),
                             format_gib_or_mib(course.freed_bytes),

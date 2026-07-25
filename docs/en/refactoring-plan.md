@@ -2,7 +2,7 @@
 
 Русский: [../ru/refactoring-plan.md](../ru/refactoring-plan.md).
 
-Status: decisions accepted (1C 2C 3A 4C) — F1–F6 done
+Status: decisions accepted (1C 2C 3C 4C 5) — F1–F6 done; remaining work → [remaining-work-plan.md](./remaining-work-plan.md)
 Basis: [review-codec-advice.md](./review-codec-advice.md), source chat [chat-optimal-mpeg4-codec.md](./chat-optimal-mpeg4-codec.md)
 
 ## Product goal (why this exists)
@@ -36,58 +36,58 @@ Technical sub-goal: on a sample, choose between **HEVC NVENC** and **AV1 NVENC**
 
 ## Phases
 
+> Checkboxes below reflect the **shipped** MVP/core. Open follow-ups (GUI split, course.json UX, multi-fragment, multipass, file logs, GPU smoke, CQ↔CRF) live in [remaining-work-plan.md](./remaining-work-plan.md) as R1–R3. Phase 5 smoke/logs remain unchecked on purpose.
+
 ### Phase 0 — Repository skeleton
 
-- [ ] Package structure, for example:
+- [x] Package structure:
   - `src/smart_convert_nvenc/` — core
   - `src/smart_convert_nvenc/cli.py`
-  - `src/smart_convert_nvenc/gui.py` (optional later)
-  - `docs/` — already exists
-- [ ] Dependencies via `uv` (`customtkinter` only for GUI extra)
-- [ ] Environment check: `ffmpeg`, `hevc_nvenc`, `av1_nvenc`
-- [ ] README: FFmpeg install (gyan), run via `uv run`
+  - `src/smart_convert_nvenc/gui.py`
+  - `docs/` — bilingual
+- [x] Dependencies via `uv` (`customtkinter` for GUI)
+- [x] Environment check: `ffmpeg`, `hevc_nvenc` (required); `av1_nvenc` optional
+- [x] README: FFmpeg / `uv run`
 
 ### Phase 1 — Honest benchmark (core)
 
-- [ ] Extract source metadata (`ffprobe`: duration, codec, bitrate, size)
-- [ ] Sampling:
-  - not from `t=0`, but with an offset (e.g. 10–25% of duration)
-  - option: N fragments → average
-- [ ] Two NVENC runs on the sample with **identical audio** (`-c:a copy`)
-- [ ] Comparison mode (pick one as default, second as advanced):
-  - **A (recommended start):** one target CQ profile per codec + **VMAF** of sample vs source fragment; winner = best size at VMAF ≥ threshold **or** best VMAF at size ≤ budget
-  - **B (simpler, no libvmaf):** calibrate CQ via binary search for target VMAF/SSIM *or* target bitrate and compare quality
-- [ ] Threshold: full encode only if `projected_full_size < original_size * (1 - min_savings)`
-- [ ] Test report: sizes, time, CQ, VMAF (if available), chosen codec, rejection reason
+- [x] Extract source metadata (`ffprobe`: duration, codec, bitrate, size)
+- [x] Sampling with offset (default ~25% of duration); multi-fragment average → [remaining-work R2.1](./remaining-work-plan.md)
+- [x] Two encode runs on the sample with **identical audio** (`-c:a copy` / `-an` for race)
+- [x] Comparison: hybrid VMAF when `libvmaf` present, else size@CQ + disclaimer (decision 1C)
+- [x] Threshold: full encode only if projected savings ≥ `min_savings`
+- [x] Report: sizes, time, CQ, chosen codec, skip reasons (VMAF scores when enabled)
 
 ### Phase 2 — Full encode
 
-- [ ] Shared NVENC presets: `p6`/`p7`, `-tune hq`, AQ, optional multipass/lookahead
-- [ ] HEVC: `-tag:v hvc1`, 8/10-bit profile per source (do not blindly force `main10`)
-- [ ] AV1: `.mkv` container (or `.mp4` if compatibility is fine)
-- [ ] Final file audio: separate policy (`copy` / AAC / Opus), do not mix with video codec selection logic
-- [ ] Output next to source + codec suffix; overwrite option
+- [x] Shared NVENC presets: `p6`/`p7`, `-tune hq`, AQ (multipass/lookahead → [remaining-work R2.2](./remaining-work-plan.md))
+- [x] HEVC: `-tag:v hvc1`
+- [x] AV1: `.mkv` container
+- [x] Final file audio: separate policy (`copy` / AAC / Opus)
+- [x] Output with codec suffix; course outbox overwrite option
 
 ### Phase 3 — CLI
 
-- [ ] `uv run smart-convert path/to/video.mp4`
-- [ ] Flags: `--sample-sec`, `--offset`, `--min-savings`, `--preset`, `--cq-hevc`, `--cq-av1`, `--dry-run`, `--force-codec`
-- [ ] Non-zero exit code on FFmpeg error / missing NVENC
+- [x] `uv run smart-convert path/to/video.mp4`
+- [x] Flags: `--sample-sec`, `--offset`, `--min-savings`, `--preset`, `--cq-hevc`, `--cq-av1`, `--dry-run`, `--force-codec`, plus encoder/VMAF/profile/audio
+- [x] Non-zero exit code on FFmpeg error / missing required encoders
 
 ### Phase 4 — GUI (after stable core)
 
-- [ ] Thin wrapper over the same API as CLI
-- [ ] UI updates only via main thread (`after`)
-- [ ] Stop = kill process group / `taskkill` on Windows reliably
-- [ ] Progress from parsing `out_time` / `time=`
-- [ ] Do not block UI; one worker + log queue
+- [x] Thin wrapper over the same API as CLI
+- [x] UI updates only via main thread (`after`)
+- [x] Stop = `taskkill` on Windows reliably
+- [x] Progress from parsing `out_time` / `time=`
+- [x] Do not block UI; one worker + log queue
 
 ### Phase 5 — Quality and resilience
 
-- [ ] Unit tests for FFmpeg command assembly (no real encode)
-- [ ] Optional smoke on a short file if GPU is available
-- [ ] Logs to file; temporary samples in `%TEMP%` / `.cache`, not next to source by default
-- [ ] Handle paths with spaces/Unicode (Windows)
+> Shipped core vs deferred: smoke and file logs stay open in [remaining-work-plan.md](./remaining-work-plan.md) R3 — Phase 5 is **not** fully closed.
+
+- [x] Unit tests for FFmpeg command assembly (no real encode); coverage ≥90%
+- [ ] Optional GPU smoke → [remaining-work R3.2](./remaining-work-plan.md)
+- [ ] Logs to file → [remaining-work R3.1](./remaining-work-plan.md); temps use unique `*.conv.<id>.*`
+- [x] Handle paths with spaces/Unicode (Windows)
 
 ---
 
@@ -242,8 +242,7 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 - [x] Name conflict in `outbox/` → overwrite by default; opt out with `--no-overwrite-outbox` / GUI checkbox
 - [x] CLI: `smart-convert-course` [name]
 - [x] GUI: `smart-convert-gui`
-- [ ] Recommendation: inbox/outbox/tmp on same volume (documented in ADR)
-
+- [x] Recommendation: inbox/outbox/tmp on same volume (documented in ADR-0001)
 ## Out of scope (for now)
 
 - Cloud upload / streaming profiles
@@ -255,6 +254,6 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 
 ## Next step
 
-1. ~~MVP / pipeline / GUI / Windows guard / feature-port F1–F6~~ — in master.
-2. Product polish as needed: consume `course.json` in GUI/reports, GUI profile picker.
-3. ~~Release hybrid VMAF~~ — **v0.1.8**.
+1. ~~MVP / pipeline / GUI / Windows guard / feature-port F1–F6 / v0.1.8~~ — done.
+2. ~~R1 (GUI split + course.json + profile picker + richer duplicates)~~ — done.
+3. Execute [remaining-work-plan.md](./remaining-work-plan.md): **R2** (encode), then **R3** (ops/release).

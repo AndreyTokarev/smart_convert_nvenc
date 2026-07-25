@@ -11,7 +11,13 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
+- План оставшейся работы (R1–R3): [docs/ru/remaining-work-plan.md](docs/ru/remaining-work-plan.md) · [docs/en/remaining-work-plan.md](docs/en/remaining-work-plan.md). Включает гейт R1.0 (разбиение GUI), единый `course_meta` и seed профиля как у CLI (после thermo-nuclear review).
+- R1.0: GUI разбит на `gui_theme` / `gui_layout` / `gui_course_list` / `gui_job` / `gui_paths` (`gui.py` — тонкая оболочка).
+- R1.1–R1.4: `course_meta.py` (ADR-0002); title из course.json в GUI и session-report; выбор профиля в GUI через `get_profile → to_convert_settings`; дубликаты по JSON title (+ пересечение publishers).
+
 ### Changed
+
+- Гигиена refactoring-plan: сделанные Phase 0–4 + ядро Phase 5 отмечены; smoke/file-logs Phase 5 явно отложены в R3; заголовок решений `3C`; Phase B same-volume отмечен; ARCHITECTURE/USER_GUIDE ссылаются на remaining-work-plan без дублирования чеклиста.
 
 ### Fixed
 
