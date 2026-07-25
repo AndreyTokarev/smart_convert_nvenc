@@ -4,7 +4,7 @@ English: [../en/ARCHITECTURE.md](../en/ARCHITECTURE.md).
 
 ## Цель системы
 
-Сжать архив видеокурсов с помощью NVIDIA NVENC так, чтобы:
+Сжать архив видеокурсов с помощью NVIDIA NVENC (или CPU-энкодеров) так, чтобы:
 
 1. экономить место при приемлемом качестве для слайдов+речи;
 2. работать единицами **курс** (папка), а не разрозненными файлами;
@@ -40,13 +40,14 @@ English: [../en/ARCHITECTURE.md](../en/ARCHITECTURE.md).
 ## Слои
 
 ```text
-CLI / GUI
+CLI / GUI / launcher
     ↓
-course.convert_course / pipeline.convert_video
+profiles (опционально) → course.convert_course / pipeline.convert_video
     ↓
+vmaf (опционально) ← race samples
 encode.encode_file → ffmpeg_runner.run_ffmpeg
     ↓
-probe / paths / temp_paths / windows_guard / session
+probe / paths / temp_paths / windows_guard / session / duplicates
 ```
 
 GUI и CLI **делят одно ядро** — без копипасты ffmpeg argv.
@@ -55,11 +56,11 @@ GUI и CLI **делят одно ядро** — без копипасты ffmpeg
 
 | Решение | Выбор | Почему |
 |---------|-------|--------|
-| Метрика race | size@CQ + дисклеймер | Быстро, без VMAF; для курсов ок |
+| Метрика race | Гибридный VMAF (`auto`) при наличии `libvmaf`; иначе size@CQ + дисклеймер | Порог качества, когда доступен; быстрый fallback |
 | UI | CLI first, затем CustomTkinter GUI | Скорость MVP |
-| Encode | только NVENC | Скорость на RTX |
+| Encode | `gpu` / `cpu` / `auto` (по умолчанию gpu) | Скорость на RTX; CPU без NVENC |
 | Audio | copy по умолчанию | Не портить речь и не врать про экономию видео |
-| Замена файлов | outbox, не in-place | Откат / прозрачность |
+| Замена файлов | outbox, не in-place; outbox перезаписывается по умолчанию | Откат; простые повторные прогоны |
 
 ## Отмена и надёжность
 
@@ -78,7 +79,8 @@ GUI и CLI **делят одно ядро** — без копипасты ffmpeg
 
 ## Сессионная статистика
 
-`session.SessionStats` копит original/final по курсам → freed bytes, %, MiB/h для GUI и логов.
+`session.SessionStats` копит original/final по курсам → freed bytes, %, MiB/h для GUI и логов.  
+Пачка курсов может писать `courses/session-report.md`.
 
 ## Тестирование
 
@@ -88,7 +90,6 @@ GUI и CLI **делят одно ядро** — без копипасты ffmpeg
 
 Хорошие точки роста без ломки ADR-0001:
 
-- чтение `course.json` в GUI/отчётах;
-- профили CQ в TOML;
-- duplicate scan по title/publishers из JSON;
-- опциональный VMAF hybrid позже.
+- чтение `course.json` в GUI/отчётах (файл уже сохраняется);
+- выбор профиля в GUI (CLI `--profile` уже есть);
+- более богатый поиск дубликатов по title/publishers из JSON.

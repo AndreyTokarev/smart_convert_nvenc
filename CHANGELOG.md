@@ -11,13 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Hybrid VMAF for sample race (`--vmaf off|auto|on`, `--vmaf-min`, GUI VMAF menu): when libvmaf is present, pick among codecs meeting the VMAF floor by size; otherwise fall back to size@CQ.
-
 ### Changed
 
 ### Fixed
 
 ### Removed
+
+## [0.1.8] — 2026-07-26
+
+### Added
+
+- Hybrid VMAF for sample race (`--vmaf off|auto|on`, `--vmaf-min`, GUI VMAF menu): when libvmaf is present, pick among codecs meeting the VMAF floor by size; otherwise fall back to size@CQ.
+
+### Changed
+
+- Documentation synced with current product (USER_GUIDE, ARCHITECTURE, RELEASES, refactoring-plan, docs index): hybrid VMAF, encoder modes, profiles, duplicates, outbox overwrite, four source entry points.
 
 ## [0.1.7] — 2026-07-26
 
@@ -119,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5

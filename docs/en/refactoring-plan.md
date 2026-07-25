@@ -133,7 +133,8 @@ A score of “how similar the re-encoded video is to the original” (usually 0�
 **Affects:** Phase 1 (benchmark core), dependencies, test speed, trust in the “winner”.
 
 **Recommendation for course archive:** **B** or **C**.  
-For screencast/slides, a stable “good enough” CQ and running thousands of files matter more than perfect VMAF on each. VMAF can be added later to calibrate the quality profile once.
+For screencast/slides, a stable “good enough” CQ and running thousands of files matter more than perfect VMAF on each.  
+**Accepted:** **C** (hybrid) — see decision log #1 (`--vmaf auto|off|on`).
 
 ---
 
@@ -169,7 +170,8 @@ You have RTX 4060 Ti — NVENC is fast. But software codecs (`libx265`, `libsvta
 **Affects:** Phases 1–2, environment check, CLI flags, encode time.
 
 **Recommendation for course archive:** **A (NVENC only)** in MVP.  
-Archive volume is large — speed beats the last 10–20% compression from CPU. CPU mode can be added later to “squeeze harder” selected folders.
+Archive volume is large — speed beats the last 10–20% compression from CPU.  
+**Accepted:** **C** (`gpu` / `cpu` / `auto`) — see decision log #3.
 
 ---
 
@@ -202,7 +204,7 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 |---|----------|---------|----------|--------|------|---------|
 | 1 | Winner selection metric | A VMAF required / B no VMAF + disclaimer / C hybrid | C | accepted | 2026-07-26 | Was B for MVP; F6.3 landed hybrid (`vmaf=auto`) |
 | 2 | CLI vs GUI | A CLI only / B CLI+GUI at once / C CLI now, GUI next | C | accepted | 2026-07-24 | CLI first, GUI next |
-| 3 | NVENC vs CPU | A NVENC only / B + CPU fallback / C gpu/cpu/auto modes | A | accepted | 2026-07-24 | NVENC only in MVP |
+| 3 | NVENC vs CPU | A NVENC only / B + CPU fallback / C gpu/cpu/auto modes | C | accepted | 2026-07-26 | Was A for MVP; F6.4 landed `gpu`/`cpu`/`auto` |
 | 4 | Final audio | A copy / B always re-encode / C copy + option | C | accepted | 2026-07-24 | copy by default; `--audio` optional |
 | 5 | Course metadata | long folder name / tagged brackets / `course.json` | `course.json` + short name | accepted | 2026-07-24 | ADR-0002: metadata and root marker in `course.json`; path without pub/by; JSON optional |
 
@@ -220,11 +222,12 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 | Folder pipeline | `courses/inbox` → `tmp` → `outbox` (+ non-video) | done ([ADR-0001](./adr/0001-course-inbox-outbox-tmp.md)) |
 | Course names / metadata | short folder name + opt. `course.json` | locked in ([ADR-0002](./adr/0002-course-folder-naming.md)) |
 | GUI | Course queue, logs, progress, Windows guard | done (`smart-convert-gui`) |
-| Resilience / reports from video_converter experience | Stop/kill, temp, MiB/hour, tests… | **plan:** [feature-port-plan.md](./feature-port-plan.md) |
-| Duplicates | Find copies, report / safe move | later (F6) |
-| “Course” profile | More aggressive CQ, opt. speech Opus/AAC | later (F5) |
-| (Optional) CPU | Squeeze selected folders harder | later |
-| Pack exe | Standalone Windows build | later (F5) |
+| Resilience / reports from video_converter experience | Stop/kill, temp, MiB/hour, tests… | done ([feature-port-plan.md](./feature-port-plan.md) F1–F6) |
+| Duplicates | Find copies, report only (no delete) | done (`smart-convert duplicates`) |
+| “Course” profile | Named presets in `profiles.toml` | done (`--profile`) |
+| Encoder modes | gpu / cpu / auto | done (`--encoder`) |
+| Hybrid VMAF | Quality floor when libvmaf present | done (`--vmaf`) |
+| Pack exe | Standalone Windows/Linux zip | experimental ([RELEASES.md](./RELEASES.md)) |
 
 ### Phase B — Course pipeline (per ADR-0001)
 
@@ -236,7 +239,7 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 - [x] Decision at **whole course** level (total size)
 - [x] If not worthwhile — `move` source `inbox → outbox`, clean `tmp`
 - [x] If worthwhile — assemble mixed tree (compressed + original videos + non-video)
-- [x] Name conflict in `outbox/` → error without overwrite
+- [x] Name conflict in `outbox/` → overwrite by default; opt out with `--no-overwrite-outbox` / GUI checkbox
 - [x] CLI: `smart-convert-course` [name]
 - [x] GUI: `smart-convert-gui`
 - [ ] Recommendation: inbox/outbox/tmp on same volume (documented in ADR)
@@ -252,6 +255,6 @@ Default `copy` (do not ruin audio or distort video savings). Option to re-encode
 
 ## Next step
 
-1. ~~MVP / pipeline / GUI / Windows guard~~ — in master.
-2. Execute [feature-port-plan.md](./feature-port-plan.md): **F1** (Stop/kill/temp) first, then **F2** (MiB/hour + sorting).
-3. Then duplicates and profiles as needed.
+1. ~~MVP / pipeline / GUI / Windows guard / feature-port F1–F6~~ — in master.
+2. Product polish as needed: consume `course.json` in GUI/reports, GUI profile picker.
+3. ~~Release hybrid VMAF~~ — **v0.1.8**.

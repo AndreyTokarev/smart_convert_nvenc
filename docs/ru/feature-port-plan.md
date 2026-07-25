@@ -62,7 +62,7 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 | F1.4 | Уникальные temp-имена encode (`*.conv.<id>.*`) | `core/output_paths.py` | `course.py` / `encode.py` |
 | F1.5 | Cleanup tmp курса при краше / закрытии окна | finalize + interrupted cleanup | `course.py`, `gui.py` |
 | F1.6 | Retry encode без `-hwaccel`, если первый прогон упал | `convert_video` retry | `pipeline.py` / `encode.py` |
-| F1.7 | Явная проверка ffmpeg/ffprobe + `hevc_nvenc`/`av1_nvenc` при старте GUI/CLI | `validate_environment` | `probe.py` + GUI banner |
+| F1.7 | Явная проверка ffmpeg/ffprobe + `hevc_nvenc` при старте GUI/CLI (`av1_nvenc` опционален; AV1 может идти через libsvtav1) | `validate_environment` | `probe.py` + GUI banner |
 
 **Критерий готовности:** Stop обрывает текущий ffmpeg за ≤2–3 с; после kill/crash `courses/tmp/<course>` либо чист, либо безопасно чистится при следующем запуске.
 

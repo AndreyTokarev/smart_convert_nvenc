@@ -10,7 +10,7 @@ GitHub Release zips are convenience artifacts for later; treat them as **unsuppo
 
 ## What GitHub Releases contain
 
-On each git tag `v*` (example: `v0.1.0`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:
+On each git tag `v*` (example: `v0.1.8`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:
 
 | Artifact zip | Runner | Notes |
 |--------------|--------|--------|
@@ -20,26 +20,27 @@ On each git tag `v*` (example: `v0.1.0`), [`.github/workflows/release.yml`](../.
 
 Each zip includes:
 
-- **`smart-convert`** — one binary: GUI (default) / `course …` / single file
+- **`smart-convert`** — one binary: GUI (default) / `course …` / `duplicates …` / single file
 - `README.md`, `LICENSE`, `README-RELEASE.txt`
 - **Windows / Linux:** `ffmpeg/bin/ffmpeg` + `ffprobe` (BtbN GPL **n8.1** static with **`hevc_nvenc` + `av1_nvenc`**, from the floating `latest` tag — not bleeding-edge `master`, which often needs a newer NVENC driver API)
 - **macOS:** FFmpeg is **not** bundled (no BtbN macOS artifacts)
 
-## Why three commands / why the zip used to have three exes
+## Why four source scripts / why the zip used to have three exes
 
-The app has **three jobs**:
+The app has **four jobs** (source) / one launcher binary (release):
 
 | Job | From source (`uv`) | Release zip (v0.1.4+) |
 |-----|--------------------|------------------------|
 | One video file | `uv run smart-convert …` | `smart-convert video.mp4 …` |
 | Course inbox→outbox | `uv run smart-convert-course …` | `smart-convert course …` |
+| Duplicate report | `uv run smart-convert-duplicates …` | `smart-convert duplicates …` |
 | Desktop GUI | `uv run smart-convert-gui` | `smart-convert` / `smart-convert gui` |
 
-Those map to three `[project.scripts]` entry points in `pyproject.toml` (`cli`, `course_cli`, `gui`). That is convenient when developing with `uv`: each command stays small and does not force-load the GUI stack for a simple CLI run.
+Those map to four `[project.scripts]` entry points in `pyproject.toml` (`cli`, `course_cli`, `duplicates_cli`, `gui`). That is convenient when developing with `uv`: each command stays small and does not force-load the GUI stack for a simple CLI run.
 
-**Through v0.1.3**, the release zip mirrored that 1:1 — PyInstaller built **three** one-file binaries (`smart-convert`, `smart-convert-course`, `smart-convert-gui`). Same code, three wrappers; the zip looked cluttered and ~tripled download size for little gain for end users.
+**Through v0.1.3**, the release zip mirrored CLI/course/GUI 1:1 — PyInstaller built **three** one-file binaries. Same code, three wrappers; the zip looked cluttered and ~tripled download size for little gain for end users.
 
-**From v0.1.4**, the zip ships **one** `smart-convert` binary with a small launcher that dispatches by argv (GUI by default). The three `uv run …` scripts remain for source installs.
+**From v0.1.4**, the zip ships **one** `smart-convert` binary with a small launcher that dispatches by argv (GUI by default; includes `duplicates` from later tags). The four `uv run …` scripts remain for source installs.
 
 ## FFmpeg in the zip
 
@@ -57,9 +58,10 @@ macOS/Linux packages exist so the app can run where Python packaging is awkward,
 3. Commit, then tag matching the version:
 
 ```powershell
-git tag v0.1.4
-git push origin v0.1.4
+git tag v0.1.8
+git push origin v0.1.8
 ```
+
 
 Or run the **Release** workflow manually (`workflow_dispatch`) from the Actions tab.
 

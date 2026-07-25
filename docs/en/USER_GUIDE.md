@@ -24,11 +24,17 @@ License: **MIT** — use, modify, redistribute freely.
 | Feature | Description |
 |---------|-------------|
 | HEVC vs AV1 sample race | Short fragment size comparison at configured CQ; winner gets full encode |
+| Hybrid VMAF | If FFmpeg has `libvmaf` (`--vmaf auto`, default): prefer smaller codec among those ≥ `vmaf_min`; else size@CQ |
 | Min-savings threshold | Keeps compressed file/course only if savings beat the threshold |
 | Course pipeline | First-level inbox folder = one course; non-video preserved |
+| Named profiles | `profiles.toml` (`default`, `course`) via `--profile` |
+| Encoder modes | `gpu` / `cpu` / `auto` |
 | Single-file CLI | `smart-convert` |
 | Course CLI | `smart-convert-course` |
-| GUI | Course queue, paths, logs, progress, session savings |
+| Duplicates report | `smart-convert-duplicates` / `smart-convert duplicates` (report only) |
+| Session report | `courses/session-report.md` after a course batch |
+| Overwrite outbox | Existing `outbox/<course>` replaced by default |
+| GUI | Course queue, paths, logs, progress, session savings, VMAF menu |
 | Hard Stop | Kills FFmpeg process tree (`taskkill /T`) |
 | Skip same codec | Skips already HEVC/AV1 (configurable) |
 | No-video pass-through | PDF-only course → outbox immediately |
@@ -38,10 +44,10 @@ License: **MIT** — use, modify, redistribute freely.
 
 ## 3. What it does not do (yet / by design)
 
-- VMAF / equal-quality codec comparison (size@CQ disclaimer instead)
 - Auto-renaming course folders
-- Duplicate detection (planned)
-- Packaged `.exe` installer (planned)
+- Auto-deleting duplicates (report only)
+- Full GUI installer / MSI (experimental PyInstaller zip only — see [RELEASES.md](./RELEASES.md))
+- Consuming `course.json` fields in GUI/reports (file is preserved as-is)
 - AMD/Intel hardware encode; CQ↔CRF recalibration for CPU vs NVENC
 
 ## 4. Requirements
@@ -50,10 +56,11 @@ License: **MIT** — use, modify, redistribute freely.
 - **Python:** 3.12+
 - **Package manager:** [uv](https://github.com/astral-sh/uv)
 - **FFmpeg** on `PATH` (when running from source):
-  - **GPU (default):** `hevc_nvenc` and `av1_nvenc`
-  - **CPU / auto-fallback:** `libx265` and `libsvtav1`
+  - **GPU (default):** `hevc_nvenc` required; `av1_nvenc` optional (AV1 falls back to **libsvtav1**)
+  - **CPU / auto:** `libx265` and `libsvtav1`
+  - Optional `libvmaf` for hybrid VMAF (`--vmaf auto|on`)
   - Release zips (Win/Linux) already ship FFmpeg under `ffmpeg/bin/`; optional override: `SMART_CONVERT_FFMPEG_DIR`
-- **GPU (optional):** NVIDIA with NVENC; **AV1 encode** typically needs RTX 40-series
+- **GPU (optional):** NVIDIA with NVENC; **hardware AV1 encode** typically needs RTX 40-series
 - Current NVIDIA driver (when using GPU)
 
 ```powershell
@@ -76,9 +83,10 @@ uv sync --group dev   # tests / contrib
 |---------|---------|
 | `uv run smart-convert` | One video file |
 | `uv run smart-convert-course` | Courses from inbox |
+| `uv run smart-convert-duplicates` | Duplicate report (no delete) |
 | `uv run smart-convert-gui` | Desktop UI |
 
-Three scripts for source installs; the **release zip** ships a single `smart-convert` with the same modes — see [RELEASES.md](./RELEASES.md) (“Why three commands…”).
+Four scripts for source installs; the **release zip** ships a single `smart-convert` with the same modes (`gui` / `course` / `duplicates` / file) — see [RELEASES.md](./RELEASES.md).
 
 ## 6. Folder model (ADR-0001)
 
@@ -136,7 +144,7 @@ Optional root file `course.json`:
 }
 ```
 
-Encode does **not** require JSON today; it is preserved with the course. Later: root marker + metadata for reports/duplicates.
+Encode does **not** require JSON today; it is preserved with the course. Later: use fields in GUI/reports.
 
 Any folder name is valid — the tool **never renames**.
 
@@ -145,12 +153,14 @@ Any folder name is valid — the tool **never renames**.
 1. Take a sample (default ~20–30s, offset ~25% of duration).
 2. Encode HEVC (default CQ 28) and AV1 (CQ 32) on the sample with **video only** (`-an`) so the size race is not skewed by audio and MPEG-TS seek stays reliable.
    - GPU mode: HEVC uses `hevc_nvenc`. AV1 uses `av1_nvenc` when present (bundled n8.1 includes it); otherwise **libsvtav1** (CPU) as fallback.
-3. Smaller sample wins; size is projected to full duration.
-4. If projected savings < `min_savings` → skip full encode for that file.
+3. Winner:
+   - **size@CQ** when `--vmaf off` or libvmaf is missing;
+   - **hybrid VMAF** when `--vmaf auto|on` and libvmaf is present: among samples with VMAF ≥ `vmaf_min` (default 90), pick the smaller; if none meet the floor, pick higher VMAF.
+4. Size is projected to full duration; if projected savings < `min_savings` → skip full encode for that file.
 5. After full encode, re-check real size.
 6. Course-level threshold: `min_course_savings`.
 
-**Disclaimer:** size@different CQ is **not** equal quality. Good enough for slide courses; VMAF is not in the MVP.
+**Disclaimer:** size@different CQ is **not** equal quality. With VMAF enabled, quality is considered via the hybrid rule above; full encode still requires enough projected size savings.
 
 Default **race once** per course: first compressed video locks the codec for the rest (faster).
 
@@ -168,7 +178,7 @@ Blocks:
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — list, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1, Overwrite existing outbox course (on by default)
+- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (on by default)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — journal + live ffmpeg line
 
@@ -180,9 +190,9 @@ Settings file:
 
 Encoder modes: `gpu` (NVENC only, default), `cpu` (libx265 / libsvtav1), `auto` (NVENC if present, else CPU).
 
-Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Use `--profile`; other CLI flags override the profile.
+Named presets live in `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Use CLI `--profile` (no GUI profile picker yet); other CLI flags override the profile.
 
-VMAF hybrid (optional): `--vmaf auto` (default) uses libvmaf when the FFmpeg build has it; `--vmaf off` keeps size@CQ only; `--vmaf on` requires libvmaf.
+VMAF: GUI **VMAF** menu or `--vmaf auto|off|on` / `--vmaf-min`.
 
 ## 10. CLI examples
 
@@ -193,14 +203,16 @@ uv run smart-convert lesson.mp4 --dry-run --force-codec hevc
 uv run smart-convert lesson.mp4 --encoder auto
 uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
+uv run smart-convert lesson.mp4 --vmaf off
 uv run smart-convert lesson.mp4 --reencode-same-codec
 
 uv run smart-convert-course
 uv run smart-convert-course --profile course
 uv run smart-convert-course "My Course Name"
-uv run smart-convert-course --encoder auto
+uv run smart-convert-course --encoder auto --vmaf auto
 uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
+uv run smart-convert-course --no-overwrite-outbox
 ```
 
 After a course batch, Markdown totals land in `courses/session-report.md` (override with `--session-report PATH`, skip with `--no-session-report`).
@@ -241,15 +253,18 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Module | Role |
 |--------|------|
+| `launcher.py` | Unified entry (GUI / course / duplicates / file) |
+| `cli.py` / `course_cli.py` / `duplicates_cli.py` | CLI surfaces |
 | `profiles.py` | Load named presets from `data/profiles.toml` |
+| `vmaf.py` | libvmaf detect + sample scoring |
 | `duplicates.py` | Exact-file + same-name course duplicate report |
 | `pipeline.py` | Per-file race + encode |
 | `course.py` | Course walk + outbox assemble |
-| `encode.py` | NVENC argv, temps, hwaccel retry |
+| `encode.py` | NVENC/CPU argv, temps, hwaccel retry |
 | `ffmpeg_runner.py` | Popen registry, cancel, taskkill |
 | `probe.py` | ffprobe + env validation |
 | `gui.py` / `gui_settings.py` | UI + persistence |
-| `session.py` | Freed bytes / % / MiB/h |
+| `session.py` | Freed bytes / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | Sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |
 | `paths.py` | Path resolution |
@@ -262,6 +277,6 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-Feature-port plan F1–F6 is complete. Further work is product polish as needed.
+Feature-port plan **F1–F6 is complete**. Remaining product polish as needed (e.g. consume `course.json` in GUI/reports, GUI profile picker).
 
 Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

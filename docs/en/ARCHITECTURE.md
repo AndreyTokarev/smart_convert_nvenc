@@ -4,7 +4,7 @@
 
 ## System goal
 
-Compress a video-course archive with NVIDIA NVENC so that:
+Compress a video-course archive with NVIDIA NVENC (or CPU encoders) so that:
 
 1. disk space is reclaimed at “good enough” quality for slides + speech;
 2. work units are **courses** (folders), not stray files;
@@ -40,13 +40,14 @@ Accepted ADRs:
 ## Layers
 
 ```text
-CLI / GUI
+CLI / GUI / launcher
     ↓
-course.convert_course / pipeline.convert_video
+profiles (optional) → course.convert_course / pipeline.convert_video
     ↓
+vmaf (optional) ← race samples
 encode.encode_file → ffmpeg_runner.run_ffmpeg
     ↓
-probe / paths / temp_paths / windows_guard / session
+probe / paths / temp_paths / windows_guard / session / duplicates
 ```
 
 GUI and CLI share one core — no duplicated FFmpeg argv construction.
@@ -55,11 +56,11 @@ GUI and CLI share one core — no duplicated FFmpeg argv construction.
 
 | Topic | Choice | Why |
 |-------|--------|-----|
-| Race metric | size@CQ + disclaimer | Fast, no VMAF; fine for courses |
+| Race metric | Hybrid VMAF (`auto`) when `libvmaf` present; else size@CQ + disclaimer | Quality floor when available; fast fallback |
 | UI | CLI first, then CustomTkinter | MVP speed |
-| Encode | NVENC only | Throughput on RTX |
+| Encode | `gpu` / `cpu` / `auto` (default gpu) | Throughput on RTX; CPU for machines without NVENC |
 | Audio | copy by default | Protect speech; don’t skew video savings |
-| Replacement | outbox, not in-place | Safer rollback / clearer flow |
+| Replacement | outbox, not in-place; overwrite outbox by default | Safer rollback; re-runs stay simple |
 
 ## Cancel & reliability
 
@@ -78,7 +79,8 @@ GUI and CLI share one core — no duplicated FFmpeg argv construction.
 
 ## Session stats
 
-`session.SessionStats` aggregates original/final sizes → freed bytes, ratio, MiB/h for GUI/logs.
+`session.SessionStats` aggregates original/final sizes → freed bytes, ratio, MiB/h for GUI/logs.  
+Course batches can write `courses/session-report.md`.
 
 ## Testing
 
@@ -88,7 +90,6 @@ Unit tests mock subprocess/ffmpeg. Coverage gate 90% excluding `gui.py`.
 
 Safe growth without breaking ADR-0001:
 
-- consume `course.json` in GUI/reports;
-- CQ profiles via TOML;
-- duplicate scan using JSON title/publishers;
-- optional VMAF hybrid later.
+- consume `course.json` in GUI/reports (file already preserved);
+- GUI profile picker (CLI `--profile` already works);
+- richer duplicate matching using JSON title/publishers.

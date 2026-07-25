@@ -24,11 +24,17 @@
 | Возможность | Описание |
 |-------------|----------|
 | Sample race HEVC vs AV1 | На коротком фрагменте сравнивает размер при заданных CQ; победитель идёт в полный encode |
+| Гибридный VMAF | Если в FFmpeg есть `libvmaf` (`--vmaf auto` по умолчанию): среди кандидатов с VMAF ≥ `vmaf_min` выбирается меньший размер; иначе size@CQ |
 | Порог экономии | Не держит сжатый файл / курс, если выигрыш меньше порога |
 | Конвейер курса | Первая папка в inbox = один курс; не-видео сохраняются |
-| CLI файла | `smart-convert` — один файл |
-| CLI курса | `smart-convert-course` — inbox/outbox |
-| GUI | Очередь курсов, пути, логи, progress, экономия сессии |
+| Именованные профили | `profiles.toml` (`default`, `course`) через `--profile` |
+| Режимы энкодера | `gpu` / `cpu` / `auto` |
+| CLI файла | `smart-convert` |
+| CLI курса | `smart-convert-course` |
+| Отчёт о дубликатах | `smart-convert-duplicates` / `smart-convert duplicates` (только отчёт) |
+| Session report | `courses/session-report.md` после пачки курсов |
+| Перезапись outbox | Существующий `outbox/<course>` по умолчанию заменяется |
+| GUI | Очередь, пути, логи, progress, экономия сессии, меню VMAF |
 | Hard Stop | Убивает дерево процессов FFmpeg (`taskkill /T`) |
 | Skip same codec | Не перекодирует уже HEVC/AV1 (настраивается) |
 | Pass-through без видео | Курс только с PDF и т.п. → сразу в outbox |
@@ -38,10 +44,10 @@
 
 ## 3. Чего нет (намеренно / пока)
 
-- VMAF / «равное качество» при сравнении кодеков (есть дисклеймер size@CQ)
 - Автопереименование папок курсов
-- Поиск дубликатов (в планах)
-- Готовый `.exe` installer (в планах)
+- Автоудаление дубликатов (только отчёт)
+- Полноценный GUI installer / MSI (есть экспериментальный PyInstaller zip — [RELEASES.md](./RELEASES.md))
+- Использование полей `course.json` в GUI/отчётах (файл сохраняется как есть)
 - Аппаратный encode AMD/Intel; перекалибровка CQ↔CRF для CPU vs NVENC
 
 ## 4. Требования
@@ -50,10 +56,11 @@
 - **Python:** 3.12+
 - **Пакетный менеджер:** [uv](https://github.com/astral-sh/uv)
 - **FFmpeg** в `PATH` (при запуске из исходников):
-  - **GPU (по умолчанию):** `hevc_nvenc` и `av1_nvenc`
-  - **CPU / auto-fallback:** `libx265` и `libsvtav1`
+  - **GPU (по умолчанию):** нужен `hevc_nvenc`; `av1_nvenc` опционален (AV1 fallback — **libsvtav1**)
+  - **CPU / auto:** `libx265` и `libsvtav1`
+  - Опционально `libvmaf` для гибридного VMAF (`--vmaf auto|on`)
   - В Win/Linux release zip FFmpeg уже лежит в `ffmpeg/bin/`; опционально: `SMART_CONVERT_FFMPEG_DIR`
-- **GPU (опционально):** NVIDIA с NVENC; для **AV1 encode** обычно RTX 40xx
+- **GPU (опционально):** NVIDIA с NVENC; для **аппаратного AV1** обычно RTX 40xx
 - Драйвер NVIDIA актуальной ветки (при режиме GPU)
 
 Проверка:
@@ -81,9 +88,10 @@ uv sync --group dev
 |---------|------------|
 | `uv run smart-convert` | Один видеофайл |
 | `uv run smart-convert-course` | Курсы из inbox |
+| `uv run smart-convert-duplicates` | Отчёт о дубликатах |
 | `uv run smart-convert-gui` | Графический интерфейс |
 
-Три скрипта — для запуска из исходников; в **release zip** один `smart-convert` с теми же режимами — см. [RELEASES.md](./RELEASES.md) («Почему три команды…»).
+Четыре скрипта — для запуска из исходников; в **release zip** один `smart-convert` с теми же режимами (`gui` / `course` / `duplicates` / файл) — см. [RELEASES.md](./RELEASES.md).
 
 ## 6. Модель папок (ADR-0001)
 
@@ -141,7 +149,7 @@ courses/
 }
 ```
 
-Сейчас encode **не требует** JSON; файл просто переносится с курсом. Позже — маркер корня и метаданные для отчётов/дубликатов.
+Сейчас encode **не требует** JSON; файл просто переносится с курсом. Позже — использование полей в GUI/отчётах.
 
 Любые имена папок валидны: инструмент **не переименовывает**.
 
@@ -150,12 +158,14 @@ courses/
 1. Берётся сэмпл (по умолчанию ~20–30 с, со смещением ~25% длительности).
 2. Кодируется HEVC (CQ по умолчанию 28) и AV1 (CQ 32) на сэмпле **только видео** (`-an`), чтобы race по размеру не искажался аудио и seek по MPEG-TS не ломал mux.
    - Режим gpu: HEVC через `hevc_nvenc`. AV1 — `av1_nvenc`, если есть (в bundled n8.1 есть); иначе fallback **libsvtav1** (CPU).
-3. Меньший сэмпл → победитель; размер проецируется на полную длительность.
-4. Если прогнозная экономия < `min_savings` → skip полного encode файла.
+3. Победитель:
+   - **size@CQ**, если `--vmaf off` или нет libvmaf;
+   - **гибридный VMAF**, если `--vmaf auto|on` и libvmaf есть: среди сэмплов с VMAF ≥ `vmaf_min` (по умолчанию 90) — меньший размер; если никто не дотянул — выше VMAF.
+4. Размер проецируется на полную длительность; если прогнозная экономия < `min_savings` → skip полного encode файла.
 5. После полного encode повторная проверка фактического размера.
 6. На уровне курса — суммарный порог `min_course_savings`.
 
-**Дисклеймер:** сравнение size@разных CQ — **не** равное качество. Для курсов со слайдами обычно достаточно; VMAF в MVP нет.
+**Дисклеймер:** сравнение size@разных CQ — **не** равное качество. С включённым VMAF качество учитывается гибридным правилом выше; полный encode всё равно требует достаточной прогнозной экономии размера.
 
 По умолчанию **race once** на курс: победитель первого сжатого видео фиксируется для остальных (быстрее).
 
@@ -173,7 +183,7 @@ uv run smart-convert-gui
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — список, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1, Overwrite existing outbox course (вкл. по умолчанию)
+- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), VMAF (auto/off/on), Skip if already HEVC/AV1, Overwrite existing outbox course (вкл. по умолчанию)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — журнал и live-строка ffmpeg
 
@@ -185,9 +195,9 @@ uv run smart-convert-gui
 
 Режимы энкодера: `gpu` (только NVENC, по умолчанию), `cpu` (libx265 / libsvtav1), `auto` (NVENC если есть, иначе CPU).
 
-Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Флаг `--profile`; остальные CLI-флаги перекрывают профиль.
+Именованные пресеты — в `src/smart_convert_nvenc/data/profiles.toml` (`default`, `course`). Флаг CLI `--profile` (в GUI выбора профиля пока нет); остальные флаги перекрывают профиль.
 
-Гибридный VMAF: `--vmaf auto` (по умолчанию) включает libvmaf, если он есть в FFmpeg; `--vmaf off` — только size@CQ; `--vmaf on` требует libvmaf.
+VMAF: меню **VMAF** в GUI или `--vmaf auto|off|on` / `--vmaf-min`.
 
 ## 10. CLI
 
@@ -201,6 +211,7 @@ uv run smart-convert lesson.mp4 --force-codec hevc --cq-hevc 30
 uv run smart-convert lesson.mp4 --encoder auto
 uv run smart-convert lesson.mp4 --encoder cpu --force-codec hevc
 uv run smart-convert lesson.mp4 --audio opus:96 --min-savings 0.15
+uv run smart-convert lesson.mp4 --vmaf off
 uv run smart-convert lesson.mp4 --reencode-same-codec
 ```
 
@@ -210,10 +221,11 @@ uv run smart-convert lesson.mp4 --reencode-same-codec
 uv run smart-convert-course
 uv run smart-convert-course --profile course
 uv run smart-convert-course "My Course Name"
-uv run smart-convert-course --encoder auto
+uv run smart-convert-course --encoder auto --vmaf auto
 uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
 uv run smart-convert-course --reencode-same-codec
+uv run smart-convert-course --no-overwrite-outbox
 ```
 
 После пачки курсов итоги пишутся в `courses/session-report.md` (`--session-report PATH` / `--no-session-report`).
@@ -254,15 +266,18 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 | Модуль | Роль |
 |--------|------|
+| `launcher.py` | Единый вход (GUI / course / duplicates / файл) |
+| `cli.py` / `course_cli.py` / `duplicates_cli.py` | CLI-поверхности |
 | `profiles.py` | Именованные пресеты из `data/profiles.toml` |
+| `vmaf.py` | Детект libvmaf + оценка сэмплов |
 | `duplicates.py` | Отчёт: точные копии файлов + одинаковые имена курсов |
 | `pipeline.py` | Race + encode одного файла |
 | `course.py` | Обход курса, assemble outbox |
-| `encode.py` | argv NVENC, temp, retry без hwaccel |
+| `encode.py` | argv NVENC/CPU, temp, retry без hwaccel |
 | `ffmpeg_runner.py` | Popen registry, cancel, taskkill |
 | `probe.py` | ffprobe + validate_environment |
 | `gui.py` / `gui_settings.py` | UI + persist |
-| `session.py` | Σ freed / % / MiB/h |
+| `session.py` | Σ freed / % / MiB/h + `session-report.md` |
 | `windows_guard.py` | sleep / reboot guard |
 | `temp_paths.py` | `*.conv.<id>.*` |
 | `paths.py` | resolve inbox/outbox/tmp |

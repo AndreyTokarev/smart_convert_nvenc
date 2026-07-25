@@ -133,7 +133,8 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 **На что влияет:** Фаза 1 (ядро бенчмарка), зависимости, скорость теста, доверие к «победителю».
 
 **Рекомендация под архив курсов:** **B** или **C**.  
-Для screencast/слайдов важнее стабильный «достаточно хороший» CQ и прогон тысяч файлов, чем идеальный VMAF на каждом. VMAF можно добавить позже для калибровки профиля качества один раз.
+Для screencast/слайдов важнее стабильный «достаточно хороший» CQ и прогон тысяч файлов, чем идеальный VMAF на каждом.  
+**Принято:** **C** (гибрид) — см. журнал решений #1 (`--vmaf auto|off|on`).
 
 ---
 
@@ -169,7 +170,8 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 **На что влияет:** Фазы 1–2, проверка окружения, флаги CLI, время кодирования.
 
 **Рекомендация под архив курсов:** **A (только NVENC)** в MVP.  
-Объём архива большой — скорость важнее последних 10–20% сжатия от CPU. CPU-режим можно добавить позже для «дожать ещё сильнее» избранные папки.
+Объём архива большой — скорость важнее последних 10–20% сжатия от CPU.  
+**Принято:** **C** (`gpu` / `cpu` / `auto`) — см. журнал решений #3.
 
 ---
 
@@ -202,7 +204,7 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 |---|--------|----------|---------|--------|------|-------------|
 | 1 | Метрика выбора победителя | A VMAF обязателен / B без VMAF + дисклеймер / C гибрид | C | принято | 2026-07-26 | Было B для MVP; F6.3 — гибрид (`vmaf=auto`) |
 | 2 | CLI vs GUI | A только CLI / B CLI+GUI сразу / C CLI сейчас, GUI следом | C | принято | 2026-07-24 | Сначала CLI, GUI следом |
-| 3 | NVENC vs CPU | A только NVENC / B + fallback CPU / C режимы gpu/cpu/auto | A | принято | 2026-07-24 | Только NVENC в MVP |
+| 3 | NVENC vs CPU | A только NVENC / B + fallback CPU / C режимы gpu/cpu/auto | C | принято | 2026-07-26 | Было A для MVP; F6.4 — `gpu`/`cpu`/`auto` |
 | 4 | Аудио в финале | A copy / B всегда перекодировать / C copy + опция | C | принято | 2026-07-24 | copy по умолчанию; `--audio` опционально |
 | 5 | Метаданные курса | длинное имя папки / tagged brackets / `course.json` | `course.json` + короткое имя | принято | 2026-07-24 | ADR-0002: метаданные и маркер корня в `course.json`; path без pub/by; JSON опционален |
 
@@ -220,11 +222,12 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 | Конвейер папок | `courses/inbox` → `tmp` → `outbox` (+ не-видео) | сделано ([ADR-0001](./adr/0001-course-inbox-outbox-tmp.md)) |
 | Имена / метаданные курсов | короткое имя папки + опц. `course.json` | зафиксировано ([ADR-0002](./adr/0002-course-folder-naming.md)) |
 | GUI | Очередь курсов, логи, progress, Windows guard | сделано (`smart-convert-gui`) |
-| Надёжность / отчёты из опыта video_converter | Stop/kill, temp, МБ/час, тесты… | **план:** [feature-port-plan.md](./feature-port-plan.md) |
-| Дубликаты | Поиск копий, отчёт / безопасный перенос | позже (F6) |
-| Профиль «курс» | Агрессивнее CQ, опц. речь Opus/AAC | позже (F5) |
-| (Опционально) CPU | Дожать отдельные папки | позже |
-| Pack exe | Standalone Windows build | позже (F5) |
+| Надёжность / отчёты из опыта video_converter | Stop/kill, temp, МБ/час, тесты… | сделано ([feature-port-plan.md](./feature-port-plan.md) F1–F6) |
+| Дубликаты | Поиск копий, только отчёт (без удаления) | сделано (`smart-convert duplicates`) |
+| Профиль «курс» | Именованные пресеты в `profiles.toml` | сделано (`--profile`) |
+| Режимы энкодера | gpu / cpu / auto | сделано (`--encoder`) |
+| Гибридный VMAF | Порог качества при наличии libvmaf | сделано (`--vmaf`) |
+| Pack exe | Standalone Windows/Linux zip | экспериментально ([RELEASES.md](./RELEASES.md)) |
 
 ### Фаза B — Конвейер курса (по ADR-0001)
 
@@ -236,7 +239,7 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 - [x] Решение на уровне **всего курса** (суммарный размер)
 - [x] Если невыгодно — `move` исходника `inbox → outbox`, очистка `tmp`
 - [x] Если выгодно — сборка смешанного дерева (сжатые + исходные видео + не-видео)
-- [x] Конфликт имён в `outbox/` → ошибка без перезаписи
+- [x] Конфликт имён в `outbox/` → перезапись по умолчанию; отказ: `--no-overwrite-outbox` / чекбокс GUI
 - [x] CLI: `smart-convert-course` [имя]
 - [x] GUI: `smart-convert-gui`
 - [ ] Рекомендация: inbox/outbox/tmp на одном томе (документировано в ADR)
@@ -252,6 +255,6 @@ English: [../en/refactoring-plan.md](../en/refactoring-plan.md).
 
 ## Следующий шаг
 
-1. ~~MVP / конвейер / GUI / Windows guard~~ — в master.
-2. Выполнять [feature-port-plan.md](./feature-port-plan.md): сначала **F1** (Stop/kill/temp), затем **F2** (МБ/час + сортировка).
-3. Потом дубликаты и профили по мере необходимости.
+1. ~~MVP / конвейер / GUI / Windows guard / feature-port F1–F6~~ — в master.
+2. Точечный polish: использование `course.json` в GUI/отчётах, выбор профиля в GUI.
+3. ~~Релиз гибридного VMAF~~ — **v0.1.8**.

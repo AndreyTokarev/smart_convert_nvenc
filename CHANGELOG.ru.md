@@ -11,13 +11,21 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
-- Гибридный VMAF для sample race (`--vmaf off|auto|on`, `--vmaf-min`, меню VMAF в GUI): при наличии libvmaf выбираем среди кодеков с VMAF ≥ порога меньший размер; иначе size@CQ.
-
 ### Changed
 
 ### Fixed
 
 ### Removed
+
+## [0.1.8] — 2026-07-26
+
+### Added
+
+- Гибридный VMAF для sample race (`--vmaf off|auto|on`, `--vmaf-min`, меню VMAF в GUI): при наличии libvmaf выбираем среди кодеков с VMAF ≥ порога меньший размер; иначе size@CQ.
+
+### Changed
+
+- Документация приведена к текущему продукту (USER_GUIDE, ARCHITECTURE, RELEASES, refactoring-plan, индекс docs): гибридный VMAF, режимы энкодера, профили, дубликаты, overwrite outbox, четыре entry point из исходников.
 
 ## [0.1.7] — 2026-07-26
 
@@ -119,7 +127,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.4...v0.1.5

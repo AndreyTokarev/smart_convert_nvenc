@@ -37,6 +37,6 @@ VK / forum draft posts are kept locally (`docs/community/`, gitignored) and are 
 
 ## Project purpose / Зачем проект
 
-**EN:** Free disk space from large **video course** libraries by GPU-encoding lessons with NVENC, deciding at **course** granularity, and publishing results through a safe outbox flow — without pretending sample size races are VMAF-equal quality.
+**EN:** Free disk space from large **video course** libraries by encoding lessons with NVENC (or CPU), deciding at **course** granularity, and publishing through a safe outbox flow. Sample races use size@CQ by default; when FFmpeg has `libvmaf`, hybrid VMAF can prefer quality-qualified winners.
 
-**RU:** Освободить диск от большого архива **видеокурсов**: GPU-encode уроков через NVENC, решение на уровне **курса**, публикация через безопасный outbox — без претензии, что sample race по размеру равен сравнению качества (VMAF).
+**RU:** Освободить диск от большого архива **видеокурсов**: encode уроков через NVENC (или CPU), решение на уровне **курса**, публикация через безопасный outbox. Race по сэмплу — size@CQ; при наличии `libvmaf` гибридный VMAF может выбирать победителя с учётом порога качества.

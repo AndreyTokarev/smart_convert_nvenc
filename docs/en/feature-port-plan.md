@@ -62,7 +62,7 @@ Related docs from the old project (reference only, do not copy blindly):
 | F1.4 | Unique temp encode names (`*.conv.<id>.*`) | `core/output_paths.py` | `course.py` / `encode.py` |
 | F1.5 | Cleanup course tmp on crash / window close | finalize + interrupted cleanup | `course.py`, `gui.py` |
 | F1.6 | Retry encode without `-hwaccel` if first run failed | `convert_video` retry | `pipeline.py` / `encode.py` |
-| F1.7 | Explicit ffmpeg/ffprobe + `hevc_nvenc`/`av1_nvenc` check on GUI/CLI start | `validate_environment` | `probe.py` + GUI banner |
+| F1.7 | Explicit ffmpeg/ffprobe + `hevc_nvenc` check on GUI/CLI start (`av1_nvenc` optional; AV1 may use libsvtav1) | `validate_environment` | `probe.py` + GUI banner |
 
 **Done when:** Stop aborts current ffmpeg within ≤2–3 s; after kill/crash `courses/tmp/<course>` is either clean or safely cleaned on next run.
 
