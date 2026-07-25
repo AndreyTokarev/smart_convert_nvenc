@@ -11,6 +11,16 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.9] — 2026-07-26
+
+### Added
+
 - План оставшейся работы (R1–R3): [docs/ru/remaining-work-plan.md](docs/ru/remaining-work-plan.md) · [docs/en/remaining-work-plan.md](docs/en/remaining-work-plan.md). Включает гейт R1.0 (разбиение GUI), единый `course_meta` и seed профиля как у CLI (после thermo-nuclear review).
 - R1.0: GUI разбит на `gui_theme` / `gui_layout` / `gui_course_list` / `gui_job` / `gui_paths` (`gui.py` — тонкая оболочка).
 - R1.1–R1.4: `course_meta.py` (ADR-0002); title из course.json в GUI и session-report; выбор профиля в GUI через `get_profile → to_convert_settings`; дубликаты по JSON title (+ пересечение publishers).
@@ -23,10 +33,6 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 - Гигиена refactoring-plan: сделанные Phase 0–4 + ядро Phase 5 отмечены; smoke/file-logs Phase 5 явно отложены в R3; заголовок решений `3C`; Phase B same-volume отмечен; ARCHITECTURE/USER_GUIDE ссылаются на remaining-work-plan без дублирования чеклиста.
 - Документация: CQ≠CRF для GPU vs CPU; в RELEASES чеклист R3.3 (формулировка «неподдерживаемые» пока остаётся).
-
-### Fixed
-
-### Removed
 
 ## [0.1.8] — 2026-07-26
 
@@ -138,7 +144,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...HEAD
+[0.1.9]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6

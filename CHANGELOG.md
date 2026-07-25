@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.9] — 2026-07-26
+
+### Added
+
 - Remaining work backlog plan (R1–R3): [docs/en/remaining-work-plan.md](docs/en/remaining-work-plan.md) · [docs/ru/remaining-work-plan.md](docs/ru/remaining-work-plan.md). Includes R1.0 GUI split gate, single `course_meta` boundary, and CLI-parity profile seeding (post thermo-nuclear review).
 - R1.0: split GUI into `gui_theme` / `gui_layout` / `gui_course_list` / `gui_job` / `gui_paths` (`gui.py` stays a thin shell).
 - R1.1–R1.4: `course_meta.py` (ADR-0002); course.json title in GUI list + session-report; GUI profile picker (`default`/`course`) via `get_profile → to_convert_settings`; duplicate report groups by JSON title (+ publisher overlap note).
@@ -23,10 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactoring-plan hygiene: shipped Phase 0–4 + Phase 5 core marked done; Phase 5 smoke/file-logs explicitly deferred to R3; decision header `3C`; Phase B same-volume checked; ARCHITECTURE/USER_GUIDE point at remaining-work-plan without duplicating the checklist.
 - Docs: CQ≠CRF honesty for GPU vs CPU; RELEASES R3.3 support-bar checklist (wording still “unsupported” until smoke).
-
-### Fixed
-
-### Removed
 
 ## [0.1.8] — 2026-07-26
 
@@ -138,7 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...HEAD
+[0.1.9]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.5...v0.1.6

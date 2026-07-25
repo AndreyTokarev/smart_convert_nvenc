@@ -17,7 +17,7 @@ Zip в GitHub Releases — задел на будущее; считайте их
 
 ## Что лежит в GitHub Releases
 
-На каждый git-тег `v*` (например `v0.1.8`) workflow [`.github/workflows/release.yml`](../../.github/workflows/release.yml) собирает **PyInstaller** one-file бинарники:
+На каждый git-тег `v*` (например `v0.1.9`) workflow [`.github/workflows/release.yml`](../../.github/workflows/release.yml) собирает **PyInstaller** one-file бинарники:
 
 | Архив | Runner | Примечание |
 |-------|--------|------------|
@@ -65,8 +65,8 @@ Zip в GitHub Releases — задел на будущее; считайте их
 3. Закоммитить и поставить тег, совпадающий с версией:
 
 ```powershell
-git tag v0.1.8
-git push origin v0.1.8
+git tag v0.1.9
+git push origin v0.1.9
 ```
 
 Либо вручную Actions → **Release** → Run workflow.
