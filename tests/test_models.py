@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from smart_convert_nvenc.models import (
@@ -10,6 +12,7 @@ from smart_convert_nvenc.models import (
     EncodeProfile,
     VideoCodec,
     already_target_codec,
+    is_video_media,
     probe_codec_is,
 )
 
@@ -68,3 +71,14 @@ def test_probe_codec_helpers() -> None:
     assert already_target_codec("av1") is VideoCodec.AV1
     assert already_target_codec("hevc", force=VideoCodec.AV1) is None
     assert already_target_codec("hevc", force=VideoCodec.HEVC) is VideoCodec.HEVC
+
+
+def test_is_video_media_skips_appledouble(tmp_path: Path) -> None:
+    real = tmp_path / "lesson.mp4"
+    junk = tmp_path / "._lesson.mp4"
+    real.write_bytes(b"x")
+    junk.write_bytes(b"y")
+    assert is_video_media(real)
+    assert not is_video_media(junk)
+    assert not is_video_media(tmp_path / ".hidden.mp4")
+    assert not is_video_media(tmp_path / "Thumbs.db")

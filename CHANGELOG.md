@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Duplicate scanner (report only): `smart-convert duplicates` / `smart-convert-duplicates` — exact file copies (size+SHA-256) and same course folder names across inbox/outbox.
 - Course batch writes `session-report.md` (Markdown totals + per-course table); `--session-report PATH` / `--no-session-report`.
 - Overwrite existing `outbox/<course>` by default (GUI checkbox + `--overwrite-outbox` / `--no-overwrite-outbox`).
+- Skip macOS AppleDouble `._*` (and similar junk) so they are not treated as videos for encode.
 
 ### Changed
 

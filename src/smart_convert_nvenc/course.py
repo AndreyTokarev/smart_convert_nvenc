@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .ffmpeg_runner import FFmpegCancelled, StopCheck
-from .models import ConvertSettings, EncodeProfile, VIDEO_EXTENSIONS, VideoDecision
+from .models import ConvertSettings, EncodeProfile, VideoDecision, is_video_media
 from .paths import CoursePaths
 from .pipeline import convert_video
 from .probe import resolve_encoder_backend
@@ -50,7 +50,7 @@ def iter_videos(course_dir: Path) -> list[Path]:
     videos = [
         path
         for path in course_dir.rglob("*")
-        if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
+        if path.is_file() and is_video_media(path)
     ]
     videos.sort(key=lambda p: (-p.stat().st_size, str(p).lower()))
     return videos
@@ -60,7 +60,7 @@ def iter_non_videos(course_dir: Path) -> list[Path]:
     return [
         path
         for path in sorted(course_dir.rglob("*"))
-        if path.is_file() and path.suffix.lower() not in VIDEO_EXTENSIONS
+        if path.is_file() and not is_video_media(path)
     ]
 
 

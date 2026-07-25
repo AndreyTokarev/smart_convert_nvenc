@@ -42,6 +42,17 @@ def test_list_and_iter(course_layout: CoursePaths) -> None:
     assert tree_size(a) == 10_000 + len(b"notes")
 
 
+def test_iter_videos_skips_appledouble(course_layout: CoursePaths) -> None:
+    course = _make_course(course_layout.inbox, "MacBundle")
+    apple = course / "mod" / "._lesson.mp4"
+    apple.write_bytes(b"not-a-video")
+    videos = iter_videos(course)
+    assert [v.name for v in videos] == ["lesson.mp4"]
+    non = iter_non_videos(course)
+    assert apple in non
+    assert any(p.name == "readme.txt" for p in non)
+
+
 def test_iter_videos_sorted_by_size_desc(tmp_path: Path) -> None:
     course = tmp_path / "C"
     course.mkdir()

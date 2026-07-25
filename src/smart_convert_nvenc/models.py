@@ -212,3 +212,15 @@ VIDEO_EXTENSIONS = {
     ".ts",
     ".mts",
 }
+
+_JUNK_FILE_NAMES = frozenset({"thumbs.db", "desktop.ini", ".ds_store"})
+
+
+def is_video_media(path: Path) -> bool:
+    """True for real video files we may encode (skips AppleDouble ``._*`` and similar junk)."""
+    name = path.name
+    if name.startswith("._") or name.startswith("."):
+        return False
+    if name.casefold() in _JUNK_FILE_NAMES:
+        return False
+    return path.suffix.lower() in VIDEO_EXTENSIONS

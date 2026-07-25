@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .course import list_course_dirs, tree_size
-from .models import VIDEO_EXTENSIONS
+from .models import is_video_media
 
 
 def file_sha256(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
@@ -85,7 +85,7 @@ def find_duplicate_files(
 ) -> list[DuplicateFileGroup]:
     by_size: dict[int, list[Path]] = defaultdict(list)
     for path in iter_files(roots, min_size=min_size):
-        if videos_only and path.suffix.lower() not in VIDEO_EXTENSIONS:
+        if videos_only and not is_video_media(path):
             continue
         by_size[path.stat().st_size].append(path)
 

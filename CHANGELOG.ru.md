@@ -16,6 +16,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - Поиск дубликатов (только отчёт): `smart-convert duplicates` / `smart-convert-duplicates` — точные копии файлов (size+SHA-256) и одинаковые имена курсов в inbox/outbox.
 - Batch курсов пишет `session-report.md` (итоги + таблица); `--session-report PATH` / `--no-session-report`.
 - По умолчанию перезапись существующего `outbox/<course>` (чекбокс GUI + `--overwrite-outbox` / `--no-overwrite-outbox`).
+- Игнор macOS AppleDouble `._*` (и похожего junk) — не считаем их видео для encode.
 
 ### Changed
 
