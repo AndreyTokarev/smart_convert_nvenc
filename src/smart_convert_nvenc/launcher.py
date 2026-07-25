@@ -38,6 +38,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return int(course_main(args[1:]))
 
+    if args[0] in {"duplicates", "dupes"}:
+        from .duplicates_cli import main as duplicates_main
+
+        return int(duplicates_main(args[1:]))
+
     if args[0] in {"-h", "--help", "help"}:
         print(
             "smart-convert — compress course videos (NVENC / CPU)\n\n"
@@ -45,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
             "  smart-convert                 Start GUI\n"
             "  smart-convert gui             Start GUI\n"
             "  smart-convert course [opts]   Process courses/inbox\n"
+            "  smart-convert duplicates …   Duplicate report (no delete)\n"
             "  smart-convert <video> [opts]  Convert one file\n"
             "  smart-convert --version\n"
         )

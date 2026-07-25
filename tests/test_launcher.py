@@ -16,6 +16,15 @@ def test_launcher_dispatches_course() -> None:
         course.assert_called_once_with(["--dry-run"])
 
 
+def test_launcher_dispatches_duplicates() -> None:
+    with patch("smart_convert_nvenc.duplicates_cli.main", return_value=0) as dupes:
+        assert main(["duplicates", "--videos-only"]) == 0
+        dupes.assert_called_once_with(["--videos-only"])
+    with patch("smart_convert_nvenc.duplicates_cli.main", return_value=0) as dupes:
+        assert main(["dupes"]) == 0
+        dupes.assert_called_once_with([])
+
+
 def test_launcher_dispatches_cli() -> None:
     with patch("smart_convert_nvenc.cli.main", return_value=0) as cli:
         assert main(["video.mp4", "--dry-run"]) == 0

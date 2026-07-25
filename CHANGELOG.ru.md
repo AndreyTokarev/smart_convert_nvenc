@@ -13,6 +13,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 - Именованные пресеты в `profiles.toml` (`default`, `course`) и CLI `--profile` (флаги перекрывают).
 - Локальный helper сборки `scripts/build.ps1` и `docs/*/BUILD.md`.
+- Поиск дубликатов (только отчёт): `smart-convert duplicates` / `smart-convert-duplicates` — точные копии файлов (size+SHA-256) и одинаковые имена курсов в inbox/outbox.
 
 ### Changed
 

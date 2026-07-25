@@ -12,6 +12,7 @@ dependencies = [
 [project.scripts]
 smart-convert = "smart_convert_nvenc.cli:main"
 smart-convert-course = "smart_convert_nvenc.course_cli:main"
+smart-convert-duplicates = "smart_convert_nvenc.duplicates_cli:main"
 smart-convert-gui = "smart_convert_nvenc.gui:main"
 
 [build-system]

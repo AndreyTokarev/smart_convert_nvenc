@@ -199,6 +199,16 @@ uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
 ```
 
+### Duplicates (report only)
+
+```powershell
+uv run smart-convert duplicates
+uv run smart-convert duplicates --videos-only -o dupes.md
+uv run smart-convert-duplicates E:\archive\courses\inbox E:\archive\courses\outbox --min-size 0
+```
+
+Scans for exact file copies (same size + SHA-256) and course folders with the same name. **Never deletes.**
+
 ## 11. Environment variables
 
 | Variable | Meaning |
@@ -226,6 +236,7 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 | Module | Role |
 |--------|------|
 | `profiles.py` | Load named presets from `data/profiles.toml` |
+| `duplicates.py` | Exact-file + same-name course duplicate report |
 | `pipeline.py` | Per-file race + encode |
 | `course.py` | Course walk + outbox assemble |
 | `encode.py` | NVENC argv, temps, hwaccel retry |
@@ -245,7 +256,6 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-- Duplicates report (no auto-delete)
 - Batch session report to file
 - Later: VMAF / hybrid quality metric
 

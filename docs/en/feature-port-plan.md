@@ -119,7 +119,7 @@ Related docs from the old project (reference only, do not copy blindly):
 
 | # | Task |
 |---|------|
-| F6.1 | Find duplicate courses/files (report, no auto-delete) |
+| F6.1 | Find duplicate courses/files (report, no auto-delete) — **done** (`duplicates` / `smart-convert-duplicates`) |
 | F6.2 | Batch report for course batch to file (`session-report.md`) |
 | F6.3 | VMAF/hybrid (decision 1B → later C) |
 | F6.4 | CPU fallback x265/SVT-AV1 — **done** (`encoder`: gpu/cpu/auto; no CQ↔CRF recalibration) |
@@ -160,7 +160,7 @@ Do not start F5 pack until Stop and temp are stable (F1).
 | F3 | done | 2026-07-24 | Settings persist; Open inbox/outbox; confirm on close; log ring-buffer; progress drain keeps latest only |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | done | 2026-07-26 | F5.1–F5.3 profiles.toml + `--profile` + build.ps1/BUILD.md; F5.4 FFmpeg vendor |
-| F6 | partial | 2026-07-25 | F6.4 CPU encode force + auto-fallback landed |
+| F6 | partial | 2026-07-26 | F6.1 duplicates report; F6.4 CPU encode |
 
 ---
 

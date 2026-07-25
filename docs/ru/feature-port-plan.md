@@ -119,7 +119,7 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 
 | # | Задача |
 |---|--------|
-| F6.1 | Поиск дубликатов курсов/файлов (отчёт, без автоудаления) |
+| F6.1 | Поиск дубликатов курсов/файлов (отчёт, без автоудаления) — **сделано** (`duplicates` / `smart-convert-duplicates`) |
 | F6.2 | Batch-отчёт по пачке курсов в файл (`session-report.md`) |
 | F6.3 | VMAF/гибрид (решение 1B → позже C) |
 | F6.4 | CPU fallback x265/SVT-AV1 — **сделано** (`encoder`: gpu/cpu/auto; без перекалибровки CQ↔CRF) |
@@ -160,7 +160,7 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 | F3 | done | 2026-07-24 | Persist настроек; Open inbox/outbox; confirm при закрытии; ring-buffer логов; progress drain — только latest |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | done | 2026-07-26 | F5.1–F5.3 profiles.toml + `--profile` + build.ps1/BUILD.md; F5.4 FFmpeg vendor |
-| F6 | partial | 2026-07-25 | F6.4 CPU encode force + auto-fallback landed |
+| F6 | partial | 2026-07-26 | F6.1 отчёт дубликатов; F6.4 CPU encode |
 
 ---
 

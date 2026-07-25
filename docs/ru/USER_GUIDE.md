@@ -212,6 +212,16 @@ uv run smart-convert-course --race-each
 uv run smart-convert-course --reencode-same-codec
 ```
 
+### Дубликаты (только отчёт)
+
+```powershell
+uv run smart-convert duplicates
+uv run smart-convert duplicates --videos-only -o dupes.md
+uv run smart-convert-duplicates E:\archive\courses\inbox E:\archive\courses\outbox --min-size 0
+```
+
+Ищет точные копии файлов (size + SHA-256) и курсы с одинаковым именем. **Ничего не удаляет.**
+
 ## 11. Переменные окружения
 
 | Переменная | Смысл |
@@ -239,6 +249,7 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 | Модуль | Роль |
 |--------|------|
 | `profiles.py` | Именованные пресеты из `data/profiles.toml` |
+| `duplicates.py` | Отчёт: точные копии файлов + одинаковые имена курсов |
 | `pipeline.py` | Race + encode одного файла |
 | `course.py` | Обход курса, assemble outbox |
 | `encode.py` | argv NVENC, temp, retry без hwaccel |
@@ -258,7 +269,6 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 ## 15. Roadmap (высокоуровнево)
 
-- Отчёт о дубликатах (без автоудаления)
 - Batch session-report в файл
 - Позже: VMAF / гибрид
 
