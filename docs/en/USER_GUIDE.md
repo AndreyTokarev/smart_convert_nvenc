@@ -102,6 +102,8 @@ Course algorithm:
 5. If not → `move inbox/Name → outbox/Name`.
 6. On mid-flight failure: leave course in inbox; never publish a partial outbox tree.
 
+If `outbox/Name` already exists, it is **removed and replaced by default** (GUI: «Overwrite existing outbox course»; CLI: `--no-overwrite-outbox` to fail instead).
+
 Overrides:
 
 - CLI: `--courses-root`, `--inbox`, `--outbox`, `--tmp`
@@ -166,7 +168,7 @@ Blocks:
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — list, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1
+- **Settings** — sample, savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1, Overwrite existing outbox course (on by default)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — journal + live ffmpeg line
 

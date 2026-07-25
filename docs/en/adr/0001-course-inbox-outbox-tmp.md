@@ -96,7 +96,7 @@ Do **not** copy the whole course into tmp.
 
 ### Name conflicts
 
-If `courses/outbox/Name` already exists — **fail** (no silent overwrite). Later: `--overwrite-outbox` or date suffix.
+If `courses/outbox/Name` already exists — **overwrite by default** (remove the old outbox folder, then publish). Opt out with `--no-overwrite-outbox` / GUI unchecked «Overwrite existing outbox course».
 
 ### Why `tmp` is required
 

@@ -113,6 +113,7 @@ class App(ctk.CTk):
         self.codec_var.set(s.codec if s.codec in {"auto", "hevc", "av1"} else "auto")
         self.encoder_var.set(s.encoder if s.encoder in {"gpu", "cpu", "auto"} else "gpu")
         self.skip_same_codec_var.set(bool(s.skip_same_codec))
+        self.overwrite_outbox_var.set(bool(s.overwrite_outbox))
         self.inbox_var.set(str(self.paths.inbox))
         self.outbox_var.set(str(self.paths.outbox))
         self.tmp_var.set(str(self.paths.tmp))
@@ -130,6 +131,7 @@ class App(ctk.CTk):
             codec=self.codec_var.get().strip(),
             encoder=self.encoder_var.get().strip(),
             skip_same_codec=bool(self.skip_same_codec_var.get()),
+            overwrite_outbox=bool(self.overwrite_outbox_var.get()),
         )
 
     def _persist_settings(self) -> None:
@@ -282,6 +284,7 @@ class App(ctk.CTk):
         self.codec_var = tk.StringVar(value="auto")
         self.encoder_var = tk.StringVar(value="gpu")
         self.skip_same_codec_var = tk.BooleanVar(value=True)
+        self.overwrite_outbox_var = tk.BooleanVar(value=True)
 
         fields = ctk.CTkFrame(settings_panel, fg_color="transparent")
         fields.pack(fill="x", padx=4)
@@ -348,6 +351,17 @@ class App(ctk.CTk):
             border_color=COLORS["border"],
             checkmark_color="#ffffff",
         ).pack(anchor="w")
+        ctk.CTkCheckBox(
+            skip_row,
+            text="Overwrite existing outbox course",
+            variable=self.overwrite_outbox_var,
+            font=self._font_ui,
+            text_color=COLORS["text"],
+            fg_color=COLORS["accent"],
+            hover_color=COLORS["accent_hover"],
+            border_color=COLORS["border"],
+            checkmark_color="#ffffff",
+        ).pack(anchor="w", pady=(4, 0))
 
         action = ctk.CTkFrame(settings_panel, fg_color="transparent")
         action.pack(fill="x", padx=12, pady=(6, 10), side="bottom")
@@ -925,6 +939,7 @@ class App(ctk.CTk):
                             self.paths,
                             settings,
                             race_once=True,
+                            overwrite_outbox=bool(self.overwrite_outbox_var.get()),
                             log=self._app_log,
                             on_ffmpeg_progress=lambda line: self._ff_log(line, replace_live=True),
                             on_progress=self._emit_progress,

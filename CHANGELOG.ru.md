@@ -15,6 +15,7 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - Локальный helper сборки `scripts/build.ps1` и `docs/*/BUILD.md`.
 - Поиск дубликатов (только отчёт): `smart-convert duplicates` / `smart-convert-duplicates` — точные копии файлов (size+SHA-256) и одинаковые имена курсов в inbox/outbox.
 - Batch курсов пишет `session-report.md` (итоги + таблица); `--session-report PATH` / `--no-session-report`.
+- По умолчанию перезапись существующего `outbox/<course>` (чекбокс GUI + `--overwrite-outbox` / `--no-overwrite-outbox`).
 
 ### Changed
 

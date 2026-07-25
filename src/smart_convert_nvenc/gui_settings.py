@@ -37,6 +37,7 @@ class GuiSettings:
     codec: str = "auto"
     encoder: str = "gpu"
     skip_same_codec: bool = True
+    overwrite_outbox: bool = True
 
     def course_paths(self) -> CoursePaths:
         inbox = Path(self.inbox) if self.inbox.strip() else None
@@ -60,6 +61,7 @@ class GuiSettings:
             codec=self.codec,
             encoder=self.encoder,
             skip_same_codec=self.skip_same_codec,
+            overwrite_outbox=self.overwrite_outbox,
         )
 
 

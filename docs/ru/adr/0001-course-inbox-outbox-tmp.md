@@ -96,7 +96,7 @@ English: [../../en/adr/0001-course-inbox-outbox-tmp.md](../../en/adr/0001-course
 
 ### Конфликты имён
 
-Если `courses/outbox/Name` уже существует — **ошибка** (без тихой перезаписи). Позже: `--overwrite-outbox` или суффикс с датой.
+Если `courses/outbox/Name` уже есть — **по умолчанию перезаписываем** (удаляем старую папку outbox, затем публикуем). Отключить: `--no-overwrite-outbox` / снять чекбокс «Overwrite existing outbox course» в GUI.
 
 ### Зачем нужен `tmp`
 

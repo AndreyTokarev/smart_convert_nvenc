@@ -219,7 +219,39 @@ def test_convert_course_no_videos_dry_run(
         patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
         pytest.raises(FileExistsError),
     ):
-        convert_course(course, course_layout, settings)
+        convert_course(course, course_layout, settings, overwrite_outbox=False)
+
+
+def test_convert_course_overwrite_outbox(
+    course_layout: CoursePaths, settings: ConvertSettings
+) -> None:
+    course = _make_course(course_layout.inbox, "Clash")
+    stale = course_layout.outbox / "Clash"
+    stale.mkdir()
+    (stale / "old.txt").write_text("stale", encoding="utf-8")
+    profile = EncodeProfile(codec=VideoCodec.HEVC, cq=28)
+
+    def _fake_convert(video: Path, *args: object, **kwargs: object) -> VideoDecision:
+        return VideoDecision(
+            source=video,
+            original_size=video.stat().st_size,
+            compressed=False,
+            output=video,
+            profile=profile,
+            projected_or_final_size=video.stat().st_size,
+        )
+
+    with (
+        patch(
+            "smart_convert_nvenc.course.resolve_encoder_backend",
+            return_value=(EncoderBackend.GPU, "encoder: gpu"),
+        ),
+        patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
+    ):
+        result = convert_course(course, course_layout, settings, overwrite_outbox=True)
+    assert result.outbox_path.is_dir()
+    assert not (result.outbox_path / "old.txt").exists()
+    assert not course.exists()
 
 
 def test_convert_course_must_be_inbox_child(

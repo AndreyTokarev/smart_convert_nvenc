@@ -77,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Do not skip videos already in HEVC/AV1 (or the forced codec)",
     )
     p.add_argument(
+        "--overwrite-outbox",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Replace existing outbox/<course> (default: yes). Use --no-overwrite-outbox to fail instead.",
+    )
+    p.add_argument(
         "--session-report",
         type=Path,
         nargs="?",
@@ -162,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
                     settings,
                     min_course_savings=min_course_savings,
                     race_once=not args.race_each,
+                    overwrite_outbox=bool(args.overwrite_outbox),
                     log=_safe_print,
                 )
                 session.add_course(

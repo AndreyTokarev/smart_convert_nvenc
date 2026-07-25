@@ -114,6 +114,7 @@ def convert_course(
     *,
     min_course_savings: float = 0.10,
     race_once: bool = True,
+    overwrite_outbox: bool = True,
     log: LogFn | None = None,
     on_ffmpeg_progress: LogFn | None = None,
     on_progress: ProgressFn | None = None,
@@ -132,9 +133,12 @@ def convert_course(
     tmp_course = paths.tmp / name
 
     if out_course.exists():
-        raise FileExistsError(
-            f"Outbox already has '{name}'. Remove or rename it before retrying."
-        )
+        if not overwrite_outbox:
+            raise FileExistsError(
+                f"Outbox already has '{name}'. Remove or rename it before retrying."
+            )
+        _log(log, f"Outbox already has '{name}' — removing for overwrite")
+        _safe_rmtree(out_course)
 
     removed = cleanup_conversion_temps(paths.tmp)
     if removed:

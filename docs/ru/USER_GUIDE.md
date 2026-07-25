@@ -107,6 +107,8 @@ courses/
 5. Если невыгоден → `move inbox/Name → outbox/Name`.
 6. При ошибке mid-flight: курс остаётся в inbox; частичный outbox не публикуется.
 
+Если `outbox/Name` уже есть — **по умолчанию удаляется и перезаписывается** (GUI: «Overwrite existing outbox course»; CLI: `--no-overwrite-outbox` чтобы снова падать с ошибкой).
+
 Переопределение путей:
 
 - CLI: `--courses-root`, `--inbox`, `--outbox`, `--tmp`
@@ -171,7 +173,7 @@ uv run smart-convert-gui
 
 - **Folders** — inbox/outbox/tmp, Browse, Courses root, Apply, Defaults
 - **Courses** — список, Refresh / Select all / Open inbox|outbox
-- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1
+- **Settings** — sample, min savings, CQ, preset, codec, encoder (gpu/cpu/auto), Skip if already HEVC/AV1, Overwrite existing outbox course (вкл. по умолчанию)
 - **Progress** — file/job bars + Last / Session freed / % · MiB/h
 - **App log / FFmpeg** — журнал и live-строка ffmpeg
 

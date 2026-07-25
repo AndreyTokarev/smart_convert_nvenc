@@ -36,6 +36,7 @@ def test_save_and_load_roundtrip(tmp_path: Path) -> None:
     assert loaded.cq_hevc == "30"
     assert loaded.codec == "hevc"
     assert loaded.encoder == "auto"
+    assert loaded.overwrite_outbox is True
     assert loaded.course_paths().inbox == defaults.inbox.resolve()
 
 
