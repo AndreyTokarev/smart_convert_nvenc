@@ -10,6 +10,7 @@ from .models import VideoCodec
 from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
 from .profiles import get_profile, list_profile_names
+from .session import SessionStats, default_session_report_path, write_session_report
 from .temp_paths import cleanup_conversion_temps
 from .windows_guard import WindowsSessionGuard
 
@@ -75,6 +76,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not skip videos already in HEVC/AV1 (or the forced codec)",
     )
+    p.add_argument(
+        "--session-report",
+        type=Path,
+        nargs="?",
+        const=Path("__AUTO__"),
+        default=Path("__AUTO__"),
+        help=(
+            "Write Markdown session report (default: <courses>/session-report.md). "
+            "Pass a path to override."
+        ),
+    )
+    p.add_argument(
+        "--no-session-report",
+        action="store_true",
+        help="Do not write session-report.md",
+    )
     return p
 
 
@@ -136,9 +153,10 @@ def main(argv: list[str] | None = None) -> int:
         guard = WindowsSessionGuard()
         guard.start()
         _safe_print("Windows guard ON (sleep blocked, pending reboot aborted while running)")
+        session = SessionStats()
         try:
             for course_dir in courses:
-                convert_course(
+                result = convert_course(
                     course_dir,
                     paths,
                     settings,
@@ -146,6 +164,25 @@ def main(argv: list[str] | None = None) -> int:
                     race_once=not args.race_each,
                     log=_safe_print,
                 )
+                session.add_course(
+                    result.name,
+                    result.original_size,
+                    result.final_size,
+                    compressed=result.compressed_course,
+                    videos_compressed=result.videos_compressed,
+                    videos_total=result.videos_total,
+                    outbox_path=str(result.outbox_path),
+                )
+            if session.courses:
+                _safe_print(session.summary_line())
+                if not args.no_session_report:
+                    report_arg = args.session_report
+                    if report_arg is None or report_arg == Path("__AUTO__"):
+                        report_path = default_session_report_path(inbox=paths.inbox)
+                    else:
+                        report_path = report_arg
+                    written = write_session_report(session, report_path)
+                    _safe_print(f"Session report: {written}")
         finally:
             guard.stop()
             _safe_print("Windows guard OFF")

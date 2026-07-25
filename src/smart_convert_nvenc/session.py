@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
 
 
 def format_mib(size_bytes: int) -> str:
@@ -25,6 +27,10 @@ class CourseSavings:
     name: str
     original_bytes: int
     final_bytes: int
+    compressed: bool = True
+    videos_compressed: int = 0
+    videos_total: int = 0
+    outbox_path: str | None = None
 
     @property
     def freed_bytes(self) -> int:
@@ -42,8 +48,26 @@ class SessionStats:
     started_at: float = field(default_factory=time.perf_counter)
     courses: list[CourseSavings] = field(default_factory=list)
 
-    def add_course(self, name: str, original_bytes: int, final_bytes: int) -> CourseSavings:
-        item = CourseSavings(name=name, original_bytes=original_bytes, final_bytes=final_bytes)
+    def add_course(
+        self,
+        name: str,
+        original_bytes: int,
+        final_bytes: int,
+        *,
+        compressed: bool = True,
+        videos_compressed: int = 0,
+        videos_total: int = 0,
+        outbox_path: str | None = None,
+    ) -> CourseSavings:
+        item = CourseSavings(
+            name=name,
+            original_bytes=original_bytes,
+            final_bytes=final_bytes,
+            compressed=compressed,
+            videos_compressed=videos_compressed,
+            videos_total=videos_total,
+            outbox_path=outbox_path,
+        )
         self.courses.append(item)
         return item
 
@@ -81,3 +105,64 @@ class SessionStats:
             f"({self.ratio * 100:.1f}%) in {self.elapsed_sec / 60:.1f} min "
             f"({self.mib_per_hour:.0f} MiB/h), courses={len(self.courses)}"
         )
+
+    def markdown_report(self) -> str:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        lines = [
+            "# Session report",
+            "",
+            f"Generated: {stamp}",
+            "",
+            "## Summary",
+            "",
+            f"- Courses: {len(self.courses)}",
+            f"- Original: {format_gib_or_mib(self.original_bytes)}",
+            f"- Final: {format_gib_or_mib(self.final_bytes)}",
+            f"- Freed: {format_gib_or_mib(self.freed_bytes)} ({self.ratio * 100:.1f}%)",
+            f"- Duration: {self.elapsed_sec / 60:.1f} min",
+            f"- Throughput: {self.mib_per_hour:.0f} MiB/h",
+            "",
+            "## Courses",
+            "",
+        ]
+        if not self.courses:
+            lines.append("No courses processed.")
+            lines.append("")
+        else:
+            lines.append("| Course | Before | After | Freed | Videos | Compressed | Outbox |")
+            lines.append("|--------|--------|-------|-------|--------|------------|--------|")
+            for course in self.courses:
+                vids = (
+                    f"{course.videos_compressed}/{course.videos_total}"
+                    if course.videos_total
+                    else "—"
+                )
+                out = f"`{course.outbox_path}`" if course.outbox_path else "—"
+                lines.append(
+                    "| "
+                    + " | ".join(
+                        [
+                            course.name.replace("|", "\\|"),
+                            format_gib_or_mib(course.original_bytes),
+                            format_gib_or_mib(course.final_bytes),
+                            format_gib_or_mib(course.freed_bytes),
+                            vids,
+                            "yes" if course.compressed else "no",
+                            out,
+                        ]
+                    )
+                    + " |"
+                )
+            lines.append("")
+        return "\n".join(lines)
+
+
+def default_session_report_path(*, inbox: Path) -> Path:
+    """Write next to inbox/outbox (``courses/session-report.md``)."""
+    return inbox.parent / "session-report.md"
+
+
+def write_session_report(stats: SessionStats, path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(stats.markdown_report(), encoding="utf-8")
+    return path

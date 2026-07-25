@@ -199,6 +199,8 @@ uv run smart-convert-course --courses-root E:\archive\courses
 uv run smart-convert-course --race-each
 ```
 
+After a course batch, Markdown totals land in `courses/session-report.md` (override with `--session-report PATH`, skip with `--no-session-report`).
+
 ### Duplicates (report only)
 
 ```powershell
@@ -256,7 +258,6 @@ See also [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## 15. Roadmap (high level)
 
-- Batch session report to file
 - Later: VMAF / hybrid quality metric
 
 Details: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).

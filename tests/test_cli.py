@@ -99,11 +99,20 @@ def test_course_cli_runs_named_course(tmp_path: Path) -> None:
     paths.tmp = tmp_path / "tmp"
     paths.ensure = MagicMock()
 
+    result = MagicMock()
+    result.name = "C1"
+    result.original_size = 1000
+    result.final_size = 400
+    result.compressed_course = True
+    result.videos_compressed = 1
+    result.videos_total = 1
+    result.outbox_path = paths.outbox / "C1"
+
     with (
         patch("smart_convert_nvenc.course_cli.resolve_course_paths", return_value=paths),
         patch("smart_convert_nvenc.course_cli.validate_environment", return_value=["env"]),
         patch("smart_convert_nvenc.course_cli.cleanup_conversion_temps", return_value=[Path("x")]),
-        patch("smart_convert_nvenc.course_cli.convert_course") as convert,
+        patch("smart_convert_nvenc.course_cli.convert_course", return_value=result) as convert,
         patch("smart_convert_nvenc.course_cli.WindowsSessionGuard") as guard_cls,
     ):
         guard = guard_cls.return_value
@@ -115,6 +124,37 @@ def test_course_cli_runs_named_course(tmp_path: Path) -> None:
     assert settings.av1_cq == 36
     guard.start.assert_called_once()
     guard.stop.assert_called_once()
+    report = inbox.parent / "session-report.md"
+    assert report.is_file()
+    assert "C1" in report.read_text(encoding="utf-8")
+
+
+def test_course_cli_no_session_report(tmp_path: Path) -> None:
+    inbox = tmp_path / "inbox"
+    course = inbox / "C1"
+    course.mkdir(parents=True)
+    paths = MagicMock()
+    paths.inbox = inbox
+    paths.outbox = tmp_path / "outbox"
+    paths.tmp = tmp_path / "tmp"
+    paths.ensure = MagicMock()
+    result = MagicMock()
+    result.name = "C1"
+    result.original_size = 100
+    result.final_size = 100
+    result.compressed_course = False
+    result.videos_compressed = 0
+    result.videos_total = 1
+    result.outbox_path = paths.outbox / "C1"
+    with (
+        patch("smart_convert_nvenc.course_cli.resolve_course_paths", return_value=paths),
+        patch("smart_convert_nvenc.course_cli.validate_environment", return_value=[]),
+        patch("smart_convert_nvenc.course_cli.cleanup_conversion_temps", return_value=[]),
+        patch("smart_convert_nvenc.course_cli.convert_course", return_value=result),
+        patch("smart_convert_nvenc.course_cli.WindowsSessionGuard"),
+    ):
+        assert course_cli.main(["C1", "--no-session-report"]) == 0
+    assert not (inbox.parent / "session-report.md").exists()
 
 
 def test_course_cli_safe_print_unicode(monkeypatch: pytest.MonkeyPatch) -> None:

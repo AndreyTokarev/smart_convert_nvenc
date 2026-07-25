@@ -2,7 +2,7 @@
 
 English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 
-- **Статус:** F1–F5 done; F6 partial (F6.4 done)  
+- **Статус:** F1–F5 done; F6 partial (F6.1–F6.2, F6.4 done; F6.3 VMAF позже)  
 - **Дата:** 2026-07-24  
 - **Контекст:** `D:\projects\python\video_converter` — предыдущий личный сервис (Flet + NVENC). Решено не допиливать его, а собрать **smart_convert_nvenc** с нуля под архив курсов. Ниже — что из старого опыта переносим сюда, в каком порядке, и чего сознательно не тащим.
 
@@ -120,7 +120,7 @@ English: [../en/feature-port-plan.md](../en/feature-port-plan.md).
 | # | Задача |
 |---|--------|
 | F6.1 | Поиск дубликатов курсов/файлов (отчёт, без автоудаления) — **сделано** (`duplicates` / `smart-convert-duplicates`) |
-| F6.2 | Batch-отчёт по пачке курсов в файл (`session-report.md`) |
+| F6.2 | Batch-отчёт по пачке курсов в файл (`session-report.md`) — **сделано** |
 | F6.3 | VMAF/гибрид (решение 1B → позже C) |
 | F6.4 | CPU fallback x265/SVT-AV1 — **сделано** (`encoder`: gpu/cpu/auto; без перекалибровки CQ↔CRF) |
 
@@ -160,7 +160,7 @@ F1 (cancel/temp/retry)  →  F2 (МБ/час + сортировка)  →  F3 (s
 | F3 | done | 2026-07-24 | Persist настроек; Open inbox/outbox; confirm при закрытии; ring-buffer логов; progress drain — только latest |
 | F4 | done | 2026-07-24 | `pytest` + `pytest-cov`, fail_under=90; GUI/`__main__` omitted from coverage metric; mocks, no GPU required |
 | F5 | done | 2026-07-26 | F5.1–F5.3 profiles.toml + `--profile` + build.ps1/BUILD.md; F5.4 FFmpeg vendor |
-| F6 | partial | 2026-07-26 | F6.1 отчёт дубликатов; F6.4 CPU encode |
+| F6 | partial | 2026-07-26 | F6.1 дубликаты; F6.2 session-report.md; F6.4 CPU encode |
 
 ---
 

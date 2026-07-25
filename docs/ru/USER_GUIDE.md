@@ -212,6 +212,8 @@ uv run smart-convert-course --race-each
 uv run smart-convert-course --reencode-same-codec
 ```
 
+После пачки курсов итоги пишутся в `courses/session-report.md` (`--session-report PATH` / `--no-session-report`).
+
 ### Дубликаты (только отчёт)
 
 ```powershell
@@ -269,7 +271,6 @@ GPU не нужен: encode/ffprobe мокаются. `gui.py` исключён 
 
 ## 15. Roadmap (высокоуровнево)
 
-- Batch session-report в файл
 - Позже: VMAF / гибрид
 
 Детали: [feature-port-plan.md](./feature-port-plan.md), [refactoring-plan.md](./refactoring-plan.md).
