@@ -19,8 +19,6 @@ class EncoderBackend(str, Enum):
 
 
 class VmafMode(str, Enum):
-    """Hybrid quality metric (F6.3): size@CQ by default; VMAF when available/forced."""
-
     OFF = "off"
     AUTO = "auto"
     ON = "on"

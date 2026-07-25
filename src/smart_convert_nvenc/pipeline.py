@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 from .encode import encode_file
@@ -115,20 +116,14 @@ def choose_winner(
     vmaf_min: float = 90.0,
 ) -> BenchmarkReport:
     if force_profile is not None:
-        # Size projection unavailable without a sample; treat as worth trying full encode.
-        # Caller should still compare actual output size.
-        projected = original_bytes
-        winner = force_profile
-        savings = 0.0
-        worth = True
         return BenchmarkReport(
-            winner=winner,
+            winner=force_profile,
             hevc=hevc,
             av1=av1,
-            projected_full_bytes=projected,
+            projected_full_bytes=original_bytes,
             original_bytes=original_bytes,
-            savings_ratio=savings,
-            worth_encoding=worth,
+            savings_ratio=0.0,
+            worth_encoding=True,
             disclaimer=DISCLAIMER_SIZE_AT_CQ,
         )
 
@@ -136,8 +131,8 @@ def choose_winner(
         raise ValueError("Need at least one sample result (hevc and/or av1)")
 
     samples = [s for s in (hevc, av1) if s is not None]
-    use_vmaf = all(s.vmaf is not None for s in samples) and len(samples) >= 1
-    disclaimer = DISCLAIMER_VMAF if use_vmaf and len(samples) > 1 else DISCLAIMER_SIZE_AT_CQ
+    use_vmaf = len(samples) > 1 and all(s.vmaf is not None for s in samples)
+    disclaimer = DISCLAIMER_VMAF if use_vmaf else DISCLAIMER_SIZE_AT_CQ
 
     if hevc is None:
         winner_sample = av1
@@ -146,11 +141,11 @@ def choose_winner(
         winner_sample = hevc
     elif use_vmaf:
         assert hevc.vmaf is not None and av1.vmaf is not None
-        above = [s for s in (hevc, av1) if s.vmaf is not None and s.vmaf >= vmaf_min]
+        above = [s for s in (hevc, av1) if s.vmaf >= vmaf_min]
         if above:
             winner_sample = min(above, key=lambda s: s.size_bytes)
         else:
-            winner_sample = max((hevc, av1), key=lambda s: s.vmaf or 0.0)
+            winner_sample = hevc if hevc.vmaf >= av1.vmaf else av1
     else:
         winner_sample = av1 if av1.size_bytes < hevc.size_bytes else hevc
 
@@ -175,6 +170,11 @@ def _want_vmaf(settings: ConvertSettings) -> bool:
     if settings.vmaf is VmafMode.OFF:
         return False
     if settings.vmaf is VmafMode.ON:
+        if not has_libvmaf():
+            raise ToolError(
+                "VMAF=on, но в FFmpeg нет libvmaf. "
+                "Поставьте сборку с libvmaf или --vmaf auto/off."
+            )
         return True
     if settings.vmaf is VmafMode.AUTO:
         return has_libvmaf()
@@ -202,13 +202,7 @@ def _with_vmaf(
         _log(log, f"    VMAF skipped ({exc})")
         return sample
     _log(log, f"    VMAF={score:.2f}")
-    return SampleResult(
-        profile=sample.profile,
-        path=sample.path,
-        size_bytes=sample.size_bytes,
-        elapsed_sec=sample.elapsed_sec,
-        vmaf=score,
-    )
+    return replace(sample, vmaf=score)
 
 
 def output_path_for(input_path: Path, profile: EncodeProfile) -> Path:
@@ -327,15 +321,7 @@ def convert_video(
 
         if racing:
             want_vmaf = _want_vmaf(settings)
-            if want_vmaf and settings.vmaf is VmafMode.ON and not has_libvmaf():
-                raise ToolError(
-                    "VMAF=on, но в FFmpeg нет libvmaf. "
-                    "Поставьте сборку с libvmaf или --vmaf auto/off."
-                )
-            if want_vmaf:
-                _log(log, f"  [!] {DISCLAIMER_VMAF}")
-            else:
-                _log(log, f"  [!] {DISCLAIMER_SIZE_AT_CQ}")
+            _log(log, f"  [!] {DISCLAIMER_VMAF if want_vmaf else DISCLAIMER_SIZE_AT_CQ}")
             hevc = run_sample(
                 input_path=input_path,
                 work_dir=work,

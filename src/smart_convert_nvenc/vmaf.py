@@ -4,8 +4,8 @@ import re
 import subprocess
 from pathlib import Path
 
-from .ffmpeg_tools import ffmpeg_executable
 from .ffmpeg_runner import FFmpegCancelled, StopCheck
+from .ffmpeg_tools import ffmpeg_executable
 from .probe import ToolError, require_tools
 
 _VMAF_SCORE_RE = re.compile(r"VMAF score:\s*([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE)
@@ -13,7 +13,6 @@ _libvmaf_cached: bool | None = None
 
 
 def has_libvmaf(*, force_refresh: bool = False) -> bool:
-    """True if the active ffmpeg build exposes the ``libvmaf`` filter."""
     global _libvmaf_cached
     if _libvmaf_cached is not None and not force_refresh:
         return _libvmaf_cached
@@ -46,13 +45,11 @@ def score_vmaf(
     sample_seconds: float,
     should_stop: StopCheck | None = None,
 ) -> float:
-    """Compare distorted sample to the matching source window. Returns VMAF 0–100."""
     if should_stop and should_stop():
         raise FFmpegCancelled("Stopped by user")
     if not has_libvmaf():
         raise ToolError("FFmpeg без фильтра libvmaf — VMAF недоступен в этой сборке.")
 
-    # Distorted sample is already a short clip; re-open source at the same window.
     cmd = [
         ffmpeg_executable(),
         "-hide_banner",
