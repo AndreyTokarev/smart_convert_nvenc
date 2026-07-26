@@ -6,8 +6,15 @@ from .ffmpeg_runner import FFmpegCancelled, FFmpegError, ProgressCallback, StopC
 from .models import AudioMode, AudioSettings, EncoderBackend, EncodeProfile, VideoCodec
 from .temp_paths import make_conversion_temp, promote_temp_to_final
 
-# MPEG-TS / similar often carry AAC in ADTS; MP4/MKV need ASC when copying.
+# MPEG-TS / similar often carry AAC in ADTS; MP4/MKV need ASC when copying AAC.
 _ADTS_INPUT_SUFFIXES = {".ts", ".mts", ".m2ts", ".mpeg", ".mpg"}
+_AAC_PROBE_NAMES = frozenset({"aac", "aac_latm"})
+
+
+def _is_aac_audio(codec_name: str | None) -> bool:
+    if not codec_name:
+        return False
+    return codec_name.strip().lower() in _AAC_PROBE_NAMES
 
 
 def audio_args(
@@ -16,6 +23,7 @@ def audio_args(
     for_sample: bool,
     input_path: Path | None = None,
     output_path: Path | None = None,
+    audio_codec: str | None = None,
 ) -> list[str]:
     # Samples compare video size only — drop audio so MPEG-TS seek + MKV/AV1
     # does not fail on broken AAC extradata, and CQ race stays video-pure.
@@ -23,8 +31,10 @@ def audio_args(
         return ["-an"]
     if settings.mode is AudioMode.COPY:
         args = ["-c:a", "copy"]
+        # aac_adtstoasc only accepts AAC; mp2/mp3/ac3 in .mpg must not get this BSF.
         if (
-            input_path is not None
+            _is_aac_audio(audio_codec)
+            and input_path is not None
             and output_path is not None
             and input_path.suffix.lower() in _ADTS_INPUT_SUFFIXES
             and output_path.suffix.lower() in {".mp4", ".m4v", ".mov", ".mkv"}
@@ -122,6 +132,7 @@ def build_encode_args(
     seek_seconds: float = 0.0,
     for_sample: bool = False,
     hwaccel: str | None = "auto",
+    audio_codec: str | None = None,
 ) -> list[str]:
     args: list[str] = []
     use_hwaccel = hwaccel if profile.backend is EncoderBackend.GPU else None
@@ -142,6 +153,7 @@ def build_encode_args(
             for_sample=for_sample,
             input_path=input_path,
             output_path=output_path,
+            audio_codec=audio_codec,
         )
     )
     args.append(str(output_path))
@@ -161,6 +173,7 @@ def encode_file(
     should_stop: StopCheck | None = None,
     use_temp: bool = True,
     retry_without_hwaccel: bool = True,
+    audio_codec: str | None = None,
 ) -> float:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     target = make_conversion_temp(output_path) if use_temp else output_path
@@ -178,6 +191,7 @@ def encode_file(
             seek_seconds=seek_seconds,
             for_sample=for_sample,
             hwaccel=hwaccel,
+            audio_codec=audio_codec,
         )
         return run_ffmpeg(args, on_progress=on_progress, should_stop=should_stop)
 

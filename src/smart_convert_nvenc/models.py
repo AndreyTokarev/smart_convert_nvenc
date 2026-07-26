@@ -178,6 +178,7 @@ class MediaInfo:
     width: int | None
     height: int | None
     has_audio: bool
+    audio_codec: str | None = None
 
 
 @dataclass(frozen=True)

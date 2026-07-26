@@ -205,9 +205,8 @@ def test_probe_media_ok(tmp_path: Path) -> None:
     assert info.width == 1280
     assert info.height == 720
     assert info.has_audio is True
+    assert info.audio_codec == "aac"
 
-
-def test_probe_media_failure(tmp_path: Path) -> None:
     path = tmp_path / "bad.mp4"
     path.write_bytes(b"x")
     result = MagicMock()

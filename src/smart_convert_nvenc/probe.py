@@ -207,4 +207,5 @@ def probe_media(path: Path) -> MediaInfo:
         width=int(video["width"]) if video and video.get("width") else None,
         height=int(video["height"]) if video and video.get("height") else None,
         has_audio=audio is not None,
+        audio_codec=(audio or {}).get("codec_name"),
     )

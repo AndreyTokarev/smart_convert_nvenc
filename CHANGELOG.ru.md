@@ -17,6 +17,12 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Removed
 
+## [0.1.10] — 2026-07-26
+
+### Fixed
+
+- Полный encode больше не вешает `aac_adtstoasc` при copy не-AAC из `.mpg`/MPEG-TS (например mp2) — только если probe показал AAC.
+
 ## [0.1.9] — 2026-07-26
 
 ### Added
@@ -144,7 +150,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...HEAD
+[0.1.10]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.6...v0.1.7

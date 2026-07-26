@@ -55,12 +55,13 @@ def test_audio_args_modes() -> None:
     assert audio_args(AudioSettings(mode=AudioMode.COPY), for_sample=True) == ["-an"]
 
 
-def test_audio_args_copy_adds_adtstoasc_for_mpegts() -> None:
+def test_audio_args_copy_adds_adtstoasc_for_mpegts_aac() -> None:
     args = audio_args(
         AudioSettings(mode=AudioMode.COPY),
         for_sample=False,
         input_path=Path("lesson.ts"),
         output_path=Path("out.mkv"),
+        audio_codec="aac",
     )
     assert args == ["-c:a", "copy", "-bsf:a", "aac_adtstoasc"]
     plain = audio_args(
@@ -68,8 +69,28 @@ def test_audio_args_copy_adds_adtstoasc_for_mpegts() -> None:
         for_sample=False,
         input_path=Path("lesson.mp4"),
         output_path=Path("out.mp4"),
+        audio_codec="aac",
     )
     assert plain == ["-c:a", "copy"]
+
+
+def test_audio_args_copy_skips_adtstoasc_for_mp2_in_mpg() -> None:
+    args = audio_args(
+        AudioSettings(mode=AudioMode.COPY),
+        for_sample=False,
+        input_path=Path("lesson.mpg"),
+        output_path=Path("out.mkv"),
+        audio_codec="mp2",
+    )
+    assert args == ["-c:a", "copy"]
+    no_codec = audio_args(
+        AudioSettings(mode=AudioMode.COPY),
+        for_sample=False,
+        input_path=Path("lesson.mpg"),
+        output_path=Path("out.mkv"),
+        audio_codec=None,
+    )
+    assert no_codec == ["-c:a", "copy"]
 
 
 def test_video_args_hevc_and_av1(hevc: EncodeProfile, av1: EncodeProfile) -> None:

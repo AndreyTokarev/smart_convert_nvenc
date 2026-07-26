@@ -506,6 +506,7 @@ def convert_video(
             for_sample=False,
             on_progress=_make_ffmpeg_cb("encode", info.duration_sec),
             should_stop=should_stop,
+            audio_codec=info.audio_codec,
         )
         _emit_phase("encode", 1.0)
         final_size = out.stat().st_size
