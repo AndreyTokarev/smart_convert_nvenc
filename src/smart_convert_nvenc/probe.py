@@ -171,7 +171,7 @@ def probe_media(path: Path) -> MediaInfo:
     cmd = [
         ffprobe_executable(),
         "-v",
-        "quiet",
+        "error",
         "-print_format",
         "json",
         "-show_format",
@@ -187,7 +187,8 @@ def probe_media(path: Path) -> MediaInfo:
         check=False,
     )
     if result.returncode != 0:
-        raise ToolError(f"ffprobe не смог прочитать файл: {path}\n{result.stderr}")
+        detail = (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}"
+        raise ToolError(f"ffprobe не смог прочитать файл: {path}\n{detail}")
 
     data = json.loads(result.stdout)
     streams = data.get("streams") or []

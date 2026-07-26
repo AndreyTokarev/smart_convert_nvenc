@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.1.11] — 2026-07-27
+
+### Fixed
+
+- Course jobs no longer abort on one unreadable video (e.g. truncated MP4 missing `moov`); keep original and continue. Probe errors include ffprobe stderr (`-v error`).
+
 ## [0.1.10] — 2026-07-26
 
 ### Fixed
@@ -150,7 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8

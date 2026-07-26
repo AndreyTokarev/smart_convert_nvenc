@@ -5,11 +5,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .ffmpeg_runner import FFmpegCancelled, StopCheck
+from .ffmpeg_runner import FFmpegCancelled, FFmpegError, StopCheck
 from .models import ConvertSettings, EncodeProfile, VideoDecision, is_video_media
 from .paths import CoursePaths
 from .pipeline import convert_video
-from .probe import resolve_encoder_backend
+from .probe import ToolError, resolve_encoder_backend
 from .progress import ProgressUpdate, clamp01
 from .temp_paths import cleanup_conversion_temps
 
@@ -218,16 +218,34 @@ def convert_course(
                     )
                 )
 
-            decision = convert_video(
-                video,
-                settings,
-                output_path=out_path,
-                force_profile=locked_profile,
-                log=log,
-                on_ffmpeg_progress=on_ffmpeg_progress,
-                on_phase_progress=_on_phase,
-                should_stop=should_stop,
-            )
+            try:
+                decision = convert_video(
+                    video,
+                    settings,
+                    output_path=out_path,
+                    force_profile=locked_profile,
+                    log=log,
+                    on_ffmpeg_progress=on_ffmpeg_progress,
+                    on_phase_progress=_on_phase,
+                    should_stop=should_stop,
+                )
+            except FFmpegCancelled:
+                raise
+            except (ToolError, FFmpegError, RuntimeError, OSError) as exc:
+                if "Stopped by user" in str(exc):
+                    raise
+                # Broken/truncated media (e.g. MP4 without moov) or one-file encode failure:
+                # keep the original and continue the course instead of aborting the job.
+                size = video.stat().st_size if video.is_file() else 0
+                _log(log, f"  keep original (skip encode): {exc}")
+                decision = VideoDecision(
+                    source=video,
+                    original_size=size,
+                    compressed=False,
+                    output=video,
+                    profile=None,
+                    projected_or_final_size=size,
+                )
             decisions.append(decision)
             if on_progress:
                 on_progress(

@@ -1,7 +1,7 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.10-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.11-blue.svg)](CHANGELOG.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
@@ -9,7 +9,7 @@ Compress **video course archives** with **NVIDIA NVENC**: race HEVC vs AV1 on a 
 
 Built as a **fast personal MVP**, now open source under **MIT**.
 
-Current version: **0.1.10** — see [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md).
+Current version: **0.1.11** — see [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md).
 
 | Language | Docs |
 |----------|------|

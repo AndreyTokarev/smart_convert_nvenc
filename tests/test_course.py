@@ -16,6 +16,7 @@ from smart_convert_nvenc.course import (
 from smart_convert_nvenc.ffmpeg_runner import FFmpegCancelled
 from smart_convert_nvenc.models import ConvertSettings, EncoderBackend, EncodeProfile, VideoCodec, VideoDecision
 from smart_convert_nvenc.paths import CoursePaths
+from smart_convert_nvenc.probe import ToolError
 
 
 def _make_course(inbox: Path, name: str) -> Path:
@@ -287,19 +288,87 @@ def test_convert_course_stop(course_layout: CoursePaths, settings: ConvertSettin
     assert not (course_layout.tmp / "StopMe").exists()
 
 
+def test_convert_course_keeps_original_on_video_error(
+    course_layout: CoursePaths, settings: ConvertSettings
+) -> None:
+    course = _make_course(course_layout.inbox, "BrokenOne")
+    good = EncodeProfile(codec=VideoCodec.HEVC, cq=28)
+    calls = {"n": 0}
+
+    def _fake_convert(video: Path, *args: object, **kwargs: object) -> VideoDecision:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ToolError("ffprobe не смог прочитать файл: broken.mp4\nmoov atom not found")
+        out = Path(str(kwargs["output_path"])).with_suffix(".mp4")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(b"y" * 100)
+        return VideoDecision(
+            source=video,
+            original_size=video.stat().st_size,
+            compressed=True,
+            output=out,
+            profile=good,
+            projected_or_final_size=100,
+        )
+
+    # second video so course still has something to compress after skip
+    (course / "mod" / "ok.mp4").write_bytes(b"z" * 20_000)
+
+    logs: list[str] = []
+    with (
+        patch(
+            "smart_convert_nvenc.course.resolve_encoder_backend",
+            return_value=(EncoderBackend.GPU, "encoder: gpu"),
+        ),
+        patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
+    ):
+        result = convert_course(
+            course,
+            course_layout,
+            settings,
+            race_once=True,
+            overwrite_outbox=True,
+            log=logs.append,
+        )
+    assert result.compressed_course is True
+    assert any("keep original" in line for line in logs)
+    assert result.outbox_path.is_dir()
+    assert (result.outbox_path / "mod" / "lesson.mp4").is_file()
+
+
 def test_convert_course_cleans_on_error(
     course_layout: CoursePaths, settings: ConvertSettings
 ) -> None:
     course = _make_course(course_layout.inbox, "Boom")
+    profile = EncodeProfile(codec=VideoCodec.HEVC, cq=28)
 
-    def _boom(*args: object, **kwargs: object) -> VideoDecision:
-        raise RuntimeError("encode failed")
+    def _fake_convert(video: Path, *args: object, **kwargs: object) -> VideoDecision:
+        out = Path(str(kwargs["output_path"])).with_suffix(".mp4")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(b"y" * 100)
+        return VideoDecision(
+            source=video,
+            original_size=video.stat().st_size,
+            compressed=True,
+            output=out,
+            profile=profile,
+            projected_or_final_size=100,
+        )
 
     with (
-        patch("smart_convert_nvenc.course.resolve_encoder_backend", return_value=(EncoderBackend.GPU, "encoder: gpu")),
-        patch("smart_convert_nvenc.course.convert_video", side_effect=_boom),
-        pytest.raises(RuntimeError, match="encode failed"),
+        patch(
+            "smart_convert_nvenc.course.resolve_encoder_backend",
+            return_value=(EncoderBackend.GPU, "encoder: gpu"),
+        ),
+        patch("smart_convert_nvenc.course.convert_video", side_effect=_fake_convert),
+        patch("smart_convert_nvenc.course._move_path", side_effect=OSError("disk full")),
+        pytest.raises(OSError, match="disk full"),
     ):
-        convert_course(course, course_layout, settings)
+        convert_course(
+            course,
+            course_layout,
+            settings,
+            min_course_savings=0.0,
+            overwrite_outbox=True,
+        )
     assert not (course_layout.tmp / "Boom").exists()
-    assert course.exists()

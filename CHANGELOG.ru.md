@@ -17,6 +17,12 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Removed
 
+## [0.1.11] — 2026-07-27
+
+### Fixed
+
+- Курс больше не падает на одном битом видео (например MP4 без `moov`): оригинал сохраняется, обработка идёт дальше. В ошибках probe виден stderr ffprobe (`-v error`).
+
 ## [0.1.10] — 2026-07-26
 
 ### Fixed
@@ -150,7 +156,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.7...v0.1.8
