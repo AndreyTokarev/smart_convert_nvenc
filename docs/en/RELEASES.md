@@ -17,7 +17,7 @@ GitHub Release zips are convenience artifacts for later; treat them as **unsuppo
 
 ## What GitHub Releases contain
 
-On each git tag `v*` (example: `v0.1.11`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:
+On each git tag `v*` (example: `v0.1.12`), [`.github/workflows/release.yml`](../../.github/workflows/release.yml) builds **PyInstaller** one-file binaries for:
 
 | Artifact zip | Runner | Notes |
 |--------------|--------|--------|
@@ -65,8 +65,8 @@ macOS/Linux packages exist so the app can run where Python packaging is awkward,
 3. Commit, then tag matching the version:
 
 ```powershell
-git tag v0.1.11
-git push origin v0.1.11
+git tag v0.1.12
+git push origin v0.1.12
 ```
 
 

@@ -1,7 +1,7 @@
 # smart_convert_nvenc
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.11-blue.svg)](CHANGELOG.ru.md)
+[![Version](https://img.shields.io/badge/version-0.1.12-blue.svg)](CHANGELOG.ru.md)
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
@@ -9,7 +9,7 @@
 
 Быстрый личный MVP, теперь open source под **MIT**.
 
-Текущая версия: **0.1.11** — [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md).
+Текущая версия: **0.1.12** — [CHANGELOG.ru.md](CHANGELOG.ru.md) · [CHANGELOG.md](CHANGELOG.md).
 
 | Язык | Документация |
 |------|--------------|
