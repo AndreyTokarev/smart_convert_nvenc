@@ -10,6 +10,7 @@ from smart_convert_nvenc.models import (
     EncodeProfile,
     MediaInfo,
     VideoCodec,
+    VmafMode,
 )
 from smart_convert_nvenc.paths import CoursePaths
 
@@ -31,6 +32,8 @@ def settings() -> ConvertSettings:
         sample_offset_ratio=0.25,
         min_savings=0.10,
         audio=AudioSettings.parse("copy"),
+        # Unit tests must not call real ffmpeg for VMAF detect (CI has no ffmpeg).
+        vmaf=VmafMode.OFF,
     )
 
 

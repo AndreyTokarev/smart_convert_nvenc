@@ -43,6 +43,7 @@ branch = true
 source = ["smart_convert_nvenc"]
 omit = [
     "*/smart_convert_nvenc/gui.py",
+    "*/smart_convert_nvenc/gui_*.py",
     "*/smart_convert_nvenc/__main__.py",
 ]
 

@@ -15,6 +15,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Fixed
 
+- CI: моки VMAF/ffmpeg в unit-тестах без системного FFmpeg; omit разбитых `gui_*.py` из coverage (как для `gui.py`).
+
 ### Removed
 
 ## [0.1.11] — 2026-07-27

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- CI: mock VMAF/ffmpeg in unit tests without system FFmpeg; omit split `gui_*.py` from coverage (same as `gui.py`).
+
 ### Removed
 
 ## [0.1.11] — 2026-07-27
