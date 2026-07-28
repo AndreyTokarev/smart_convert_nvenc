@@ -36,6 +36,7 @@ from .gui_paths import (
 from .gui_settings import GuiSettings, default_settings_path, load_gui_settings, save_gui_settings
 from .gui_theme import APP_LOG_MAX_LINES, COLORS, FF_LOG_MAX_LINES, configure_appearance
 from .models import EncoderBackend
+from .paths import ensure_long_paths
 from .probe import ToolError, validate_environment
 from .profiles import get_profile, list_profile_names
 from .progress import ProgressUpdate, clamp01, trim_textbox_line_count
@@ -318,6 +319,7 @@ class App(ctk.CTk):
 
 
 def main() -> int:
+    ensure_long_paths()
     app = App()
     app.mainloop()
     return 0

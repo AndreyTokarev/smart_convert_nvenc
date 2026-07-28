@@ -79,6 +79,7 @@ CLI/GUI expose the same version via `smart-convert --version` / window title.
 ```powershell
 uv sync --group release
 uv run pyinstaller --noconfirm --clean --onefile --name smart-convert `
+  --manifest packaging/windows/smart-convert.manifest `
   --collect-all customtkinter --collect-data smart_convert_nvenc `
   scripts/pyi_smart_convert.py
 ```

@@ -125,6 +125,18 @@ courses/
 
 Рекомендация: inbox/outbox/tmp на **одном томе**, чтобы `move` не превращался в copy+delete.
 
+### Длинные пути (Windows)
+
+При старте приложение проверяет `LongPathsEnabled` и при наличии прав пытается выставить `1`.  
+Для ffmpeg длинные пути дополнительно проходят через префикс `\\?\`.  
+Frozen `.exe` собирается с манифестом `longPathAware` (`packaging/windows/smart-convert.manifest`).
+
+Проверка:
+
+```powershell
+Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled
+```
+
 ## 7. Именование курсов и метаданные (ADR-0002)
 
 **Целевое** короткое имя папки:

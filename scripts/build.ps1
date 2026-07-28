@@ -16,6 +16,7 @@ uv sync --group release
 Write-Host "Building smart-convert.exe..."
 uv run pyinstaller `
     --noconfirm --clean --onefile --name "smart-convert" `
+    --manifest packaging/windows/smart-convert.manifest `
     --collect-all customtkinter `
     --collect-data smart_convert_nvenc `
     scripts/pyi_smart_convert.py

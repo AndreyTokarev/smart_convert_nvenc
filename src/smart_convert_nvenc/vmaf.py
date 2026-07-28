@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .ffmpeg_runner import FFmpegCancelled, StopCheck
 from .ffmpeg_tools import ffmpeg_executable
+from .paths import fs_path
 from .probe import ToolError, require_tools
 
 _VMAF_SCORE_RE = re.compile(r"VMAF score:\s*([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE)
@@ -55,13 +56,13 @@ def score_vmaf(
         "-hide_banner",
         "-y",
         "-i",
-        str(distorted),
+        fs_path(distorted),
         "-ss",
         f"{seek_seconds:.3f}",
         "-t",
         f"{sample_seconds:.3f}",
         "-i",
-        str(reference),
+        fs_path(reference),
         "-filter_complex",
         (
             "[0:v]setpts=PTS-STARTPTS[dist];"

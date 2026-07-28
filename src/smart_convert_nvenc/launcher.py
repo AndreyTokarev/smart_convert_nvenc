@@ -25,6 +25,9 @@ def main(argv: list[str] | None = None) -> int:
     - ``course`` … → course inbox/outbox CLI
     - otherwise → single-file CLI (same argv as ``smart-convert``)
     """
+    from .paths import ensure_long_paths
+
+    ensure_long_paths()
     args = list(sys.argv[1:] if argv is None else argv)
 
     if not args or args[0] in {"gui", "--gui"}:

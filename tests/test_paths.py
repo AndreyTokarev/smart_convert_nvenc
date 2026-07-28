@@ -5,7 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from smart_convert_nvenc.paths import CoursePaths, find_project_root, resolve_course_paths
+from smart_convert_nvenc.paths import (
+    CoursePaths,
+    ensure_long_paths,
+    find_project_root,
+    fs_path,
+    long_paths_enabled,
+    resolve_course_paths,
+    try_enable_long_paths,
+)
 
 
 def test_find_project_root() -> None:
@@ -122,3 +130,57 @@ def test_course_paths_ensure(tmp_path: Path) -> None:
     assert paths.inbox.is_dir()
     assert paths.outbox.is_dir()
     assert paths.tmp.is_dir()
+
+
+def test_fs_path_non_windows(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "linux")
+    p = tmp_path / "a.mp4"
+    assert fs_path(p) == str(p)
+
+
+def test_fs_path_adds_extended_prefix_when_long(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(
+        "smart_convert_nvenc.paths.long_paths_enabled",
+        lambda: False,
+    )
+    long_name = "x" * 250 + ".mp4"
+    p = tmp_path / long_name
+    text = fs_path(p)
+    assert text.startswith("\\\\?\\")
+    assert text.endswith(long_name)
+
+
+def test_fs_path_short_when_long_paths_on(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(
+        "smart_convert_nvenc.paths.long_paths_enabled",
+        lambda: True,
+    )
+    p = tmp_path / "short.mp4"
+    p.write_bytes(b"x")
+    assert not fs_path(p).startswith("\\\\?\\")
+
+
+def test_ensure_long_paths_noop_on_linux(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "linux")
+    assert ensure_long_paths() is True
+
+
+def test_try_enable_when_already_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(
+        "smart_convert_nvenc.paths.long_paths_enabled",
+        lambda: True,
+    )
+    assert try_enable_long_paths() is True
+
+
+def test_long_paths_enabled_reads_registry_shape() -> None:
+    # On this CI/dev Windows box the helper must not crash.
+    value = long_paths_enabled()
+    assert value is None or isinstance(value, bool)

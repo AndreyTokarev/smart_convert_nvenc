@@ -7,6 +7,7 @@ from pathlib import Path
 from . import __version__
 from .log_sink import tee_log
 from .models import VideoCodec
+from .paths import ensure_long_paths
 from .pipeline import convert_one
 from .probe import ToolError, validate_environment
 from .profiles import get_profile, list_profile_names
@@ -140,6 +141,7 @@ def _safe_print(message: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    ensure_long_paths()
     args = build_parser().parse_args(argv)
     try:
         profile = get_profile(args.profile)

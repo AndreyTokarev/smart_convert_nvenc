@@ -57,6 +57,7 @@ jobs:
           # console=True so CLI modes work; GUI hides the console on Windows.
           uv run pyinstaller \
             --noconfirm --clean --onefile --name "smart-convert" \
+            --manifest packaging/windows/smart-convert.manifest \
             --collect-all customtkinter \
             --collect-data smart_convert_nvenc \
             scripts/pyi_smart_convert.py

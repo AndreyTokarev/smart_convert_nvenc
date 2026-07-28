@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .ffmpeg_runner import FFmpegCancelled, FFmpegError, ProgressCallback, StopCheck, run_ffmpeg
 from .models import AudioMode, AudioSettings, EncoderBackend, EncodeProfile, VideoCodec
+from .paths import fs_path
 from .temp_paths import make_conversion_temp, promote_temp_to_final
 
 # MPEG-TS / similar often carry AAC in ADTS; MP4/MKV need ASC when copying AAC.
@@ -140,7 +141,7 @@ def build_encode_args(
         args.extend(["-hwaccel", use_hwaccel])
     if seek_seconds > 0:
         args.extend(["-ss", f"{seek_seconds:.3f}"])
-    args.extend(["-i", str(input_path)])
+    args.extend(["-i", fs_path(input_path)])
     if sample_seconds is not None:
         args.extend(["-t", f"{sample_seconds:.3f}"])
     args.extend(["-map", "0:v:0"])
@@ -156,7 +157,7 @@ def build_encode_args(
             audio_codec=audio_codec,
         )
     )
-    args.append(str(output_path))
+    args.append(fs_path(output_path))
     return args
 
 

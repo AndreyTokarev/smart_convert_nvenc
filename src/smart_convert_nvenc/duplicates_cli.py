@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import __version__
 from .duplicates import format_report, scan_duplicates
-from .paths import resolve_course_paths
+from .paths import ensure_long_paths, resolve_course_paths
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,6 +59,7 @@ def _default_roots(
 
 
 def main(argv: list[str] | None = None) -> int:
+    ensure_long_paths()
     args = build_parser().parse_args(argv)
     try:
         roots = list(args.roots) if args.roots else _default_roots(
