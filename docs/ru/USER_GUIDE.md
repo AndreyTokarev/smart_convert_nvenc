@@ -127,15 +127,17 @@ courses/
 
 ### Длинные пути (Windows)
 
-При старте приложение проверяет `LongPathsEnabled` и при наличии прав пытается выставить `1`.  
-Для ffmpeg длинные пути дополнительно проходят через префикс `\\?\`.  
-Frozen `.exe` собирается с манифестом `longPathAware` (`packaging/windows/smart-convert.manifest`).
-
-Проверка:
+FFmpeg/ffprobe получают пути с префиксом `\\?\` автоматически (граница subprocess).  
+Политика ОС `LongPathsEnabled` — **предпосылка оператора**, приложение её не пишет при обычном запуске.
 
 ```powershell
 Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled
+# выставить (админ):
+smart-convert enable-long-paths
+# или New-ItemProperty … LongPathsEnabled = 1, затем reboot
 ```
+
+Frozen `.exe` собирается с манифестом `longPathAware`.
 
 ## 7. Именование курсов и метаданные (ADR-0002)
 

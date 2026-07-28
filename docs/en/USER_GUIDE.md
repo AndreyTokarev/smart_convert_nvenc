@@ -122,12 +122,16 @@ Keep inbox/outbox/tmp on **one volume** so `move` stays cheap.
 
 ### Long paths (Windows)
 
-On startup the app checks `LongPathsEnabled` and tries to set it to `1` when running elevated.  
-FFmpeg I/O uses the `\\?\` prefix for long paths. Frozen builds ship with a `longPathAware` manifest (`packaging/windows/smart-convert.manifest`).
+FFmpeg/ffprobe argv get `\\?\` prefixes at the subprocess boundary.  
+OS `LongPathsEnabled` is an **operator prerequisite** — the app does not write the registry on normal startup.
 
 ```powershell
 Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem LongPathsEnabled
+# set (admin):
+smart-convert enable-long-paths
 ```
+
+Frozen builds ship with a `longPathAware` manifest.
 
 ## 7. Naming & metadata (ADR-0002)
 

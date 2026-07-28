@@ -8,6 +8,7 @@ from collections import deque
 from collections.abc import Callable
 
 from .ffmpeg_tools import ffmpeg_executable
+from .win_paths import with_fs_paths
 
 
 class FFmpegError(RuntimeError):
@@ -74,7 +75,7 @@ def run_ffmpeg(
     on_progress: ProgressCallback | None = None,
     should_stop: StopCheck | None = None,
 ) -> float:
-    cmd = [ffmpeg_executable(), "-hide_banner", "-y", *args]
+    cmd = with_fs_paths([ffmpeg_executable(), "-hide_banner", "-y", *args])
     started = time.perf_counter()
     process = subprocess.Popen(
         cmd,

@@ -9,7 +9,7 @@ from .course import convert_course, list_course_dirs
 from .course_meta import load_course_meta
 from .log_sink import tee_log
 from .models import VideoCodec
-from .paths import ensure_long_paths, resolve_course_paths
+from .paths import resolve_course_paths
 from .probe import ToolError, validate_environment
 from .profiles import get_profile, list_profile_names
 from .session import SessionStats, default_session_report_path, write_session_report
@@ -146,7 +146,6 @@ def _safe_print(message: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ensure_long_paths()
     args = build_parser().parse_args(argv)
     try:
         paths = resolve_course_paths(

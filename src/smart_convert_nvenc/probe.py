@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .ffmpeg_tools import describe_tools, ffmpeg_executable, ffprobe_executable, resolve_tool
 from .models import EncoderBackend, MediaInfo
-from .paths import fs_path
+from .win_paths import with_fs_paths
 
 
 class ToolError(RuntimeError):
@@ -177,10 +177,10 @@ def probe_media(path: Path) -> MediaInfo:
         "json",
         "-show_format",
         "-show_streams",
-        fs_path(path),
+        str(path),
     ]
     result = subprocess.run(
-        cmd,
+        with_fs_paths(cmd),
         capture_output=True,
         text=True,
         encoding="utf-8",

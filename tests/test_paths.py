@@ -5,14 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from smart_convert_nvenc.paths import (
-    CoursePaths,
-    ensure_long_paths,
-    find_project_root,
+from smart_convert_nvenc.paths import CoursePaths, find_project_root, resolve_course_paths
+from smart_convert_nvenc.win_paths import (
     fs_path,
     long_paths_enabled,
-    resolve_course_paths,
     try_enable_long_paths,
+    warn_if_long_paths_disabled,
+    with_fs_paths,
 )
 
 
@@ -135,52 +134,68 @@ def test_course_paths_ensure(tmp_path: Path) -> None:
 def test_fs_path_non_windows(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "linux")
     p = tmp_path / "a.mp4"
-    assert fs_path(p) == str(p)
+    assert fs_path(p) == str(p.resolve(strict=False))
 
 
-def test_fs_path_adds_extended_prefix_when_long(
+def test_fs_path_always_extended_on_windows(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(sys, "platform", "win32")
-    monkeypatch.setattr(
-        "smart_convert_nvenc.paths.long_paths_enabled",
-        lambda: False,
-    )
-    long_name = "x" * 250 + ".mp4"
-    p = tmp_path / long_name
+    p = tmp_path / "short.mp4"
     text = fs_path(p)
     assert text.startswith("\\\\?\\")
-    assert text.endswith(long_name)
+    assert text.endswith("short.mp4")
 
 
-def test_fs_path_short_when_long_paths_on(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_fs_path_unc(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    def fake_resolve(self: Path, strict: bool = False) -> Path:  # noqa: ARG001
+        return Path(r"\\server\share\video.mp4")
+
+    monkeypatch.setattr(Path, "resolve", fake_resolve)
+    text = fs_path(r"\\server\share\video.mp4")
+    assert text.startswith("\\\\?\\UNC\\")
+    assert text.endswith("video.mp4")
+
+
+def test_with_fs_paths_skips_flags(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(
-        "smart_convert_nvenc.paths.long_paths_enabled",
+        "smart_convert_nvenc.win_paths.long_paths_enabled",
         lambda: True,
     )
-    p = tmp_path / "short.mp4"
-    p.write_bytes(b"x")
-    assert not fs_path(p).startswith("\\\\?\\")
+    video = tmp_path / "clip.mp4"
+    out = with_fs_paths(["-i", str(video), "-c:v", "copy", str(tmp_path / "out.mp4")])
+    assert out[0] == "-i"
+    assert out[1].startswith("\\\\?\\")
+    assert out[2] == "-c:v"
+    assert out[3] == "copy"
+    assert out[4].startswith("\\\\?\\")
 
 
-def test_ensure_long_paths_noop_on_linux(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(sys, "platform", "linux")
-    assert ensure_long_paths() is True
+def test_warn_once(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(
+        "smart_convert_nvenc.win_paths.long_paths_enabled",
+        lambda: False,
+    )
+    monkeypatch.setattr("smart_convert_nvenc.win_paths._LONG_PATHS_WARNED", False)
+    warn_if_long_paths_disabled()
+    warn_if_long_paths_disabled()
+    err = capsys.readouterr().err
+    assert err.count("WARNING:") == 1
 
 
 def test_try_enable_when_already_on(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(
-        "smart_convert_nvenc.paths.long_paths_enabled",
+        "smart_convert_nvenc.win_paths.long_paths_enabled",
         lambda: True,
     )
     assert try_enable_long_paths() is True
 
 
 def test_long_paths_enabled_reads_registry_shape() -> None:
-    # On this CI/dev Windows box the helper must not crash.
     value = long_paths_enabled()
     assert value is None or isinstance(value, bool)
