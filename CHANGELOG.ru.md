@@ -17,6 +17,18 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 
 ### Removed
 
+## [0.1.13] — 2026-07-28
+
+### Added
+
+- Поддержка длинных путей Windows для FFmpeg/ffprobe: `win_paths.with_fs_paths` всегда ставит `\\?\` на границе subprocess; frozen-сборки с манифестом `longPathAware`.
+- Явная admin-команда: `smart-convert enable-long-paths` (не вызывается при обычном старте).
+
+### Changed
+
+- Политика `LongPathsEnabled` — на стороне оператора; приложение больше не пишет в HKLM при каждом запуске.
+- encode/probe/vmaf оставляют обычные пути; extended-префиксы только на tool edge (`ffmpeg_runner` / probe / vmaf).
+
 ## [0.1.12] — 2026-07-27
 
 ### Fixed
@@ -162,7 +174,8 @@ English: [CHANGELOG.md](./CHANGELOG.md).
 - GitHub Actions CI + PyInstaller release (`v*` теги).
 - MIT; документация на русском и английском.
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.13...HEAD
+[0.1.13]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.12...v0.1.13
 [0.1.12]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...v0.1.10

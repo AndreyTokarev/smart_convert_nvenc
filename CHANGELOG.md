@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.1.13] — 2026-07-28
+
+### Added
+
+- Windows long-path support for FFmpeg/ffprobe: `win_paths.with_fs_paths` always applies `\\?\` at the subprocess boundary; frozen builds ship a `longPathAware` manifest.
+- Explicit admin helper: `smart-convert enable-long-paths` (does not run on normal startup).
+
+### Changed
+
+- Long-path policy is operator-owned (`LongPathsEnabled`); the app no longer writes HKLM on every launch.
+- Encode/probe/vmaf keep plain paths; extended prefixes are applied only at the tool edge (`ffmpeg_runner` / probe / vmaf).
+
 ## [0.1.12] — 2026-07-27
 
 ### Fixed
@@ -162,7 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI + PyInstaller release workflow (`v*` tags).
 - MIT license; bilingual docs (EN/RU).
 
-[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.13...HEAD
+[0.1.13]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.12...v0.1.13
 [0.1.12]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/AndreyTokarev/smart_convert_nvenc/compare/v0.1.9...v0.1.10
